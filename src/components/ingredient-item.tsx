@@ -15,25 +15,22 @@ type IngredientItemProps = {
 
 export default function IngredientItem({ value, title, icon, ingredients }: IngredientItemProps) {
   return (
-    <AccordionItem value={value}>
-      <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-        <div className="flex items-center gap-2">
+    <AccordionItem value={value} className="border-b-0">
+      <AccordionTrigger className="text-lg font-semibold hover:no-underline rounded-lg p-4 data-[state=open]:bg-muted/50">
+        <div className="flex items-center gap-3">
           {icon}
           {title}
         </div>
       </AccordionTrigger>
-      <AccordionContent>
-        <ul className="space-y-4 pt-2">
+      <AccordionContent className="pt-2">
+        <ul className="space-y-4">
           {ingredients.map((item, index) => (
-            <li key={index} className={cn("pl-2 border-l-2 ml-2", {
-                "border-success": value === 'positive',
-                "border-accent": value === 'cautionary',
-                "border-border": value !== 'positive' && value !== 'cautionary'
+            <li key={index} className={cn("p-4 rounded-lg", {
+                "bg-success/10": value === 'positive',
+                "bg-destructive/10": value === 'cautionary',
             })}>
-              <div className='pl-4'>
-                <p className="font-semibold text-foreground">{item.name}</p>
-                <p className="text-sm text-muted-foreground">{item.reason}</p>
-              </div>
+              <p className="font-semibold text-foreground">{item.name}</p>
+              <p className="text-sm text-muted-foreground mt-1">{item.reason}</p>
             </li>
           ))}
         </ul>

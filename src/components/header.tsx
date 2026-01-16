@@ -21,28 +21,28 @@ export default function Header() {
 
   return (
     <>
-      <header className="py-4 px-4 sm:px-6 border-b">
+      <header className="py-4 px-4 sm:px-6 border-b bg-card/80 backdrop-blur-sm sticky top-0 z-40">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           <Link href="/" className="flex items-center gap-2">
             <PawPrint className="text-primary h-8 w-8" />
             <h1 className="text-2xl font-bold text-foreground font-headline">
-              Pettner Ingredient Analyzer
+              Pettner
             </h1>
           </Link>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             {loading ? (
-              <div className="h-10 w-24 bg-muted rounded-md animate-pulse" />
+              <div className="h-9 w-32 bg-muted rounded-md animate-pulse" />
             ) : user ? (
-              <Button onClick={handleLogout} variant="ghost" disabled={!isFirebaseReady}>
+              <Button onClick={handleLogout} variant="ghost" size="sm" disabled={!isFirebaseReady}>
                 <LogOut className="mr-2 h-4 w-4" />
                 로그아웃
               </Button>
             ) : (
               <>
-                <Button asChild variant="ghost" disabled={!isFirebaseReady}>
+                <Button asChild variant="ghost" size="sm" disabled={!isFirebaseReady}>
                   <Link href="/login">로그인</Link>
                 </Button>
-                <Button asChild disabled={!isFirebaseReady}>
+                <Button asChild size="sm" disabled={!isFirebaseReady}>
                   <Link href="/signup">회원가입</Link>
                 </Button>
               </>
