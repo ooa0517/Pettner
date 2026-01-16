@@ -1,0 +1,117 @@
+import type { AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-food-ingredients';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Accordion } from '@/components/ui/accordion';
+import { CheckCircle2, AlertTriangle, Lightbulb, Beaker, FileText, Repeat } from 'lucide-react';
+import IngredientItem from './ingredient-item';
+
+type AnalysisResultProps = {
+  result: AnalyzePetFoodIngredientsOutput;
+  onReset: () => void;
+};
+
+export default function AnalysisResult({ result, onReset }: AnalysisResultProps) {
+  const { productName, summaryHeadline, ingredients, nutritionalAnalysis, hiddenInsights } = result;
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <Card className="text-center shadow-lg">
+        <CardHeader>
+          <CardDescription>{productName || '분석된 제품'}</CardDescription>
+          <CardTitle className="text-3xl font-bold font-headline">{summaryHeadline}</CardTitle>
+        </CardHeader>
+      </Card>
+
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <FileText className="text-primary" />
+              성분 상세 분석
+            </CardTitle>
+            <CardDescription>AI가 분석한 핵심 성분 목록입니다.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Accordion type="single" collapsible defaultValue="positive" className="w-full">
+              {ingredients.positive && ingredients.positive.length > 0 && (
+                <IngredientItem
+                  value="positive"
+                  title="긍정적인 성분"
+                  icon={<CheckCircle2 className="text-green-500" />}
+                  ingredients={ingredients.positive}
+                />
+              )}
+              {ingredients.cautionary && ingredients.cautionary.length > 0 && (
+                <IngredientItem
+                  value="cautionary"
+                  title="주의가 필요한 성분"
+                  icon={<AlertTriangle className="text-orange-500" />}
+                  ingredients={ingredients.cautionary}
+                />
+              )}
+            </Accordion>
+          </CardContent>
+        </Card>
+
+        <div className="space-y-6">
+          <Card className="shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Beaker className="text-primary" />
+                영양소 및 칼로리
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {nutritionalAnalysis.estimatedCalories && (
+                <div>
+                  <h4 className="font-semibold text-muted-foreground">추정 칼로리</h4>
+                  <p className="text-lg font-bold">{nutritionalAnalysis.estimatedCalories}</p>
+                </div>
+              )}
+              {nutritionalAnalysis.insights && nutritionalAnalysis.insights.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-muted-foreground">영양학적 인사이트</h4>
+                  <ul className="list-disc list-inside space-y-1 mt-1 text-sm">
+                    {nutritionalAnalysis.insights.map((insight, index) => (
+                      <li key={index}>{insight}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {hiddenInsights && hiddenInsights.length > 0 && (
+            <Card className="shadow-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <Lightbulb className="text-primary" />
+                  숨겨진 인사이트
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  {hiddenInsights.map((insight, index) => (
+                    <li key={index}>{insight}</li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+      
+      <Card className="shadow-md">
+        <CardFooter className="flex-col items-center gap-4 p-4">
+          <p className="text-xs text-muted-foreground text-center">
+            <strong>면책 조항:</strong> 이 분석은 이미지 인식 기술과 일반적인 영양학적 근거를 바탕으로 한 정보 제공 목적이며, 수의사의 의학적 조언을 대체할 수 없습니다. 반려동물의 건강에 이상이 있을 경우, 반드시 전문 수의사와 상담하시기 바랍니다.
+          </p>
+          <Button onClick={onReset} variant="outline" className="mt-2 self-center">
+            <Repeat className="mr-2 h-4 w-4" />
+            새로운 제품 분석하기
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+}
