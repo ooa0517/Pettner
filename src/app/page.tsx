@@ -83,7 +83,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleImageAnalysis = async (file: File) => {
+  const handleImageAnalysis = async (file: File, healthConditions: string) => {
     setIsLoading(true);
     setAnalysisResult(null);
 
@@ -92,7 +92,7 @@ export default function Home() {
     reader.onload = async () => {
       const imageDataUri = reader.result as string;
       try {
-        const result = await getAnalysis(imageDataUri);
+        const result = await getAnalysis({ photoDataUri: imageDataUri, healthConditions });
         if (result.error) {
           throw new Error(result.error);
         }

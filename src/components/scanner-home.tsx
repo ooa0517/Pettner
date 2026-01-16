@@ -1,16 +1,19 @@
 'use client';
 
-import { useRef } from 'react';
-import { Camera, Sparkles } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Camera, Sparkles, HeartPulse } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 type ScannerHomeProps = {
-  onImageSelect: (file: File) => void;
+  onImageSelect: (file: File, healthConditions: string) => void;
 };
 
 export default function ScannerHome({ onImageSelect }: ScannerHomeProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [healthConditions, setHealthConditions] = useState('');
 
   const handleButtonClick = () => {
     fileInputRef.current?.click();
@@ -19,7 +22,7 @@ export default function ScannerHome({ onImageSelect }: ScannerHomeProps) {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      onImageSelect(file);
+      onImageSelect(file, healthConditions);
     }
   };
 
@@ -34,6 +37,20 @@ export default function ScannerHome({ onImageSelect }: ScannerHomeProps) {
       </CardHeader>
       <CardContent className="p-8 pt-0">
         <div className="flex flex-col items-center space-y-6">
+           <div className="w-full text-left space-y-2 mb-4">
+              <Label htmlFor="health-conditions" className="flex items-center gap-2 font-semibold text-foreground">
+                <HeartPulse className="w-5 h-5 text-primary" />
+                반려동물의 기저질환 (선택)
+              </Label>
+              <Textarea
+                id="health-conditions"
+                placeholder="예: 신장 질환, 피부 알레르기, 당뇨 등. 질환이 있다면 더 정확한 분석을 받을 수 있어요."
+                value={healthConditions}
+                onChange={(e) => setHealthConditions(e.target.value)}
+                className="bg-background"
+              />
+           </div>
+
            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
              <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
               <Camera className="w-10 h-10 text-primary" />

@@ -18,6 +18,7 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
     .describe(
       "A photo of the pet food ingredient list, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+  healthConditions: z.string().optional().describe('Any known pre-existing health conditions of the pet (e.g., "신장 질환", "피부 알레르기").'),
 });
 export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngredientsInputSchema>;
 
@@ -79,6 +80,11 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
 Analyze the ingredient list from the image. This could be for pet food, supplements, or treats. Provide a highly detailed and professional breakdown. For each ingredient, analyze its biological impact at a cellular and systemic level. Consider potential interactions and effects on metabolic pathways. For cautionary ingredients, specify the biochemical mechanisms of concern.
 
 Your analysis should also include considerations for genetic predispositions. For example, mention if certain ingredients are beneficial or risky for breeds with known genetic tendencies (e.g., copper storage disease in Bedlington Terriers, urolithiasis in Dalmatians).
+
+{{#if healthConditions}}
+IMPORTANT: The pet has the following pre-existing health conditions: {{{healthConditions}}}.
+Your entire analysis, especially the 'cautionary ingredients', 'keyTakeaways', and 'recommendations' sections, MUST be tailored to a pet with these specific conditions. For example, if the pet has kidney disease, you must flag high phosphorus or protein levels. If it has allergies, you must identify potential allergens.
+{{/if}}
 
 If the product is identified as being for cats, you must apply a different, more stringent set of criteria due to their unique physiology as an obligate carnivore. Pay special attention to:
 - Taurine: Explicitly check for and comment on the presence and source of taurine, as it is an essential amino acid for cats.
