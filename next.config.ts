@@ -2,6 +2,9 @@ import type {NextConfig} from 'next';
 import withPWA from '@ducanh2912/next-pwa';
 
 const nextConfig: NextConfig = {
+  experimental: {
+    allowedDevOrigins: ["https://6000-firebase-studio-1768543331366.cluster-qxqlf3vb3nbf2r42l5qfoebdry.cloudworkstations.dev"],
+  },
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
