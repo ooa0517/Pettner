@@ -14,8 +14,7 @@ export async function getAnalysis(input: AnalyzePetFoodIngredientsInput): Promis
     return { data: result };
   } catch (e) {
     console.error(e);
-    // It's better to return a generic error message to the client
-    // and log the detailed error on the server.
-    return { error: 'AI 분석 중 오류가 발생했습니다. 이미지에 성분표가 잘 보이는지 확인 후 다시 시도해주세요.' };
+    // Return a translation key instead of a hardcoded string
+    return { error: 'homePage.aiError' };
   }
 }

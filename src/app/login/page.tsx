@@ -25,13 +25,9 @@ import { useToast } from '@/hooks/use-toast';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
-
-const formSchema = z.object({
-  email: z.string().email({ message: '유효한 이메일을 입력해주세요.' }),
-  password: z.string().min(1, { message: '비밀번호를 입력해주세요.' }),
-});
+import { useLanguage } from '@/contexts/language-context';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" {...props}>
@@ -42,12 +38,17 @@ const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     </svg>
 );
 
-
 export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const { t } = useLanguage();
+
+  const formSchema = useMemo(() => z.object({
+    email: z.string().email({ message: t('loginPage.invalidEmail') }),
+    password: z.string().min(1, { message: t('loginPage.passwordRequired') }),
+  }), [t]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,8 +63,8 @@ export default function LoginPage() {
     if (!auth) {
       toast({
         variant: 'destructive',
-        title: 'Firebase 오류',
-        description: 'Firebase 설정이 올바르지 않습니다. .env 파일을 확인해주세요.',
+        title: t('loginPage.firebaseErrorTitle'),
+        description: t('loginPage.firebaseErrorDescription'),
       });
       setIsLoading(false);
       return;
@@ -71,21 +72,21 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       toast({
-        title: '로그인 성공',
-        description: '다시 오신 것을 환영합니다!',
+        title: t('loginPage.loginSuccessTitle'),
+        description: t('loginPage.loginSuccessDescription'),
       });
       router.push('/');
     } catch (error: any) {
       console.error(error);
-      let errorMessage = '이메일 또는 비밀번호를 확인해주세요.';
+      let errorMessage = t('loginPage.loginFailedDescription');
       if (error.code === 'auth/operation-not-allowed') {
-        errorMessage = 'Firebase 프로젝트에서 이메일/비밀번호 로그인이 활성화되지 않았습니다. Firebase 콘솔에서 활성화해주세요.';
+        errorMessage = t('loginPage.loginFailedNotAllowed');
       } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다.';
+        errorMessage = t('loginPage.loginFailedInvalid');
       }
       toast({
         variant: 'destructive',
-        title: '로그인 실패',
+        title: t('loginPage.loginFailedTitle'),
         description: errorMessage,
       });
     } finally {
@@ -98,8 +99,8 @@ export default function LoginPage() {
     if (!auth) {
       toast({
         variant: 'destructive',
-        title: 'Firebase 오류',
-        description: 'Firebase 설정이 올바르지 않습니다.',
+        title: t('loginPage.firebaseErrorTitle'),
+        description: t('loginPage.firebaseErrorDescription'),
       });
       setIsGoogleLoading(false);
       return;
@@ -108,16 +109,16 @@ export default function LoginPage() {
     try {
       await signInWithPopup(auth, provider);
       toast({
-        title: '로그인 성공',
-        description: 'Google 계정으로 로그인되었습니다.',
+        title: t('loginPage.loginSuccessTitle'),
+        description: t('loginPage.loginSuccessDescription'),
       });
       router.push('/');
     } catch (error: any) {
       console.error('Google Sign-In Error:', error);
        toast({
         variant: 'destructive',
-        title: '로그인 실패',
-        description: 'Google 로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+        title: t('loginPage.loginFailedTitle'),
+        description: t('loginPage.googleLoginFailed'),
       });
     } finally {
         setIsGoogleLoading(false);
@@ -128,9 +129,9 @@ export default function LoginPage() {
     <div className="flex items-center justify-center flex-grow p-4">
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader>
-          <CardTitle className="text-2xl">로그인</CardTitle>
+          <CardTitle className="text-2xl">{t('loginPage.title')}</CardTitle>
           <CardDescription>
-            계정에 로그인하려면 이메일과 비밀번호를 입력하세요.
+            {t('loginPage.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -142,9 +143,9 @@ export default function LoginPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>이메일</FormLabel>
+                      <FormLabel>{t('loginPage.emailLabel')}</FormLabel>
                       <FormControl>
-                        <Input placeholder="m@example.com" {...field} />
+                        <Input placeholder={t('loginPage.emailPlaceholder')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -155,7 +156,7 @@ export default function LoginPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>비밀번호</FormLabel>
+                      <FormLabel>{t('loginPage.passwordLabel')}</FormLabel>
                       <FormControl>
                         <Input type="password" {...field} />
                       </FormControl>
@@ -165,7 +166,7 @@ export default function LoginPage() {
                 />
                 <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  로그인
+                  {t('common.login')}
                 </Button>
               </form>
             </Form>
@@ -176,20 +177,20 @@ export default function LoginPage() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-card px-2 text-muted-foreground">
-                  또는
+                  {t('loginPage.or')}
                 </span>
               </div>
             </div>
 
             <Button variant="outline" className="w-full" type="button" disabled={isLoading || isGoogleLoading} onClick={handleGoogleSignIn}>
               {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon className="mr-2 h-5 w-5" />}
-              Google 계정으로 로그인
+              {t('loginPage.googleLogin')}
             </Button>
           </div>
           <div className="mt-4 text-center text-sm">
-            계정이 없으신가요?{' '}
+            {t('loginPage.noAccount')}{' '}
             <Link href="/signup" className="underline">
-              회원가입
+              {t('common.signup')}
             </Link>
           </div>
         </CardContent>

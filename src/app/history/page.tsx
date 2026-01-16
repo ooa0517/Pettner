@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -16,6 +15,7 @@ import {
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-food-ingredients';
+import { useLanguage } from '@/contexts/language-context';
 
 type AnalysisRecord = AnalyzePetFoodIngredientsOutput & {
   id: string;
@@ -28,6 +28,7 @@ export default function HistoryPage() {
   const [history, setHistory] = useState<AnalysisRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -50,7 +51,7 @@ export default function HistoryPage() {
           setHistory(historyData);
         } catch (err) {
           console.error("Error fetching history: ", err);
-          setError('분석 기록을 불러오는 중 오류가 발생했습니다.');
+          setError(t('historyPage.fetchError'));
         } finally {
           setIsLoading(false);
         }
@@ -59,7 +60,7 @@ export default function HistoryPage() {
     } else if (!authLoading) {
         setIsLoading(false);
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, t]);
 
   if (authLoading || isLoading) {
     return (
@@ -72,11 +73,11 @@ export default function HistoryPage() {
   return (
     <div className="flex-grow p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold font-headline">나의 분석 기록</h1>
+        <h1 className="text-3xl font-bold font-headline">{t('historyPage.title')}</h1>
 
         {error && (
           <Alert variant="destructive">
-            <AlertTitle>오류</AlertTitle>
+            <AlertTitle>{t('common.error')}</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
@@ -84,8 +85,8 @@ export default function HistoryPage() {
         {history.length === 0 && !error ? (
           <Card className="text-center">
             <CardHeader>
-              <CardTitle>분석 기록이 없습니다.</CardTitle>
-              <CardDescription>홈으로 이동하여 새로운 제품을 분석해보세요.</CardDescription>
+              <CardTitle>{t('historyPage.noHistoryTitle')}</CardTitle>
+              <CardDescription>{t('historyPage.noHistoryDescription')}</CardDescription>
             </CardHeader>
             <CardContent className="p-8">
               <FileText className="h-12 w-12 mx-auto text-muted-foreground" />
@@ -103,7 +104,7 @@ export default function HistoryPage() {
                   <div className="text-right text-sm text-muted-foreground flex items-center gap-2">
                     <Clock className="h-4 w-4" />
                     <span>
-                      {item.createdAt?.toDate().toLocaleDateString('ko-KR')}
+                      {item.createdAt?.toDate().toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US')}
                     </span>
                   </div>
                 </CardContent>

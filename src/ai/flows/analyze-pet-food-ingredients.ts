@@ -18,7 +18,8 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
     .describe(
       "A photo of the pet food ingredient list, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
-  healthConditions: z.string().optional().describe('Any known pre-existing health conditions of the pet (e.g., "신장 질환", "피부 알레르기").'),
+  healthConditions: z.string().optional().describe('Any known pre-existing health conditions of the pet (e.g., "kidney disease", "skin allergies").'),
+  language: z.string().optional().default('ko').describe("The language for the analysis output, e.g., 'en' for English, 'ko' for Korean."),
 });
 export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngredientsInputSchema>;
 
@@ -28,7 +29,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
   petType: z.string().describe('The target pet type (e.g., Dog, Cat).'),
   lifeStage: z.string().describe('The target life stage (e.g., Puppy, Adult, Senior).'),
   specialClaims: z.array(z.string()).describe('Any special claims made on the packaging (e.g., Grain-Free, Organic).'),
-  keyTakeaways: z.array(z.string()).describe("반드시 알아야 할 핵심 과학적 사실 및 필수 정보입니다. 수의학적 관점에서 가장 중요한 2-3가지 포인트를 요약합니다."),
+  keyTakeaways: z.array(z.string()).describe("The most critical scientific facts and essential information. Summarizes the 2-3 most important points from a veterinary perspective."),
   summaryHeadline: z.string().describe('A one-line scientific summary of the pet food.'),
   ingredients: z.object({
     positive: z.array(
@@ -50,20 +51,20 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
   }).describe('Nutritional analysis of the pet food.'),
   hiddenInsights: z.array(z.string()).describe('Hidden details or professional insights about the pet food.'),
   recommendations: z.object({
-    introduction: z.string().describe("완벽한 사료는 없다는 점을 상기시키고, 현재 식단을 개선하기 위한 제안임을 설명하는 간단한 소개글입니다."),
+    introduction: z.string().describe("A brief introduction explaining that no food is perfect and these are suggestions to improve the current diet."),
     supplementaryIngredients: z.array(
       z.object({
-        name: z.string().describe("추가로 급여하면 좋을 추천 성분명 (예: 오메가-3 지방산)"),
-        reason: z.string().describe("해당 성분을 추천하는 과학적인 이유"),
+        name: z.string().describe("Recommended supplementary ingredient name (e.g., Omega-3 fatty acids)."),
+        reason: z.string().describe("The scientific reason for recommending this ingredient."),
       })
-    ).describe("현재 식단을 보완할 수 있는 추천 영양 성분 목록입니다."),
+    ).describe("List of recommended nutritional ingredients to supplement the current diet."),
     alternativeProductTypes: z.array(
       z.object({
-        type: z.string().describe("고려해볼 만한 다른 유형의 제품 (예: 가수분해 단백질 사료)"),
-        reason: z.string().describe("해당 유형의 제품을 추천하는 이유"),
+        type: z.string().describe("An alternative product type to consider (e.g., Hydrolyzed protein diet)."),
+        reason: z.string().describe("The reason for recommending this product type."),
       })
-    ).describe("현재 제품의 대안으로 고려해볼 만한 다른 제품 유형 목록입니다."),
-  }).describe("분석 결과를 바탕으로 한 개선 제안. 보충할 성분이나 다른 종류의 제품을 추천합니다.")
+    ).describe("List of alternative product types to consider as an alternative to the current product."),
+  }).describe("Improvement suggestions based on the analysis. Recommends supplementary ingredients or alternative product types.")
 });
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
 
@@ -76,6 +77,8 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
   prompt: `You are a world-renowned authority in veterinary science, specializing in canine and feline genomics, molecular biology, and clinical nutrition. Your analysis must be strictly objective, evidence-based, and directly reference established guidelines (e.g., AAFCO, NRC, FEDIAF) and findings from peer-reviewed scientific literature.
+
+IMPORTANT: Your entire response, including all values in the final JSON output, MUST be in the language specified by this language code: '{{{language}}}'. (e.g., 'en' for English, 'ko' for Korean). The JSON keys must always be in camelCase as defined in the output schema.
 
 Analyze the ingredient list from the image. This could be for pet food, supplements, or treats. Provide a highly detailed and professional breakdown. For each ingredient, analyze its biological impact at a cellular and systemic level. Consider potential interactions and effects on metabolic pathways. For cautionary ingredients, specify the biochemical mechanisms of concern.
 
@@ -97,31 +100,7 @@ Crucially, since no single food is perfect, you must provide recommendations for
 
 Most importantly, you must provide a "keyTakeaways" section. This must contain the 2-3 most critical, evidence-based points from a veterinary perspective that a pet owner absolutely must know for the health and safety of their pet.
 
-The output must be precise, professional, and in a structured JSON format as follows:
-
-{
-  "productName": "추정된 제품명",
-  "brandName": "브랜드명",
-  "petType": "대상 반려동물 (예: 강아지, 고양이)",
-  "lifeStage": "대상 연령 (예: 퍼피, 어덜트, 시니어)",
-  "specialClaims": ["특별한 주장 (예: 그레인프리, 유기농, 관절 건강)"],
-  "keyTakeaways": ["반드시 알아야 할 가장 중요한 핵심 정보 1", "반드시 알아야 할 가장 중요한 핵심 정보 2"],
-  "summaryHeadline": "핵심적인 과학적 사실 기반의 한 줄 요약",
-  "ingredients": {
-    "positive": [{"name": "성분명", "reason": "유전학적 및 생화학적 관점을 포함한 상세한 분석"}],
-    "cautionary": [{"name": "성분명", "reason": "유전학적 및 생화학적 관점을 포함한 상세한 분석과 잠재적 우려 사항"}]
-  },
-  "nutritionalAnalysis": {
-    "estimatedCalories": "추정 칼로리 (해당 시)",
-    "insights": ["생체 이용률, 대사 경로, 영양소 상호작용을 고려한 전문가 코멘트"]
-  },
-  "hiddenInsights": ["성분 배합의 의도, 잠재적 장기 영향 등 수의학적 심층 분석"],
-  "recommendations": {
-    "introduction": "이 세상에 완벽한 사료는 없습니다. 아래 추천은 현재 식단을 보완하고 더 나은 선택을 돕기 위한 제안입니다.",
-    "supplementaryIngredients": [{"name": "추천 보충 성분명", "reason": "추천 이유"}],
-    "alternativeProductTypes": [{"type": "추천 제품 유형", "reason": "추천 이유"}]
-  }
-}
+The final output must be a structured JSON object as defined in the schema.
 
 Analyze the following ingredient list from the product image:
 

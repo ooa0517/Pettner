@@ -1,7 +1,6 @@
-
 'use client';
 
-import { PawPrint, LogOut, AlertTriangle, LayoutDashboard, ChevronDown, History } from 'lucide-react';
+import { PawPrint, LogOut, AlertTriangle, LayoutDashboard, ChevronDown, History, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
@@ -18,10 +17,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useLanguage } from '@/contexts/language-context';
 
 export default function Header() {
   const { user, loading, isFirebaseReady } = useAuth();
   const router = useRouter();
+  const { setLanguage, t } = useLanguage();
 
   const handleLogout = async () => {
     if (!auth) return;
@@ -40,10 +41,23 @@ export default function Header() {
           <Link href="/" className="flex items-center gap-2">
             <PawPrint className="text-primary h-8 w-8" />
             <h1 className="text-2xl font-bold text-foreground font-headline">
-              Pettner
+              {t('header.title')}
             </h1>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Globe className="h-5 w-5" />
+                  <span className="sr-only">Change language</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setLanguage('ko')}>한국어</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {loading ? (
               <div className="h-9 w-32 bg-muted rounded-md animate-pulse" />
             ) : user ? (
@@ -59,34 +73,34 @@ export default function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>내 계정</DropdownMenuLabel>
+                  <DropdownMenuLabel>{t('common.myAccount')}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/account">
                       <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>계정 관리</span>
+                      <span>{t('header.accountManagement')}</span>
                     </Link>
                   </DropdownMenuItem>
                    <DropdownMenuItem asChild>
                     <Link href="/history">
                       <History className="mr-2 h-4 w-4" />
-                      <span>분석 기록</span>
+                      <span>{t('common.analysisHistory')}</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>로그아웃</span>
+                    <span>{t('common.logout')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <>
                 <Button asChild variant="ghost" size="sm" disabled={!isFirebaseReady}>
-                  <Link href="/login">로그인</Link>
+                  <Link href="/login">{t('common.login')}</Link>
                 </Button>
                 <Button asChild size="sm" disabled={!isFirebaseReady}>
-                  <Link href="/signup">회원가입</Link>
+                  <Link href="/signup">{t('common.signup')}</Link>
                 </Button>
               </>
             )}
@@ -97,9 +111,9 @@ export default function Header() {
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-4">
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Firebase 설정 오류</AlertTitle>
+            <AlertTitle>{t('header.firebaseErrorTitle')}</AlertTitle>
             <AlertDescription>
-              Firebase가 설정되지 않았습니다. 인증 기능이 동작하지 않습니다. <code>.env</code> 파일에 Firebase 프로젝트 정보를 올바르게 입력했는지 확인해주세요.
+              {t('header.firebaseErrorDescription')}
             </AlertDescription>
           </Alert>
         </div>

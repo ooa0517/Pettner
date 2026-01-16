@@ -1,0 +1,116 @@
+{
+  "metadata": {
+    "title": "Pettner Ingredient Analyzer"
+  },
+  "common": {
+    "login": "Login",
+    "logout": "Logout",
+    "signup": "Sign Up",
+    "myAccount": "My Account",
+    "analysisHistory": "Analysis History",
+    "error": "Error",
+    "confirm": "Confirm"
+  },
+  "header": {
+    "title": "Pettner",
+    "firebaseErrorTitle": "Firebase Configuration Error",
+    "firebaseErrorDescription": "Firebase is not configured. Authentication will not work. Please ensure you have correctly entered your Firebase project information in the `.env` file.",
+    "accountManagement": "Account Management"
+  },
+  "loginPage": {
+    "title": "Login",
+    "description": "Enter your email and password to log in to your account.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "m@example.com",
+    "passwordLabel": "Password",
+    "or": "or",
+    "googleLogin": "Login with Google",
+    "noAccount": "Don't have an account?",
+    "invalidEmail": "Please enter a valid email.",
+    "passwordRequired": "Please enter your password.",
+    "loginSuccessTitle": "Login Successful",
+    "loginSuccessDescription": "Welcome back!",
+    "firebaseErrorTitle": "Firebase Error",
+    "firebaseErrorDescription": "Firebase is not configured correctly. Please check your .env file.",
+    "loginFailedTitle": "Login Failed",
+    "loginFailedDescription": "Please check your email or password.",
+    "loginFailedNotAllowed": "Email/Password login is not enabled in the Firebase project. Please enable it in the Firebase console.",
+    "loginFailedInvalid": "The email or password is incorrect.",
+    "googleLoginFailed": "An error occurred during Google sign-in. Please try again later."
+  },
+  "signupPage": {
+    "title": "Sign Up",
+    "description": "Enter your information below to create an account.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "m@example.com",
+    "passwordLabel": "Password",
+    "confirmPasswordLabel": "Confirm Password",
+    "createAccount": "Create Account",
+    "haveAccount": "Already have an account?",
+    "invalidEmail": "Please enter a valid email.",
+    "passwordMinLength": "Password must be at least 6 characters.",
+    "passwordMismatch": "Passwords do not match.",
+    "signupSuccessTitle": "Sign-up Successful",
+    "signupSuccessDescription": "Welcome to Pettner!",
+    "signupFailedTitle": "Sign-up Failed",
+    "signupFailedDefault": "An error occurred during sign-up.",
+    "emailInUse": "This email is already in use.",
+    "operationNotAllowed": "Email/Password login is not enabled in the Firebase project. Please enable it in the Firebase console."
+  },
+  "accountPage": {
+    "title": "My Account",
+    "profile": "Profile",
+    "profileDescription": "This is my account information.",
+    "user": "User",
+    "myPets": "My Pets",
+    "myPetsDescription": "Register your pet and use personalized services. (Subscription feature coming soon)",
+    "noPets": "No pets registered yet.",
+    "addPet": "Add Pet"
+  },
+  "historyPage": {
+    "title": "My Analysis History",
+    "fetchError": "An error occurred while fetching analysis history.",
+    "noHistoryTitle": "No Analysis History",
+    "noHistoryDescription": "Go to the home page to analyze a new product."
+  },
+  "homePage": {
+    "analysisCompleteTitle": "Analysis Complete!",
+    "analysisCompleteDescription": "The result has been saved to 'My Analysis History'.",
+    "analysisFailedTitle": "Analysis Failed",
+    "analysisFailedDescriptionUnknown": "An unknown error occurred. Please try again.",
+    "fileReadFailedTitle": "File Read Failed",
+    "fileReadFailedDescription": "An error occurred while reading the image. Please select a different file.",
+    "aiError": "An error occurred during AI analysis. Please check if the ingredient list is clearly visible in the image and try again."
+  },
+  "scannerHome": {
+    "title": "Leave Ingredient Analysis to AI",
+    "description": "One photo of the ingredients list for food, treats, or supplements is all it takes. <br /> Our veterinary nutrition AI analyzes it in 10 seconds based on scientific evidence.",
+    "healthConditionsLabel": "Pet's Pre-existing Conditions (Optional)",
+    "healthConditionsPlaceholder": "e.g., kidney disease, skin allergies, diabetes. Providing this information allows for a more accurate analysis.",
+    "analyzeButton": "Analyze Ingredients with AI",
+    "instruction": "* Please take a clear picture of the 'Ingredients' and 'Guaranteed Analysis'."
+  },
+  "analysisLoading": {
+    "title": "AI is analyzing...",
+    "description": "We are carefully examining the food ingredients based on the latest scientific papers and nutritional guidelines."
+  },
+  "analysisResult": {
+    "productAnalyzed": "Analyzed Product",
+    "checkThis": "Must Check!",
+    "checkThisDescription": "This is the most important key information analyzed by the AI.",
+    "ingredientAnalysis": "Detailed Ingredient Analysis",
+    "ingredientAnalysisDescription": "Here is a list of key ingredients analyzed by the AI.",
+    "positiveIngredients": "Positive Ingredients",
+    "cautionaryIngredients": "Cautionary Ingredients",
+    "nutritionProfile": "Nutrition Profile",
+    "estimatedCalories": "Estimated Calories",
+    "nutritionalInsights": "Nutritional Insights",
+    "expertInsights": "Expert Insights",
+    "aiRecommendations": "AI-Powered Improvement Suggestions",
+    "recommendationsIntro": "There's no perfect food in this world. The recommendations below are veterinary nutritional suggestions to supplement the current diet and help make better choices.",
+    "recommendedSupplements": "Recommended Supplementary Ingredients",
+    "alternativeProducts": "Alternative Product Types",
+    "disclaimer": "<strong>Disclaimer:</strong> This analysis is for informational purposes using AI technology and cannot replace professional medical advice from a veterinarian. If your pet has any health issues, please consult a professional veterinarian.",
+    "analyzeNewProduct": "Analyze a New Product"
+  }
+}

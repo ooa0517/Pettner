@@ -14,10 +14,12 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PawPrint, PlusCircle, Loader2 } from 'lucide-react';
+import { useLanguage } from '@/contexts/language-context';
 
 export default function AccountPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,12 +42,12 @@ export default function AccountPage() {
   return (
     <div className="flex-grow p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-3xl font-bold font-headline">내 계정</h1>
+        <h1 className="text-3xl font-bold font-headline">{t('accountPage.title')}</h1>
         
         <Card>
           <CardHeader>
-            <CardTitle>프로필</CardTitle>
-            <CardDescription>내 계정 정보입니다.</CardDescription>
+            <CardTitle>{t('accountPage.profile')}</CardTitle>
+            <CardDescription>{t('accountPage.profileDescription')}</CardDescription>
           </CardHeader>
           <CardContent className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
@@ -53,7 +55,7 @@ export default function AccountPage() {
               <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-semibold text-lg">{user.displayName || '사용자'}</p>
+              <p className="font-semibold text-lg">{user.displayName || t('accountPage.user')}</p>
               <p className="text-muted-foreground">{user.email}</p>
             </div>
           </CardContent>
@@ -63,21 +65,21 @@ export default function AccountPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <PawPrint className="text-primary"/>
-              나의 반려동물
+              {t('accountPage.myPets')}
             </CardTitle>
             <CardDescription>
-              반려동물을 등록하고 맞춤형 서비스를 이용해보세요. (구독 기능 준비 중)
+              {t('accountPage.myPetsDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                <p className="text-muted-foreground">아직 등록된 반려동물이 없습니다.</p>
+                <p className="text-muted-foreground">{t('accountPage.noPets')}</p>
             </div>
           </CardContent>
           <CardFooter>
             <Button disabled>
               <PlusCircle className="mr-2 h-4 w-4" />
-              반려동물 추가하기
+              {t('accountPage.addPet')}
             </Button>
           </CardFooter>
         </Card>
