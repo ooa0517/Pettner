@@ -9,8 +9,8 @@ export default function AnalysisLoading() {
         <div className="absolute h-full w-full bg-primary/20 rounded-full animate-ping"></div>
         <PawPrint className="h-12 w-12 text-primary animate-pulse" />
       </div>
-      <h2 className="text-xl font-semibold text-foreground">{t('analysisLoading.title')}</h2>
-      <p className="text-muted-foreground max-w-md" dangerouslySetInnerHTML={{ __html: t('analysisLoading.description') }} />
+      <h1 className="text-3xl md:text-4xl font-extrabold font-headline tracking-tight">{t('analysisLoading.title')}</h1>
+      <p className="text-muted-foreground max-w-md pt-2" dangerouslySetInnerHTML={{ __html: t('analysisLoading.description') }} />
     </div>
   );
 }
