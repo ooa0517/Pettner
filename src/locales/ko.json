@@ -84,7 +84,7 @@
     "aiInputError": "분석을 위해 성분 텍스트 또는 이미지를 제공해야 합니다."
   },
   "scannerHome": {
-    "title": "성분 분석, AI에게 맡기세요",
+    "title": "성분 분석, 수의 영양학 AI에게 맡기세요",
     "descriptionV2": "제품 정보를 직접 입력하거나 성분표 사진을 촬영해 보세요. <br /> 수의 영양학 AI가 과학적 근거로 분석해 드립니다.",
     "petTypeLabel": "누구의 음식인가요?",
     "petTypes": {
@@ -114,7 +114,7 @@
     "healthConditionsPlaceholder": "예: 신장 질환, 피부 알레르기, 당뇨 등. 질환이 있다면 더 정확한 분석을 받을 수 있어요.",
     "imageLabel": "성분 사진 (선택)",
     "imageDescription": "* 더 정확한 '2차 검증'을 위해 선명한 사진을 첨부해주세요.",
-    "analyzeButton": "AI로 성분 분석하기",
+    "analyzeButton": "수의 영양학 AI로 성분 분석하기",
     "instruction": "* '원료명' 및 '등록성분량'이 선명하게 보이도록 촬영해주세요."
   },
   "analysisLoading": {

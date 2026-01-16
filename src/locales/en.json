@@ -84,7 +84,7 @@
     "aiInputError": "Please provide either the ingredient text or an image for analysis."
   },
   "scannerHome": {
-    "title": "Leave Ingredient Analysis to AI",
+    "title": "Veterinary AI Ingredient Analysis",
     "descriptionV2": "Directly input product information or take a photo of the ingredients. <br /> Our veterinary nutrition AI will analyze it for you based on scientific evidence.",
     "petTypeLabel": "Whose food is it?",
     "petTypes": {
@@ -114,7 +114,7 @@
     "healthConditionsPlaceholder": "e.g., kidney disease, skin allergies, diabetes. Providing this information allows for a more accurate analysis.",
     "imageLabel": "Ingredient Photo (Optional)",
     "imageDescription": "* For more accurate '2nd verification', please attach a clear photo.",
-    "analyzeButton": "Analyze Ingredients with AI",
+    "analyzeButton": "Analyze with Veterinary AI",
     "instruction": "* Please take a clear picture of the 'Ingredients' and 'Guaranteed Analysis'."
   },
   "analysisLoading": {
