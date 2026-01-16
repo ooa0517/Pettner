@@ -46,7 +46,7 @@ export default function AnalysisResult({ result, onReset }: AnalysisResultProps)
                 <IngredientItem
                   value="positive"
                   title="긍정적인 성분"
-                  icon={<CheckCircle2 className="text-green-500" />}
+                  icon={<CheckCircle2 className="text-success" />}
                   ingredients={ingredients.positive}
                 />
               )}
@@ -54,7 +54,7 @@ export default function AnalysisResult({ result, onReset }: AnalysisResultProps)
                 <IngredientItem
                   value="cautionary"
                   title="주의가 필요한 성분"
-                  icon={<AlertTriangle className="text-orange-500" />}
+                  icon={<AlertTriangle className="text-accent" />}
                   ingredients={ingredients.cautionary}
                 />
               )}
@@ -154,8 +154,8 @@ export default function AnalysisResult({ result, onReset }: AnalysisResultProps)
         </Card>
       )}
 
-      <Card className="shadow-md">
-        <CardFooter className="flex-col items-center gap-4 p-4">
+      <Card className="shadow-none border-t rounded-none">
+        <CardFooter className="flex-col items-center gap-4 p-4 pt-6">
           <p className="text-xs text-muted-foreground text-center">
             <strong>면책 조항:</strong> 이 분석은 이미지 인식 기술과 일반적인 영양학적 근거를 바탕으로 한 정보 제공 목적이며, 수의사의 의학적 조언을 대체할 수 없습니다. 반려동물의 건강에 이상이 있을 경우, 반드시 전문 수의사와 상담하시기 바랍니다.
           </p>
