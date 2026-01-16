@@ -80,12 +80,12 @@
     "analysisFailedDescriptionUnknown": "An unknown error occurred. Please try again.",
     "fileReadFailedTitle": "File Read Failed",
     "fileReadFailedDescription": "An error occurred while reading the image. Please select a different file.",
-    "aiError": "An error occurred during AI analysis. Please check your input and try again.",
+    "aiError": "An error occurred during analysis. Please check your input and try again.",
     "aiInputError": "Please provide either the ingredient text or an image for analysis."
   },
   "scannerHome": {
-    "title": "Veterinary AI Ingredient Analysis",
-    "descriptionV2": "Directly input product information or take a photo of the ingredients. <br /> Our veterinary nutrition AI will analyze it for you based on scientific evidence.",
+    "title": "Veterinary Nutrition Ingredient Analysis",
+    "descriptionV2": "Directly input product information or take a photo of the ingredients. <br /> Our veterinary nutrition science provides an analysis based on scientific evidence.",
     "petTypeLabel": "Whose food is it?",
     "petTypes": {
       "dog": "Dog",
@@ -114,30 +114,30 @@
     "healthConditionsPlaceholder": "e.g., kidney disease, skin allergies, diabetes. Providing this information allows for a more accurate analysis.",
     "imageLabel": "Ingredient Photo (Optional)",
     "imageDescription": "* For more accurate '2nd verification', please attach a clear photo.",
-    "analyzeButton": "Analyze with Veterinary AI",
+    "analyzeButton": "Start Ingredient Analysis",
     "instruction": "* Please take a clear picture of the 'Ingredients' and 'Guaranteed Analysis'."
   },
   "analysisLoading": {
-    "title": "AI is analyzing...",
+    "title": "Analyzing Ingredients...",
     "description": "We are carefully examining the food ingredients based on the latest scientific papers and nutritional guidelines."
   },
   "analysisResult": {
     "productAnalyzed": "Analyzed Product",
     "checkThis": "Must Check!",
-    "checkThisDescription": "This is the most important key information analyzed by the AI.",
+    "checkThisDescription": "This is the most important key information from the analysis.",
     "ingredientAnalysis": "Detailed Ingredient Analysis",
-    "ingredientAnalysisDescription": "Here is a list of key ingredients analyzed by the AI.",
+    "ingredientAnalysisDescription": "Here is a list of key ingredients from the analysis.",
     "positiveIngredients": "Positive Ingredients",
     "cautionaryIngredients": "Cautionary Ingredients",
     "nutritionProfile": "Nutrition Profile",
     "estimatedCalories": "Estimated Calories",
     "nutritionalInsights": "Nutritional Insights",
     "expertInsights": "Expert Insights",
-    "aiRecommendations": "AI-Powered Improvement Suggestions",
+    "aiRecommendations": "Improvement Suggestions",
     "recommendationsIntro": "There's no perfect food in this world. The recommendations below are veterinary nutritional suggestions to supplement the current diet and help make better choices.",
+    "disclaimer": "<strong>Disclaimer:</strong> This analysis is for informational purposes and cannot replace professional medical advice from a veterinarian. If your pet has any health issues, please consult a professional veterinarian.",
+    "analyzeNewProduct": "Analyze a New Product",
     "recommendedSupplements": "Recommended Supplementary Ingredients",
-    "alternativeProducts": "Alternative Product Types",
-    "disclaimer": "<strong>Disclaimer:</strong> This analysis is for informational purposes using AI technology and cannot replace professional medical advice from a veterinarian. If your pet has any health issues, please consult a professional veterinarian.",
-    "analyzeNewProduct": "Analyze a New Product"
+    "alternativeProducts": "Alternative Product Types"
   }
 }
