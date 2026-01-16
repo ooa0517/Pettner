@@ -23,6 +23,10 @@ export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngred
 
 const AnalyzePetFoodIngredientsOutputSchema = z.object({
   productName: z.string().describe('The estimated product name.'),
+  brandName: z.string().describe('The brand name of the product.'),
+  petType: z.string().describe('The target pet type (e.g., Dog, Cat).'),
+  lifeStage: z.string().describe('The target life stage (e.g., Puppy, Adult, Senior).'),
+  specialClaims: z.array(z.string()).describe('Any special claims made on the packaging (e.g., Grain-Free, Organic).'),
   summaryHeadline: z.string().describe('A one-line scientific summary of the pet food.'),
   ingredients: z.object({
     positive: z.array(
@@ -62,6 +66,10 @@ Output must be in a structured JSON format, as follows:
 \n
 {
   "productName": "추정된 제품명",
+  "brandName": "브랜드명",
+  "petType": "대상 반려동물 (예: 강아지, 고양이)",
+  "lifeStage": "대상 연령 (예: 퍼피, 어덜트, 시니어)",
+  "specialClaims": ["특별한 주장 (예: 그레인프리, 유기농)"],
   "summaryHeadline": "한 줄 과학적 요약",
   "ingredients": {
     "positive": [{"name": "성분명", "reason": "과학적 근거"}],

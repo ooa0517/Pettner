@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Accordion } from '@/components/ui/accordion';
 import { CheckCircle2, AlertTriangle, Lightbulb, Beaker, FileText, Repeat } from 'lucide-react';
 import IngredientItem from './ingredient-item';
+import { Badge } from '@/components/ui/badge';
 
 type AnalysisResultProps = {
   result: AnalyzePetFoodIngredientsOutput;
@@ -11,14 +12,22 @@ type AnalysisResultProps = {
 };
 
 export default function AnalysisResult({ result, onReset }: AnalysisResultProps) {
-  const { productName, summaryHeadline, ingredients, nutritionalAnalysis, hiddenInsights } = result;
+  const { productName, brandName, petType, lifeStage, specialClaims, summaryHeadline, ingredients, nutritionalAnalysis, hiddenInsights } = result;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <Card className="text-center shadow-lg">
         <CardHeader>
-          <CardDescription>{productName || '분석된 제품'}</CardDescription>
-          <CardTitle className="text-3xl font-bold font-headline">{summaryHeadline}</CardTitle>
+          <CardDescription>{brandName || '분석된 제품'}</CardDescription>
+          <CardTitle className="text-3xl font-bold font-headline">{productName}</CardTitle>
+          <CardDescription className="pt-2">{summaryHeadline}</CardDescription>
+          <div className="flex justify-center gap-2 pt-4 flex-wrap">
+            {petType && <Badge variant="secondary">{petType}</Badge>}
+            {lifeStage && <Badge variant="secondary">{lifeStage}</Badge>}
+            {specialClaims && specialClaims.map((claim, index) => (
+              <Badge key={index} variant="outline">{claim}</Badge>
+            ))}
+          </div>
         </CardHeader>
       </Card>
 
