@@ -2,9 +2,10 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 interface AuthContextType {
   user: User | null;
@@ -24,9 +25,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isFirebaseReady = !!auth;
 
   useEffect(() => {
-    if (auth) {
+    if (auth && db) {
       const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          if (!userDoc.exists()) {
+            const userData = {
+              email: user.email,
+              createdAt: serverTimestamp(),
+            };
+            setDoc(userDocRef, userData)
+              .catch((serverError) => {
+                const permissionError = new FirestorePermissionError({
+                  path: userDocRef.path,
+                  operation: 'create',
+                  requestResourceData: userData,
+                });
+                errorEmitter.emit('permission-error', permissionError);
+              });
+          }
           setUser(user);
         } else {
           setUser(null);

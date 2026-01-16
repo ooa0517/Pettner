@@ -23,13 +23,10 @@ import {
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { errorEmitter } from '@/firebase/error-emitter';
-import { FirestorePermissionError } from '@/firebase/errors';
 
 const formSchema = z.object({
   email: z.string().email({ message: '유효한 이메일을 입력해주세요.' }),
@@ -56,7 +53,7 @@ export default function SignUpPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    if (!auth || !db) {
+    if (!auth) {
       toast({
         variant: 'destructive',
         title: 'Firebase 오류',
@@ -66,24 +63,7 @@ export default function SignUpPage() {
       return;
     }
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
-      
-      const userDocRef = doc(db, 'users', user.uid);
-      const userData = {
-        email: user.email,
-        createdAt: new Date(),
-      };
-
-      setDoc(userDocRef, userData)
-        .catch((serverError) => {
-          const permissionError = new FirestorePermissionError({
-            path: userDocRef.path,
-            operation: 'create',
-            requestResourceData: userData,
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        });
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
       
       toast({
         title: '회원가입 성공',
