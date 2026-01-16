@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -7,6 +8,9 @@ import AnalysisResult from '@/components/analysis-result';
 import ScannerHome from '@/components/scanner-home';
 import AnalysisLoading from '@/components/analysis-loading';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth-context';
+import { db } from '@/lib/firebase';
+import { saveAnalysisToHistory } from '@/lib/history';
 
 // Mock data for the example
 const exampleAnalysis: AnalyzePetFoodIngredientsOutput = {
@@ -82,6 +86,7 @@ export default function Home() {
   const [analysisResult, setAnalysisResult] = useState<AnalyzePetFoodIngredientsOutput | null>(exampleAnalysis);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleImageAnalysis = async (file: File, healthConditions: string) => {
     setIsLoading(true);
@@ -96,7 +101,16 @@ export default function Home() {
         if (result.error) {
           throw new Error(result.error);
         }
-        setAnalysisResult(result.data);
+        if (result.data) {
+          setAnalysisResult(result.data);
+          if (user && db) {
+            saveAnalysisToHistory(db, user.uid, result.data);
+            toast({
+              title: "분석 완료!",
+              description: "결과가 '나의 분석 기록'에 저장되었습니다.",
+            });
+          }
+        }
       } catch (error) {
         console.error(error);
         toast({

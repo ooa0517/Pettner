@@ -48,6 +48,26 @@
         }
       },
       "required": ["name", "petType"]
+    },
+    "AnalysisRecord": {
+      "title": "Analysis Record",
+      "description": "Represents a single pet food analysis result.",
+      "type": "object",
+      "properties": {
+        "productName": { "type": "string" },
+        "brandName": { "type": "string" },
+        "petType": { "type": "string" },
+        "lifeStage": { "type": "string" },
+        "specialClaims": { "type": "array", "items": { "type": "string" } },
+        "keyTakeaways": { "type": "array", "items": { "type": "string" } },
+        "summaryHeadline": { "type": "string" },
+        "ingredients": { "type": "object" },
+        "nutritionalAnalysis": { "type": "object" },
+        "hiddenInsights": { "type": "array", "items": { "type": "string" } },
+        "recommendations": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["productName", "summaryHeadline", "createdAt"]
     }
   },
   "auth": {
@@ -65,6 +85,12 @@
         "$ref": "#/entities/PetProfile"
       },
       "description": "Stores profile information for each of a user's pets."
+    },
+    "/users/{userId}/analysisHistory/{analysisId}": {
+      "schema": {
+        "$ref": "#/entities/AnalysisRecord"
+      },
+      "description": "Stores the history of all analysis records for a user."
     }
   }
 }

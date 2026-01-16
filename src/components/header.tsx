@@ -1,6 +1,7 @@
+
 'use client';
 
-import { PawPrint, LogOut, AlertTriangle, LayoutDashboard, ChevronDown } from 'lucide-react';
+import { PawPrint, LogOut, AlertTriangle, LayoutDashboard, ChevronDown, History } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
@@ -64,6 +65,12 @@ export default function Header() {
                     <Link href="/account">
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       <span>계정 관리</span>
+                    </Link>
+                  </DropdownMenuItem>
+                   <DropdownMenuItem asChild>
+                    <Link href="/history">
+                      <History className="mr-2 h-4 w-4" />
+                      <span>분석 기록</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
