@@ -95,6 +95,8 @@ export default function SignUpPage() {
       let errorMessage = '회원가입 중 오류가 발생했습니다.';
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = '이미 사용 중인 이메일입니다.';
+      } else if (error.code === 'auth/operation-not-allowed') {
+        errorMessage = 'Firebase 프로젝트에서 이메일/비밀번호 로그인이 활성화되지 않았습니다. Firebase 콘솔에서 활성화해주세요.';
       }
       toast({
         variant: 'destructive',

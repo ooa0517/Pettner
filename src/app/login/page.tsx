@@ -66,10 +66,16 @@ export default function LoginPage() {
       router.push('/');
     } catch (error: any) {
       console.error(error);
+      let errorMessage = '이메일 또는 비밀번호를 확인해주세요.';
+      if (error.code === 'auth/operation-not-allowed') {
+        errorMessage = 'Firebase 프로젝트에서 이메일/비밀번호 로그인이 활성화되지 않았습니다. Firebase 콘솔에서 활성화해주세요.';
+      } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다.';
+      }
       toast({
         variant: 'destructive',
         title: '로그인 실패',
-        description: '이메일 또는 비밀번호를 확인해주세요.',
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
