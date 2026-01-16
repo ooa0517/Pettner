@@ -7,7 +7,6 @@ import AnalysisResult from '@/components/analysis-result';
 import ScannerHome from '@/components/scanner-home';
 import AnalysisLoading from '@/components/analysis-loading';
 import { useToast } from '@/hooks/use-toast';
-import Header from '@/components/header';
 
 export default function Home() {
   const [analysisResult, setAnalysisResult] = useState<AnalyzePetFoodIngredientsOutput | null>(null);
@@ -55,19 +54,16 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <Header />
-      <main className="flex-grow flex flex-col items-center justify-center p-4 md:p-8">
-        <div className="w-full max-w-4xl">
-          {isLoading ? (
-            <AnalysisLoading />
-          ) : analysisResult ? (
-            <AnalysisResult result={analysisResult} onReset={handleReset} />
-          ) : (
-            <ScannerHome onImageSelect={handleImageAnalysis} />
-          )}
-        </div>
-      </main>
+    <div className="flex flex-col items-center justify-center flex-grow p-4 md:p-8">
+      <div className="w-full max-w-4xl">
+        {isLoading ? (
+          <AnalysisLoading />
+        ) : analysisResult ? (
+          <AnalysisResult result={analysisResult} onReset={handleReset} />
+        ) : (
+          <ScannerHome onImageSelect={handleImageAnalysis} />
+        )}
+      </div>
     </div>
   );
 }
