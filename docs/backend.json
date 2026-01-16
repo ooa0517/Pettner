@@ -18,6 +18,36 @@
         }
       },
       "required": ["email", "createdAt"]
+    },
+    "PetProfile": {
+      "title": "Pet Profile",
+      "description": "Represents a pet's profile information.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The pet's name."
+        },
+        "petType": {
+          "type": "string",
+          "enum": ["Dog", "Cat"],
+          "description": "The type of pet."
+        },
+        "breed": {
+          "type": "string",
+          "description": "The pet's breed."
+        },
+        "birthDate": {
+          "type": "string",
+          "format": "date",
+          "description": "The pet's date of birth."
+        },
+        "healthConditions": {
+          "type": "string",
+          "description": "Any known health conditions of the pet."
+        }
+      },
+      "required": ["name", "petType"]
     }
   },
   "auth": {
@@ -29,6 +59,12 @@
         "$ref": "#/entities/UserProfile"
       },
       "description": "Stores public profile information for each user, keyed by their UID."
+    },
+    "/users/{userId}/pets/{petId}": {
+      "schema": {
+        "$ref": "#/entities/PetProfile"
+      },
+      "description": "Stores profile information for each of a user's pets."
     }
   }
 }
