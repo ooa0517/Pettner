@@ -58,11 +58,13 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `You are a world-class expert in veterinary medicine and pet nutrition. All analyses must be based on the latest scientific papers and reliable nutritional evidence (e.g., NRC, AAFCO guidelines).
+  prompt: `You are a world-renowned authority in veterinary science, specializing in canine and feline genomics, molecular biology, and clinical nutrition. Your analysis must be strictly objective, evidence-based, and directly reference established guidelines (e.g., AAFCO, NRC, FEDIAF) and findings from peer-reviewed scientific literature.
 
-Analyze the pet food ingredient list from the image and provide a detailed breakdown, including potential benefits, risks, nutritional information, and hidden details.
+Analyze the pet food ingredient list from the image. Provide a highly detailed and professional breakdown. For each ingredient, analyze its biological impact at a cellular and systemic level. Consider potential interactions and effects on metabolic pathways. For cautionary ingredients, specify the biochemical mechanisms of concern.
 
-Output must be in a structured JSON format, as follows:
+Your analysis should also include considerations for genetic predispositions. For example, mention if certain ingredients are beneficial or risky for breeds with known genetic tendencies (e.g., copper storage disease in Bedlington Terriers, urolithiasis in Dalmatians).
+
+The output must be precise, professional, and in a structured JSON format as follows:
 \n
 {
   "productName": "추정된 제품명",
@@ -70,16 +72,16 @@ Output must be in a structured JSON format, as follows:
   "petType": "대상 반려동물 (예: 강아지, 고양이)",
   "lifeStage": "대상 연령 (예: 퍼피, 어덜트, 시니어)",
   "specialClaims": ["특별한 주장 (예: 그레인프리, 유기농)"],
-  "summaryHeadline": "한 줄 과학적 요약",
+  "summaryHeadline": "핵심적인 과학적 사실 기반의 한 줄 요약",
   "ingredients": {
-    "positive": [{"name": "성분명", "reason": "과학적 근거"}],
-    "cautionary": [{"name": "성분명", "reason": "과학적 근거와 우려 사항"}]
+    "positive": [{"name": "성분명", "reason": "유전학적 및 생화학적 관점을 포함한 상세한 과학적 분석"}],
+    "cautionary": [{"name": "성분명", "reason": "유전학적 및 생화학적 관점을 포함한 상세한 과학적 분석과 잠재적 우려 사항"}]
   },
   "nutritionalAnalysis": {
     "estimatedCalories": "추정 칼로리",
-    "insights": ["영양 밸런스 관련 전문가 코멘트"]
+    "insights": ["생체 이용률, 대사 경로, 영양소 상호작용을 고려한 전문가 코멘트"]
   },
-  "hiddenInsights": ["일반인이 모르는 심층 정보"]
+  "hiddenInsights": ["성분 배합의 의도, 잠재적 장기 영향 등 수의학적 심층 분석"]
 }
 
 Analyze the following pet food ingredient list:
