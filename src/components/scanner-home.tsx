@@ -32,18 +32,27 @@ type ScannerHomeProps = {
 export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
   const { t } = useLanguage();
   
-  const formSchema = useMemo(() => z.object({
-    petType: z.enum(['dog', 'cat'], { required_error: t('scannerHome.petTypeRequired') }),
-    productName: z.string().min(1, { message: t('scannerHome.productNameRequired') }),
-    brandName: z.string().optional(),
-    foodType: z.string().optional(),
-    ingredientsText: z.string().optional(),
-    healthConditions: z.string().optional(),
-    image: z.any().optional(),
-  }).refine(data => data.ingredientsText || (data.image && data.image.length > 0), {
-    message: t('scannerHome.inputRequired'),
-    path: ['ingredientsText'], 
-  }), [t]);
+  const formSchema = useMemo(() => {
+    // Dynamically create the schema for the image field.
+    // On the server, use `z.any()` to avoid referencing browser-only APIs like `FileList`.
+    // On the client, use `z.instanceof(FileList)` for proper validation.
+    const imageSchema = typeof window !== 'undefined' 
+      ? z.instanceof(FileList).optional() 
+      : z.any().optional();
+
+    return z.object({
+      petType: z.enum(['dog', 'cat'], { required_error: t('scannerHome.petTypeRequired') }),
+      productName: z.string().min(1, { message: t('scannerHome.productNameRequired') }),
+      brandName: z.string().optional(),
+      foodType: z.string().optional(),
+      ingredientsText: z.string().optional(),
+      healthConditions: z.string().optional(),
+      image: imageSchema,
+    }).refine(data => data.ingredientsText || (data.image && data.image.length > 0), {
+      message: t('scannerHome.inputRequired'),
+      path: ['ingredientsText'], 
+    });
+  }, [t]);
 
   const form = useForm<AnalysisFormValues>({
     resolver: zodResolver(formSchema),
