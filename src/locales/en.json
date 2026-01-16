@@ -140,5 +140,11 @@
     "analyzeNewProduct": "Analyze a New Product",
     "recommendedSupplements": "Recommended Supplementary Ingredients",
     "alternativeProducts": "Alternative Product Types"
+  },
+  "firebaseError": {
+    "title": "Firebase Configuration Required",
+    "description": "The application is not connected to a Firebase project.",
+    "instructions": "To connect to your Firebase project, you need to set up your environment variables. Please copy the web app configuration from your Firebase project settings in the Firebase Console and paste it into a <strong>.env</strong> file in the root of your project.",
+    "restart": "After editing the file, you need to restart the development server for the changes to take effect."
   }
 }

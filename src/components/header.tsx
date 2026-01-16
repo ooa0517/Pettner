@@ -1,13 +1,12 @@
 'use client';
 
-import { PawPrint, LogOut, AlertTriangle, LayoutDashboard, ChevronDown, History, Globe } from 'lucide-react';
+import { PawPrint, LogOut, LayoutDashboard, ChevronDown, History, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,89 +34,76 @@ export default function Header() {
   }
 
   return (
-    <>
-      <header className="py-4 px-4 sm:px-6 border-b bg-card/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
-          <Link href="/" className="flex items-center gap-2">
-            <PawPrint className="text-primary h-8 w-8" />
-            <h1 className="text-2xl font-bold text-foreground font-headline">
-              {t('header.title')}
-            </h1>
-          </Link>
-          <div className="flex items-center gap-1 sm:gap-2">
+    <header className="py-4 px-4 sm:px-6 border-b bg-card/80 backdrop-blur-sm sticky top-0 z-40">
+      <div className="flex items-center justify-between max-w-4xl mx-auto">
+        <Link href="/" className="flex items-center gap-2">
+          <PawPrint className="text-primary h-8 w-8" />
+          <h1 className="text-2xl font-bold text-foreground font-headline">
+            {t('header.title')}
+          </h1>
+        </Link>
+        <div className="flex items-center gap-1 sm:gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Globe className="h-5 w-5" />
+                <span className="sr-only">Change language</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setLanguage('ko')}>한국어</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {loading ? (
+            <div className="h-9 w-32 bg-muted rounded-md animate-pulse" />
+          ) : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Globe className="h-5 w-5" />
-                  <span className="sr-only">Change language</span>
+                <Button variant="ghost" className="flex items-center gap-2">
+                   <Avatar className="h-8 w-8">
+                     <AvatarImage src={user.photoURL || undefined} />
+                     <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
+                   </Avatar>
+                   <span className="hidden md:inline">{user.email}</span>
+                   <ChevronDown className="h-4 w-4 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setLanguage('ko')}>한국어</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLanguage('en')}>English</DropdownMenuItem>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>{t('common.myAccount')}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/account">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>{t('header.accountManagement')}</span>
+                  </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                  <Link href="/history">
+                    <History className="mr-2 h-4 w-4" />
+                    <span>{t('common.analysisHistory')}</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>{t('common.logout')}</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {loading ? (
-              <div className="h-9 w-32 bg-muted rounded-md animate-pulse" />
-            ) : user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2">
-                     <Avatar className="h-8 w-8">
-                       <AvatarImage src={user.photoURL || undefined} />
-                       <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
-                     </Avatar>
-                     <span className="hidden md:inline">{user.email}</span>
-                     <ChevronDown className="h-4 w-4 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>{t('common.myAccount')}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/account">
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>{t('header.accountManagement')}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                   <DropdownMenuItem asChild>
-                    <Link href="/history">
-                      <History className="mr-2 h-4 w-4" />
-                      <span>{t('common.analysisHistory')}</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>{t('common.logout')}</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <>
-                <Button asChild variant="ghost" size="sm" disabled={!isFirebaseReady}>
-                  <Link href="/login">{t('common.login')}</Link>
-                </Button>
-                <Button asChild size="sm" disabled={!isFirebaseReady}>
-                  <Link href="/signup">{t('common.signup')}</Link>
-                </Button>
-              </>
-            )}
-          </div>
+          ) : (
+            <>
+              <Button asChild variant="ghost" size="sm" disabled={!isFirebaseReady}>
+                <Link href="/login">{t('common.login')}</Link>
+              </Button>
+              <Button asChild size="sm" disabled={!isFirebaseReady}>
+                <Link href="/signup">{t('common.signup')}</Link>
+              </Button>
+            </>
+          )}
         </div>
-      </header>
-      {!isFirebaseReady && !loading && (
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 pt-4">
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>{t('header.firebaseErrorTitle')}</AlertTitle>
-            <AlertDescription>
-              {t('header.firebaseErrorDescription')}
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
-    </>
+      </div>
+    </header>
   );
 }
