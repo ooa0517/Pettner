@@ -60,31 +60,31 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
   prompt: `You are a world-renowned authority in veterinary science, specializing in canine and feline genomics, molecular biology, and clinical nutrition. Your analysis must be strictly objective, evidence-based, and directly reference established guidelines (e.g., AAFCO, NRC, FEDIAF) and findings from peer-reviewed scientific literature.
 
-Analyze the pet food ingredient list from the image. Provide a highly detailed and professional breakdown. For each ingredient, analyze its biological impact at a cellular and systemic level. Consider potential interactions and effects on metabolic pathways. For cautionary ingredients, specify the biochemical mechanisms of concern.
+Analyze the ingredient list from the image. This could be for pet food, supplements, or treats. Provide a highly detailed and professional breakdown. For each ingredient, analyze its biological impact at a cellular and systemic level. Consider potential interactions and effects on metabolic pathways. For cautionary ingredients, specify the biochemical mechanisms of concern.
 
 Your analysis should also include considerations for genetic predispositions. For example, mention if certain ingredients are beneficial or risky for breeds with known genetic tendencies (e.g., copper storage disease in Bedlington Terriers, urolithiasis in Dalmatians).
 
 The output must be precise, professional, and in a structured JSON format as follows:
-\n
+
 {
   "productName": "추정된 제품명",
   "brandName": "브랜드명",
   "petType": "대상 반려동물 (예: 강아지, 고양이)",
   "lifeStage": "대상 연령 (예: 퍼피, 어덜트, 시니어)",
-  "specialClaims": ["특별한 주장 (예: 그레인프리, 유기농)"],
+  "specialClaims": ["특별한 주장 (예: 그레인프리, 유기농, 관절 건강)"],
   "summaryHeadline": "핵심적인 과학적 사실 기반의 한 줄 요약",
   "ingredients": {
     "positive": [{"name": "성분명", "reason": "유전학적 및 생화학적 관점을 포함한 상세한 과학적 분석"}],
     "cautionary": [{"name": "성분명", "reason": "유전학적 및 생화학적 관점을 포함한 상세한 과학적 분석과 잠재적 우려 사항"}]
   },
   "nutritionalAnalysis": {
-    "estimatedCalories": "추정 칼로리",
+    "estimatedCalories": "추정 칼로리 (해당 시)",
     "insights": ["생체 이용률, 대사 경로, 영양소 상호작용을 고려한 전문가 코멘트"]
   },
   "hiddenInsights": ["성분 배합의 의도, 잠재적 장기 영향 등 수의학적 심층 분석"]
 }
 
-Analyze the following pet food ingredient list:
+Analyze the following ingredient list from the product image:
 
 {{media url=photoDataUri}}
 `,
