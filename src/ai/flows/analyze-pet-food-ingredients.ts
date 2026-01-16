@@ -27,6 +27,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
   petType: z.string().describe('The target pet type (e.g., Dog, Cat).'),
   lifeStage: z.string().describe('The target life stage (e.g., Puppy, Adult, Senior).'),
   specialClaims: z.array(z.string()).describe('Any special claims made on the packaging (e.g., Grain-Free, Organic).'),
+  keyTakeaways: z.array(z.string()).describe("반드시 알아야 할 핵심 과학적 사실 및 필수 정보입니다. 수의학적 관점에서 가장 중요한 2-3가지 포인트를 요약합니다."),
   summaryHeadline: z.string().describe('A one-line scientific summary of the pet food.'),
   ingredients: z.object({
     positive: z.array(
@@ -88,6 +89,8 @@ If the product is identified as being for cats, you must apply a different, more
 
 Crucially, since no single food is perfect, you must provide recommendations for improvement based on your analysis. This should include suggestions for supplementary ingredients (like specific vitamins, oils, or probiotics) and/or alternative types of products (e.g., "hydrolyzed protein food for allergies", "single protein source food") that could address any identified shortcomings.
 
+Most importantly, you must provide a "keyTakeaways" section. This must contain the 2-3 most critical, evidence-based points from a veterinary perspective that a pet owner absolutely must know for the health and safety of their pet.
+
 The output must be precise, professional, and in a structured JSON format as follows:
 
 {
@@ -96,6 +99,7 @@ The output must be precise, professional, and in a structured JSON format as fol
   "petType": "대상 반려동물 (예: 강아지, 고양이)",
   "lifeStage": "대상 연령 (예: 퍼피, 어덜트, 시니어)",
   "specialClaims": ["특별한 주장 (예: 그레인프리, 유기농, 관절 건강)"],
+  "keyTakeaways": ["반드시 알아야 할 가장 중요한 핵심 정보 1", "반드시 알아야 할 가장 중요한 핵심 정보 2"],
   "summaryHeadline": "핵심적인 과학적 사실 기반의 한 줄 요약",
   "ingredients": {
     "positive": [{"name": "성분명", "reason": "유전학적 및 생화학적 관점을 포함한 상세한 분석"}],

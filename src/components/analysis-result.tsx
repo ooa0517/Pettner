@@ -2,7 +2,7 @@ import type { AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-foo
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Accordion } from '@/components/ui/accordion';
-import { CheckCircle2, AlertTriangle, Lightbulb, Beaker, FileText, Repeat, Sparkles, Dog, Cat } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Lightbulb, Beaker, FileText, Repeat, Sparkles, Dog, Cat, ShieldAlert } from 'lucide-react';
 import IngredientItem from './ingredient-item';
 import { Badge } from '@/components/ui/badge';
 
@@ -12,7 +12,7 @@ type AnalysisResultProps = {
 };
 
 export default function AnalysisResult({ result, onReset }: AnalysisResultProps) {
-  const { productName, brandName, petType, lifeStage, specialClaims, summaryHeadline, ingredients, nutritionalAnalysis, hiddenInsights, recommendations } = result;
+  const { productName, brandName, petType, lifeStage, specialClaims, keyTakeaways, summaryHeadline, ingredients, nutritionalAnalysis, hiddenInsights, recommendations } = result;
 
   const PetIcon = petType === '고양이' ? Cat : Dog;
 
@@ -36,6 +36,25 @@ export default function AnalysisResult({ result, onReset }: AnalysisResultProps)
           <p className="text-lg font-medium text-foreground/80">{summaryHeadline}</p>
         </CardContent>
       </Card>
+
+      {keyTakeaways && keyTakeaways.length > 0 && (
+        <Card className="shadow-lg bg-destructive/10 border-destructive/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-xl font-headline text-destructive">
+              <ShieldAlert />
+              반드시 확인하세요!
+            </CardTitle>
+            <CardDescription>AI가 분석한 가장 중요한 핵심 정보입니다.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc list-inside space-y-3 text-base font-medium">
+              {keyTakeaways.map((takeaway, index) => (
+                <li key={index}>{takeaway}</li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid md:grid-cols-2 gap-8">
         <Card className="shadow-lg">

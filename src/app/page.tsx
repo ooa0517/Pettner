@@ -15,6 +15,10 @@ const exampleAnalysis: AnalyzePetFoodIngredientsOutput = {
   petType: "강아지",
   lifeStage: "전연령",
   specialClaims: ["유기농", "관절 건강"],
+  keyTakeaways: [
+    "이 제품은 '그레인프리'이지만, 렌틸콩, 완두콩 등 고탄수화물 콩류가 다량 함유되어 있어 혈당 관리가 필요한 반려견에게는 주의가 필요합니다.",
+    "주 단백질원이 '닭고기'로 표시되어 있으나, 성분 목록 후반부에 '완두콩 단백질'이 위치하는 것으로 보아 실제 동물성 단백질의 비율은 기대보다 낮을 수 있습니다. 이는 필수 아미노산 프로필에 영향을 줄 수 있습니다."
+  ],
   summaryHeadline: "유기농 원료 기반의 균형 잡힌 사료이나, 일부 반려견에게 알레르기 반응을 유발할 수 있는 성분이 포함되어 있습니다.",
   ingredients: {
     positive: [
