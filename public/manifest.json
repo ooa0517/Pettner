@@ -1,0 +1,16 @@
+{
+  "name": "Pettner Ingredient Analyzer",
+  "short_name": "Pettner",
+  "description": "Veterinary nutrition based pet food ingredient analysis",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#4B45ED",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
