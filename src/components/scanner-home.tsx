@@ -38,9 +38,8 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
     brandName: z.string().optional(),
     foodType: z.string().optional(),
     ingredientsText: z.string().optional(),
-    image: typeof window === 'undefined'
-      ? z.any().optional()
-      : z.instanceof(FileList).optional(),
+    healthConditions: z.string().optional(),
+    image: z.any().optional(),
   }).refine(data => data.ingredientsText || (data.image && data.image.length > 0), {
     message: t('scannerHome.inputRequired'),
     path: ['ingredientsText'], 
@@ -190,11 +189,11 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
               <FormField
                 control={form.control}
                 name="image"
-                render={({ field }) => (
+                render={({ field: { onChange, value, ...rest } }) => (
                     <FormItem>
                         <FormLabel className="flex items-center gap-2"><Camera/>{t('scannerHome.imageLabel')}</FormLabel>
                         <FormControl>
-                           <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files)} />
+                           <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files)} {...rest} />
                         </FormControl>
                         <FormDescription>{t('scannerHome.imageDescription')}</FormDescription>
                          <FormMessage />
