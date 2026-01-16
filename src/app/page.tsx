@@ -34,6 +34,8 @@ export default function Home() {
           title: "분석 실패",
           description: error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다. 다시 시도해 주세요.",
         });
+        setAnalysisResult(null);
+      } finally {
         setIsLoading(false);
       }
     };
