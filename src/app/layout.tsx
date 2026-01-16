@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import Header from '@/components/header';
 import { AuthProvider } from '@/contexts/auth-context';
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 export const metadata: Metadata = {
   title: 'Pettner Ingredient Analyzer',
@@ -23,6 +24,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <AuthProvider>
+          <FirebaseErrorListener />
           <div className="flex flex-col min-h-screen bg-background">
             <Header />
             <main className="flex-grow flex flex-col">
