@@ -13,10 +13,15 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const AnalyzePetFoodIngredientsInputSchema = z.object({
+  productName: z.string().optional().describe('The name of the product, if provided by the user.'),
+  brandName: z.string().optional().describe('The brand of the product, if provided by the user.'),
+  foodType: z.string().optional().describe('The type of food (e.g., Dry Food, Wet Food, Cooked Food, Supplement, Treat), if provided by the user.'),
+  ingredientsText: z.string().optional().describe('The list of ingredients, if provided as text by the user.'),
   photoDataUri: z
     .string()
+    .optional()
     .describe(
-      "A photo of the pet food ingredient list, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "A photo of the pet food ingredient list, as a data URI. Used for primary analysis or for verification if text is also provided. Format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
   healthConditions: z.string().optional().describe('Any known pre-existing health conditions of the pet (e.g., "kidney disease", "skin allergies").'),
   language: z.string().optional().default('ko').describe("The language for the analysis output, e.g., 'en' for English, 'ko' for Korean."),
@@ -69,6 +74,9 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
 
 export async function analyzePetFoodIngredients(input: AnalyzePetFoodIngredientsInput): Promise<AnalyzePetFoodIngredientsOutput> {
+  if (!input.photoDataUri && !input.ingredientsText) {
+    throw new Error('Either an image of the ingredients or a text of the ingredients must be provided for analysis.');
+  }
   return analyzePetFoodIngredientsFlow(input);
 }
 
@@ -80,7 +88,32 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
 
 IMPORTANT: Your entire response, including all values in the final JSON output, MUST be in the language specified by this language code: '{{{language}}}'. (e.g., 'en' for English, 'ko' for Korean). The JSON keys must always be in camelCase as defined in the output schema.
 
-Analyze the ingredient list from the image. This could be for pet food, supplements, or treats. Provide a highly detailed and professional breakdown. For each ingredient, analyze its biological impact at a cellular and systemic level. Consider potential interactions and effects on metabolic pathways. For cautionary ingredients, specify the biochemical mechanisms of concern.
+You will be provided with information about a pet food product (food, supplement, or treat). This may include a product name, brand, food type, a text list of ingredients, and/or an image of the packaging.
+
+{{#if photoDataUri}}
+An image has been provided. This image is the primary source of truth for the ingredient list and guaranteed analysis. Use your vision capabilities to extract all relevant information from it.
+{{/if}}
+
+{{#if ingredientsText}}
+A text-based list of ingredients has been provided by the user. Use this as a key source of information.
+{{/if}}
+
+{{#if (and photoDataUri ingredientsText)}}
+Both an image and text have been provided. The image serves as the definitive source for "2nd verification". Cross-reference the user-provided text with the information extracted from the image. If there are discrepancies, prioritize the information from the image.
+{{/if}}
+
+User-provided product details:
+{{#if productName}}
+- Product Name: {{{productName}}}
+{{/if}}
+{{#if brandName}}
+- Brand: {{{brandName}}}
+{{/if}}
+{{#if foodType}}
+- Food Type: {{{foodType}}}
+{{/if}}
+
+Your task is to analyze this product. Provide a highly detailed and professional breakdown. For each ingredient, analyze its biological impact at a cellular and systemic level. Consider potential interactions and effects on metabolic pathways. For cautionary ingredients, specify the biochemical mechanisms of concern.
 
 Your analysis should also include considerations for genetic predispositions. For example, mention if certain ingredients are beneficial or risky for breeds with known genetic tendencies (e.g., copper storage disease in Bedlington Terriers, urolithiasis in Dalmatians).
 
@@ -102,9 +135,16 @@ Most importantly, you must provide a "keyTakeaways" section. This must contain t
 
 The final output must be a structured JSON object as defined in the schema.
 
-Analyze the following ingredient list from the product image:
+Sources to analyze:
+{{#if ingredientsText}}
+User-provided text:
+{{{ingredientsText}}}
+{{/if}}
 
+{{#if photoDataUri}}
+Product image (for primary analysis or verification):
 {{media url=photoDataUri}}
+{{/if}}
 `,
 });
 
@@ -115,6 +155,9 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
     outputSchema: AnalyzePetFoodIngredientsOutputSchema,
   },
   async input => {
+    if (!input.photoDataUri && !input.ingredientsText) {
+      throw new Error('Either an image of the ingredients or a text of the ingredients must be provided for analysis.');
+    }
     const {output} = await analyzePetFoodIngredientsPrompt(input);
     return output!;
   }

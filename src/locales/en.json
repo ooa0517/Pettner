@@ -80,13 +80,34 @@
     "analysisFailedDescriptionUnknown": "An unknown error occurred. Please try again.",
     "fileReadFailedTitle": "File Read Failed",
     "fileReadFailedDescription": "An error occurred while reading the image. Please select a different file.",
-    "aiError": "An error occurred during AI analysis. Please check if the ingredient list is clearly visible in the image and try again."
+    "aiError": "An error occurred during AI analysis. Please check your input and try again.",
+    "aiInputError": "Please provide either the ingredient text or an image for analysis."
   },
   "scannerHome": {
     "title": "Leave Ingredient Analysis to AI",
-    "description": "One photo of the ingredients list for food, treats, or supplements is all it takes. <br /> Our veterinary nutrition AI analyzes it in 10 seconds based on scientific evidence.",
+    "descriptionV2": "Directly input product information or take a photo of the ingredients. <br /> Our veterinary nutrition AI will analyze it for you based on scientific evidence.",
+    "productNameLabel": "Product Name",
+    "productNamePlaceholder": "e.g., Natural Core Organic Eco 2",
+    "productNameRequired": "Product name is required.",
+    "brandNameLabel": "Brand Name (Optional)",
+    "brandNamePlaceholder": "e.g., Natural Core",
+    "foodTypeLabel": "Product Type (Optional)",
+    "foodTypePlaceholder": "Select a product type",
+    "foodTypes": {
+      "dry": "Dry Food",
+      "wet": "Wet Food",
+      "cooked": "Cooked/Raw Food",
+      "treat": "Treat",
+      "supplement": "Supplement"
+    },
+    "ingredientsLabel": "Ingredients",
+    "ingredientsPlaceholder": "Copy and paste the full list of ingredients here...",
+    "ingredientsDescription": "* Please copy the 'Ingredients' and 'Guaranteed Analysis' exactly as they appear.",
+    "ingredientsRequired": "Ingredient information is required.",
     "healthConditionsLabel": "Pet's Pre-existing Conditions (Optional)",
     "healthConditionsPlaceholder": "e.g., kidney disease, skin allergies, diabetes. Providing this information allows for a more accurate analysis.",
+    "imageLabel": "Ingredient Photo (Optional)",
+    "imageDescription": "* For more accurate '2nd verification', please attach a clear photo.",
     "analyzeButton": "Analyze Ingredients with AI",
     "instruction": "* Please take a clear picture of the 'Ingredients' and 'Guaranteed Analysis'."
   },

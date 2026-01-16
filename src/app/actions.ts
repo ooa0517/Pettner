@@ -12,9 +12,9 @@ export async function getAnalysis(input: AnalyzePetFoodIngredientsInput): Promis
   try {
     const result = await analyzePetFoodIngredients(input);
     return { data: result };
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
-    // Return a translation key instead of a hardcoded string
-    return { error: 'homePage.aiError' };
+    const errorMessage = e.message || 'homePage.aiError';
+    return { error: errorMessage.includes('must be provided') ? 'homePage.aiInputError' : 'homePage.aiError' };
   }
 }

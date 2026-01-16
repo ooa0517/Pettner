@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-food-ingredients';
+import type { AnalyzePetFoodIngredientsInput, AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { getAnalysis } from '@/app/actions';
 import AnalysisResult from '@/components/analysis-result';
 import ScannerHome from '@/components/scanner-home';
@@ -96,6 +96,16 @@ const exampleAnalysisEn: AnalyzePetFoodIngredientsOutput = {
   }
 };
 
+type AnalysisFormData = {
+  productName: string;
+  brandName: string;
+  foodType: string;
+  ingredientsText: string;
+  healthConditions: string;
+  image?: FileList;
+};
+
+
 export default function Home() {
   const { language, t } = useLanguage();
   const exampleAnalysis = useMemo(() => language === 'ko' ? exampleAnalysisKo : exampleAnalysisEn, [language]);
@@ -105,16 +115,24 @@ export default function Home() {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const handleImageAnalysis = async (file: File, healthConditions: string) => {
+  const handleAnalysis = async (formData: AnalysisFormData) => {
     setIsLoading(true);
     setAnalysisResult(null);
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = async () => {
-      const imageDataUri = reader.result as string;
+    const file = formData.image?.[0];
+    
+    const analysisInput: AnalyzePetFoodIngredientsInput = {
+        productName: formData.productName,
+        brandName: formData.brandName,
+        foodType: formData.foodType,
+        ingredientsText: formData.ingredientsText,
+        healthConditions: formData.healthConditions,
+        language: language,
+    };
+
+    const processAndAnalyze = async (input: AnalyzePetFoodIngredientsInput) => {
       try {
-        const result = await getAnalysis({ photoDataUri: imageDataUri, healthConditions, language });
+        const result = await getAnalysis(input);
         if (result.error) {
           throw new Error(t(result.error));
         }
@@ -135,20 +153,32 @@ export default function Home() {
           title: t('homePage.analysisFailedTitle'),
           description: error instanceof Error ? error.message : t('homePage.analysisFailedDescriptionUnknown'),
         });
-        setAnalysisResult(null);
+        setAnalysisResult(exampleAnalysis);
       } finally {
         setIsLoading(false);
       }
     };
-    reader.onerror = (error) => {
-      console.error("FileReader error: ", error);
-      toast({
-        variant: "destructive",
-        title: t('homePage.fileReadFailedTitle'),
-        description: t('homePage.fileReadFailedDescription'),
-      });
-      setIsLoading(false);
-    };
+    
+    if (file) {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const imageDataUri = reader.result as string;
+        analysisInput.photoDataUri = imageDataUri;
+        await processAndAnalyze(analysisInput);
+      };
+      reader.onerror = (error) => {
+        console.error("FileReader error: ", error);
+        toast({
+          variant: "destructive",
+          title: t('homePage.fileReadFailedTitle'),
+          description: t('homePage.fileReadFailedDescription'),
+        });
+        setIsLoading(false);
+      };
+    } else {
+        await processAndAnalyze(analysisInput);
+    }
   };
   
   const handleReset = () => {
@@ -164,7 +194,7 @@ export default function Home() {
         ) : analysisResult ? (
           <AnalysisResult result={analysisResult} onReset={handleReset} />
         ) : (
-          <ScannerHome onImageSelect={handleImageAnalysis} />
+          <ScannerHome onAnalyze={handleAnalysis} />
         )}
       </div>
     </div>
