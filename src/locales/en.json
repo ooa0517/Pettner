@@ -119,7 +119,7 @@
   },
   "analysisLoading": {
     "title": "Analyzing Ingredients...",
-    "description": "We are carefully examining the food ingredients based on the latest scientific papers and nutritional guidelines."
+    "description": "We are carefully examining the food ingredients<br/>based on the latest scientific papers and nutritional guidelines."
   },
   "analysisResult": {
     "productAnalyzed": "Analyzed Product",

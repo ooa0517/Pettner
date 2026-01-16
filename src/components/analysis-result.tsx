@@ -26,7 +26,7 @@ export default function AnalysisResult({ result, onReset }: AnalysisResultProps)
               <PetIcon className="w-5 h-5"/>
               <span>{brandName || t('analysisResult.productAnalyzed')}</span>
            </div>
-          <CardTitle className="text-3xl md:text-4xl font-extrabold font-headline tracking-tight">{productName}</CardTitle>
+          <h1 className="text-3xl md:text-4xl font-extrabold font-headline tracking-tight mt-2">{productName}</h1>
           <div className="flex justify-center gap-2 pt-4 flex-wrap">
             {lifeStage && <Badge variant="default">{lifeStage}</Badge>}
             {specialClaims && specialClaims.map((claim, index) => (

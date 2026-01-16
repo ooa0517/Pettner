@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { Camera, Sparkles, HeartPulse, FileText, Package, Building, Pilcrow, Dog, Cat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,9 +33,6 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
   const { t } = useLanguage();
   
   const formSchema = useMemo(() => {
-    // Dynamically create the schema for the image field.
-    // On the server, use `z.any()` to avoid referencing browser-only APIs like `FileList`.
-    // On the client, use `z.instanceof(FileList)` for proper validation.
     const imageSchema = typeof window !== 'undefined' 
       ? z.instanceof(FileList).optional() 
       : z.any().optional();
@@ -73,7 +70,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
   return (
     <Card className="max-w-2xl mx-auto text-center shadow-2xl shadow-primary/10 animate-in fade-in-50 duration-700 border-primary/20">
       <CardHeader className="p-8 md:p-12">
-        <CardTitle className="text-3xl md:text-4xl font-extrabold font-headline tracking-tight">{t('scannerHome.title')}</CardTitle>
+        <h1 className="text-3xl md:text-4xl font-extrabold font-headline tracking-tight">{t('scannerHome.title')}</h1>
         <CardDescription className="text-muted-foreground pt-3 text-base" dangerouslySetInnerHTML={{ __html: t('scannerHome.descriptionV2')}} />
       </CardHeader>
       <CardContent className="p-8 pt-0">
