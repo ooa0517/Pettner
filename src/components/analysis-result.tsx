@@ -16,7 +16,7 @@ export default function AnalysisResult({ result, onReset }: AnalysisResultProps)
   const { t } = useLanguage();
   const { productName, brandName, petType, lifeStage, specialClaims, keyTakeaways, summaryHeadline, ingredients, nutritionalAnalysis, hiddenInsights, recommendations } = result;
 
-  const PetIcon = petType === '고양이' || petType.toLowerCase() === 'cat' ? Cat : Dog;
+  const PetIcon = petType.toLowerCase() === 'cat' ? Cat : Dog;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">

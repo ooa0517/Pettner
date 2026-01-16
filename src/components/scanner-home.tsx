@@ -1,20 +1,22 @@
 'use client';
 
-import { useState } from 'react';
-import { Camera, Sparkles, HeartPulse, FileText, Package, Building, Pilcrow } from 'lucide-react';
+import { useMemo } from 'react';
+import { Camera, Sparkles, HeartPulse, FileText, Package, Building, Pilcrow, Dog, Cat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useLanguage } from '@/contexts/language-context';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import { Label } from '@/components/ui/label';
 
 type AnalysisFormValues = {
+  petType: 'dog' | 'cat';
   productName: string;
   brandName: string;
   foodType: string;
@@ -30,18 +32,24 @@ type ScannerHomeProps = {
 export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
   const { t } = useLanguage();
   
-  const formSchema = z.object({
+  const formSchema = useMemo(() => z.object({
+    petType: z.enum(['dog', 'cat'], { required_error: t('scannerHome.petTypeRequired') }),
     productName: z.string().min(1, { message: t('scannerHome.productNameRequired') }),
     brandName: z.string().optional(),
     foodType: z.string().optional(),
-    ingredientsText: z.string().min(1, { message: t('scannerHome.ingredientsRequired') }),
-    healthConditions: z.string().optional(),
-    image: z.instanceof(FileList).optional(),
-  });
+    ingredientsText: z.string().optional(),
+    image: typeof window === 'undefined'
+      ? z.any().optional()
+      : z.instanceof(FileList).optional(),
+  }).refine(data => data.ingredientsText || (data.image && data.image.length > 0), {
+    message: t('scannerHome.inputRequired'),
+    path: ['ingredientsText'], 
+  }), [t]);
 
   const form = useForm<AnalysisFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      petType: 'dog',
       productName: '',
       brandName: '',
       foodType: 'dry',
@@ -63,6 +71,44 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
       <CardContent className="p-8 pt-0">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 text-left">
+
+            <FormField
+              control={form.control}
+              name="petType"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel className="font-semibold">{t('scannerHome.petTypeLabel')}</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                      className="grid grid-cols-2 gap-4"
+                    >
+                      <FormItem>
+                        <FormControl>
+                          <RadioGroupItem value="dog" id="dog" className="sr-only" />
+                        </FormControl>
+                        <Label htmlFor="dog" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                          <Dog className="mb-3 h-6 w-6" />
+                          {t('scannerHome.petTypes.dog')}
+                        </Label>
+                      </FormItem>
+                      <FormItem>
+                         <FormControl>
+                          <RadioGroupItem value="cat" id="cat" className="sr-only" />
+                        </FormControl>
+                        <Label htmlFor="cat" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                           <Cat className="mb-3 h-6 w-6" />
+                          {t('scannerHome.petTypes.cat')}
+                        </Label>
+                      </FormItem>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
             <div className="grid md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}

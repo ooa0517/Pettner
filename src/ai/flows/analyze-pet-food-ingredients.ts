@@ -13,6 +13,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const AnalyzePetFoodIngredientsInputSchema = z.object({
+  petType: z.enum(['dog', 'cat']).describe('The type of pet the food is for.'),
   productName: z.string().optional().describe('The name of the product, if provided by the user.'),
   brandName: z.string().optional().describe('The brand of the product, if provided by the user.'),
   foodType: z.string().optional().describe('The type of food (e.g., Dry Food, Wet Food, Cooked Food, Supplement, Treat), if provided by the user.'),
@@ -25,6 +26,8 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
     ),
   healthConditions: z.string().optional().describe('Any known pre-existing health conditions of the pet (e.g., "kidney disease", "skin allergies").'),
   language: z.string().optional().default('ko').describe("The language for the analysis output, e.g., 'en' for English, 'ko' for Korean."),
+}).refine(data => data.ingredientsText || data.photoDataUri, {
+  message: 'Either ingredientsText or photoDataUri must be provided.',
 });
 export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngredientsInputSchema>;
 
@@ -74,9 +77,6 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
 
 export async function analyzePetFoodIngredients(input: AnalyzePetFoodIngredientsInput): Promise<AnalyzePetFoodIngredientsOutput> {
-  if (!input.photoDataUri && !input.ingredientsText) {
-    throw new Error('Either an image of the ingredients or a text of the ingredients must be provided for analysis.');
-  }
   return analyzePetFoodIngredientsFlow(input);
 }
 
@@ -87,6 +87,8 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   prompt: `You are a world-renowned authority in veterinary science, specializing in canine and feline genomics, molecular biology, and clinical nutrition. Your analysis must be strictly objective, evidence-based, and directly reference established guidelines (e.g., AAFCO, NRC, FEDIAF) and findings from peer-reviewed scientific literature.
 
 IMPORTANT: Your entire response, including all values in the final JSON output, MUST be in the language specified by this language code: '{{{language}}}'. (e.g., 'en' for English, 'ko' for Korean). The JSON keys must always be in camelCase as defined in the output schema.
+
+This analysis is specifically for a {{{petType}}}. Apply all relevant physiological and nutritional standards for this species.
 
 You will be provided with information about a pet food product (food, supplement, or treat). This may include a product name, brand, food type, a text list of ingredients, and/or an image of the packaging.
 
@@ -122,12 +124,14 @@ IMPORTANT: The pet has the following pre-existing health conditions: {{{healthCo
 Your entire analysis, especially the 'cautionary ingredients', 'keyTakeaways', and 'recommendations' sections, MUST be tailored to a pet with these specific conditions. For example, if the pet has kidney disease, you must flag high phosphorus or protein levels. If it has allergies, you must identify potential allergens.
 {{/if}}
 
-If the product is identified as being for cats, you must apply a different, more stringent set of criteria due to their unique physiology as an obligate carnivore. Pay special attention to:
+{{#if (eq petType 'cat')}}
+IMPORTANT: This is a cat. You must apply a different, more stringent set of criteria due to their unique physiology as an obligate carnivore. Pay special attention to:
 - Taurine: Explicitly check for and comment on the presence and source of taurine, as it is an essential amino acid for cats.
 - Protein Source: Prioritize and evaluate the quality of animal-based proteins over plant-based ones. Note the specific types of meat (e.g., muscle meat vs. by-products).
 - Carbohydrates: Assess the level and type of carbohydrates, noting that cats have limited ability to digest them.
 - Harmful Ingredients: Actively look for and flag ingredients that are toxic or inappropriate for cats, such as certain essential oils, propylene glycol, and excessive plant matter.
 - Urinary Health: Consider how the overall formulation might impact urinary pH and urinary tract health.
+{{/if}}
 
 Crucially, since no single food is perfect, you must provide recommendations for improvement based on your analysis. This should include suggestions for supplementary ingredients (like specific vitamins, oils, or probiotics) and/or alternative types of products (e.g., "hydrolyzed protein food for allergies", "single protein source food") that could address any identified shortcomings.
 
@@ -155,9 +159,6 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
     outputSchema: AnalyzePetFoodIngredientsOutputSchema,
   },
   async input => {
-    if (!input.photoDataUri && !input.ingredientsText) {
-      throw new Error('Either an image of the ingredients or a text of the ingredients must be provided for analysis.');
-    }
     const {output} = await analyzePetFoodIngredientsPrompt(input);
     return output!;
   }

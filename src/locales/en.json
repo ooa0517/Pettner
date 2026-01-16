@@ -86,6 +86,12 @@
   "scannerHome": {
     "title": "Leave Ingredient Analysis to AI",
     "descriptionV2": "Directly input product information or take a photo of the ingredients. <br /> Our veterinary nutrition AI will analyze it for you based on scientific evidence.",
+    "petTypeLabel": "Whose food is it?",
+    "petTypes": {
+      "dog": "Dog",
+      "cat": "Cat"
+    },
+    "petTypeRequired": "Please select a pet type.",
     "productNameLabel": "Product Name",
     "productNamePlaceholder": "e.g., Natural Core Organic Eco 2",
     "productNameRequired": "Product name is required.",
@@ -100,10 +106,10 @@
       "treat": "Treat",
       "supplement": "Supplement"
     },
-    "ingredientsLabel": "Ingredients",
+    "ingredientsLabel": "Ingredients (or photo)",
     "ingredientsPlaceholder": "Copy and paste the full list of ingredients here...",
     "ingredientsDescription": "* Please copy the 'Ingredients' and 'Guaranteed Analysis' exactly as they appear.",
-    "ingredientsRequired": "Ingredient information is required.",
+    "inputRequired": "Please enter ingredient text or upload a photo.",
     "healthConditionsLabel": "Pet's Pre-existing Conditions (Optional)",
     "healthConditionsPlaceholder": "e.g., kidney disease, skin allergies, diabetes. Providing this information allows for a more accurate analysis.",
     "imageLabel": "Ingredient Photo (Optional)",
