@@ -2,7 +2,7 @@ import type { AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-foo
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Accordion } from '@/components/ui/accordion';
-import { CheckCircle2, AlertTriangle, Lightbulb, Beaker, FileText, Repeat } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Lightbulb, Beaker, FileText, Repeat, Sparkles } from 'lucide-react';
 import IngredientItem from './ingredient-item';
 import { Badge } from '@/components/ui/badge';
 
@@ -12,7 +12,7 @@ type AnalysisResultProps = {
 };
 
 export default function AnalysisResult({ result, onReset }: AnalysisResultProps) {
-  const { productName, brandName, petType, lifeStage, specialClaims, summaryHeadline, ingredients, nutritionalAnalysis, hiddenInsights } = result;
+  const { productName, brandName, petType, lifeStage, specialClaims, summaryHeadline, ingredients, nutritionalAnalysis, hiddenInsights, recommendations } = result;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -110,6 +110,50 @@ export default function AnalysisResult({ result, onReset }: AnalysisResultProps)
         </div>
       </div>
       
+      {recommendations && (
+        <Card className="shadow-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Sparkles className="text-primary" />
+              AI 맞춤 개선 제안
+            </CardTitle>
+            {recommendations.introduction && <CardDescription>{recommendations.introduction}</CardDescription>}
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {recommendations.supplementaryIngredients && recommendations.supplementaryIngredients.length > 0 && (
+              <div>
+                <h4 className="font-semibold text-muted-foreground mb-2">추천 보충 성분</h4>
+                <ul className="space-y-3">
+                  {recommendations.supplementaryIngredients.map((item, index) => (
+                    <li key={index} className="pl-2 border-l-2 border-accent ml-2">
+                        <div className="pl-4">
+                            <p className="font-semibold text-foreground">{item.name}</p>
+                            <p className="text-sm text-muted-foreground">{item.reason}</p>
+                        </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {recommendations.alternativeProductTypes && recommendations.alternativeProductTypes.length > 0 && (
+              <div>
+                <h4 className="font-semibold text-muted-foreground mb-2">대안 제품 유형</h4>
+                 <ul className="space-y-3">
+                  {recommendations.alternativeProductTypes.map((item, index) => (
+                    <li key={index} className="pl-2 border-l-2 border-accent ml-2">
+                         <div className="pl-4">
+                            <p className="font-semibold text-foreground">{item.type}</p>
+                            <p className="text-sm text-muted-foreground">{item.reason}</p>
+                        </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="shadow-md">
         <CardFooter className="flex-col items-center gap-4 p-4">
           <p className="text-xs text-muted-foreground text-center">
