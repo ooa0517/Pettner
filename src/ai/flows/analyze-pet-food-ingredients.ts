@@ -64,6 +64,13 @@ Analyze the ingredient list from the image. This could be for pet food, suppleme
 
 Your analysis should also include considerations for genetic predispositions. For example, mention if certain ingredients are beneficial or risky for breeds with known genetic tendencies (e.g., copper storage disease in Bedlington Terriers, urolithiasis in Dalmatians).
 
+If the product is identified as being for cats, you must apply a different, more stringent set of criteria due to their unique physiology as obligate carnivores. Pay special attention to:
+- Taurine: Explicitly check for and comment on the presence and source of taurine, as it is an essential amino acid for cats.
+- Protein Source: Prioritize and evaluate the quality of animal-based proteins over plant-based ones. Note the specific types of meat (e.g., muscle meat vs. by-products).
+- Carbohydrates: Assess the level and type of carbohydrates, noting that cats have limited ability to digest them.
+- Harmful Ingredients: Actively look for and flag ingredients that are toxic or inappropriate for cats, such as certain essential oils, propylene glycol, and excessive plant matter.
+- Urinary Health: Consider how the overall formulation might impact urinary pH and urinary tract health.
+
 The output must be precise, professional, and in a structured JSON format as follows:
 
 {
@@ -74,8 +81,8 @@ The output must be precise, professional, and in a structured JSON format as fol
   "specialClaims": ["특별한 주장 (예: 그레인프리, 유기농, 관절 건강)"],
   "summaryHeadline": "핵심적인 과학적 사실 기반의 한 줄 요약",
   "ingredients": {
-    "positive": [{"name": "성분명", "reason": "유전학적 및 생화학적 관점을 포함한 상세한 과학적 분석"}],
-    "cautionary": [{"name": "성분명", "reason": "유전학적 및 생화학적 관점을 포함한 상세한 과학적 분석과 잠재적 우려 사항"}]
+    "positive": [{"name": "성분명", "reason": "유전학적 및 생화학적 관점을 포함한 상세한 분석"}],
+    "cautionary": [{"name": "성분명", "reason": "유전학적 및 생화학적 관점을 포함한 상세한 분석과 잠재적 우려 사항"}]
   },
   "nutritionalAnalysis": {
     "estimatedCalories": "추정 칼로리 (해당 시)",
