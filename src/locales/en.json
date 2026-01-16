@@ -111,7 +111,7 @@
     "ingredientsDescription": "* Please copy the 'Ingredients' and 'Guaranteed Analysis' exactly as they appear.",
     "inputRequired": "Please enter ingredient text or upload a photo.",
     "healthConditionsLabel": "Pet's Pre-existing Conditions (Optional)",
-    "healthConditionsPlaceholder": "e.g., kidney disease, skin allergies, diabetes. Providing this information allows for a more accurate analysis.",
+    "healthConditionsPlaceholder": "e.g., kidney disease, skin allergies. Enter multiple conditions separated by commas.",
     "imageLabel": "Ingredient Photo (Optional)",
     "imageDescription": "* For more accurate '2nd verification', please attach a clear photo.",
     "analyzeButton": "Start Ingredient Analysis",

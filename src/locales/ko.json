@@ -111,7 +111,7 @@
     "ingredientsDescription": "* '원료명' 및 '등록성분량'을 정확하게 복사해주세요.",
     "inputRequired": "원료를 입력하시거나 사진을 첨부해주세요.",
     "healthConditionsLabel": "반려동물의 기저질환 (선택)",
-    "healthConditionsPlaceholder": "예: 신장 질환, 피부 알레르기, 당뇨 등. 질환이 있다면 더 정확한 분석을 받을 수 있어요.",
+    "healthConditionsPlaceholder": "예: 신장질환, 피부 알러지. 여러 질환이 있다면 쉼표로 구분하여 입력하세요.",
     "imageLabel": "성분 사진 (선택)",
     "imageDescription": "* 더 정확한 '2차 검증'을 위해 선명한 사진을 첨부해주세요.",
     "analyzeButton": "성분 분석 시작하기",

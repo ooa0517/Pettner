@@ -24,7 +24,7 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
     .describe(
       "A photo of the pet food ingredient list, as a data URI. Used for primary analysis or for verification if text is also provided. Format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
-  healthConditions: z.string().optional().describe('Any known pre-existing health conditions of the pet (e.g., "kidney disease", "skin allergies").'),
+  healthConditions: z.string().optional().describe('Any known pre-existing health conditions of the pet (e.g., "kidney disease, skin allergies").'),
   language: z.string().optional().default('ko').describe("The language for the analysis output, e.g., 'en' for English, 'ko' for Korean."),
 }).refine(data => data.ingredientsText || data.photoDataUri, {
   message: 'Either ingredientsText or photoDataUri must be provided.',
@@ -121,7 +121,7 @@ Your analysis should also include considerations for genetic predispositions. Fo
 
 {{#if healthConditions}}
 IMPORTANT: The pet has the following pre-existing health conditions: {{{healthConditions}}}.
-Your entire analysis, especially the 'cautionary ingredients', 'keyTakeaways', and 'recommendations' sections, MUST be tailored to a pet with these specific conditions. For example, if the pet has kidney disease, you must flag high phosphorus or protein levels. If it has allergies, you must identify potential allergens.
+This is the most critical part of the analysis. Your entire assessment, especially the 'cautionary ingredients', 'keyTakeaways', and 'recommendations' sections, MUST be tailored to a pet with this specific combination of conditions. You must consider potential conflicts. For example, a high-protein diet might be good for an active dog but dangerous for one with kidney disease. If a user lists 'kidney disease, skin allergies', you must flag high phosphorus/protein AND identify potential allergens.
 {{/if}}
 
 {{#if (eq petType 'cat')}}
