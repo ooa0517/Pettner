@@ -119,6 +119,15 @@ Your task is to analyze this product. Provide a highly detailed and professional
 
 Your analysis should also include considerations for genetic predispositions. For example, mention if certain ingredients are beneficial or risky for breeds with known genetic tendencies (e.g., copper storage disease in Bedlington Terriers, urolithiasis in Dalmatians).
 
+Life Stage-Specific Analysis:
+Your analysis must be tailored to the product's stated life stage.
+- If the product is for a specific stage (e.g., 'Puppy', 'Senior'), all your nutritional insights and recommendations must align with the needs of that stage.
+- **Crucially, if the product is labeled for 'All Life Stages' (전연령용), you must provide a more nuanced analysis. Explain that 'All Life Stages' formulas are typically designed to meet the high nutritional demands of growing puppies/kittens. Then, in the 'nutritionalAnalysis.insights' and 'keyTakeaways' sections, you must detail what this means for different life stages:**
+  - **For Puppies/Kittens:** Is it adequate for growth?
+  - **For Adults:** Is it potentially too high in calories or certain nutrients for a typical adult? Mention the importance of portion control.
+  - **For Seniors:** Are there concerns about high calories, phosphorus, or sodium for an aging pet?
+This nuanced breakdown is essential to prevent user confusion.
+
 {{#if healthConditions}}
 IMPORTANT: The pet has the following pre-existing health conditions: {{{healthConditions}}}.
 This is the most critical part of the analysis. Your entire assessment, especially the 'cautionary ingredients', 'keyTakeaways', and 'recommendations' sections, MUST be tailored to a pet with this specific combination of conditions. You must consider potential conflicts. For example, a high-protein diet might be good for an active dog but dangerous for one with kidney disease. If a user lists 'kidney disease, skin allergies', you must flag high phosphorus/protein AND identify potential allergens.
