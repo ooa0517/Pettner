@@ -22,11 +22,59 @@ type AnalysisFormData = {
   image?: FileList;
 };
 
+// Mock data for previewing the analysis result page
+const mockAnalysisResult: AnalyzePetFoodIngredientsOutput = {
+  productName: "내추럴 코어 유기농 에코 2",
+  brandName: "내추럴 코어",
+  petType: "dog",
+  lifeStage: "전연령용",
+  specialClaims: ["Grain-Free", "Organic", "Human-Grade"],
+  summaryHeadline: "가수분해 단백질을 사용하여 알러지 반응을 최소화하고 소화 흡수율을 높인 유기농 사료입니다.",
+  keyTakeaways: [
+    "주 단백질원으로 가수분해 닭고기를 사용하여 식이 알러지 발생 가능성이 매우 낮습니다.",
+    "곡물 대신 유기농 통곡물을 사용하여 혈당 관리에 유리하고 풍부한 식이섬유를 제공합니다.",
+    "인공 화학 첨가물(보존제, 색소, 향료)이 전혀 사용되지 않아 안심하고 급여할 수 있습니다."
+  ],
+  ingredients: {
+    positive: [
+      { name: "가수분해 닭고기", reason: "단백질을 아미노산 단위로 잘게 쪼개어 알러지 반응을 최소화하고 소화 흡수율을 극대화합니다." },
+      { name: "유기농 통귀리", reason: "정제되지 않은 통곡물로, 풍부한 식이섬유와 베타글루칸을 함유하여 장 건강과 면역력 증진에 도움을 줍니다." },
+      { name: "연어 오일", reason: "오메가-3 지방산(EPA, DHA)이 풍부하여 피부 장벽 강화, 모질 개선 및 심혈관 건강에 긍정적인 영향을 줍니다." }
+    ],
+    cautionary: [
+      { name: "감자", reason: "일부 반려동물에게 알러지 반응을 유발할 수 있으며, 높은 GI 지수로 인해 혈당을 급격히 상승시킬 수 있습니다." },
+      { name: "완두콩 단백질", reason: "육류 단백질에 비해 필수 아미노산 조성이 불완전하며, 과도하게 함유될 경우 신장에 부담을 줄 수 있습니다." }
+    ]
+  },
+  nutritionalAnalysis: {
+    estimatedCalories: "~3,640 kcal/kg",
+    insights: [
+      "조단백질 함량이 24% 이상으로 활동적인 성견에게 적합한 수준입니다.",
+      "칼슘과 인의 비율이 약 1.2:1로 AAFCO 기준에 부합하는 균형잡힌 미네랄 설계를 보여줍니다."
+    ]
+  },
+  hiddenInsights: [
+    "본 제품은 단일 가수분해 단백질을 사용하여 식이 민감성이 있는 반려동물에게 특히 추천됩니다.",
+    "유기농 원료 함량이 70% 이상으로, 잔류 농약이나 화학 비료에 대한 걱정을 덜 수 있습니다."
+  ],
+  recommendations: {
+    introduction: "이 세상에 완벽한 사료는 없습니다. 아래 내용은 현재 식단을 보완하고 더 나은 선택을 돕기 위한 수의 영양학적 제안입니다.",
+    supplementaryIngredients: [
+      { name: "프로바이오틱스", reason: "장내 유익균의 균형을 맞추어 소화 기능 개선 및 면역 체계 강화에 도움을 줄 수 있습니다." },
+      { name: "글루코사민 & 콘드로이틴", reason: "관절 연골의 구성 성분으로, 관절 건강 유지 및 관절염 예방에 기여할 수 있습니다." }
+    ],
+    alternativeProductTypes: [
+      { type: "곤충 단백질 기반 사료", reason: "가금류 단백질에 알러지 반응을 보이는 경우, 새로운 단백질원인 곤충 단백질을 시도해볼 수 있습니다." }
+    ]
+  }
+};
+
 
 export default function Home() {
   const { language, t } = useLanguage();
   
-  const [analysisResult, setAnalysisResult] = useState<AnalyzePetFoodIngredientsOutput | null>(null);
+  // Set initial state to show the result page for preview
+  const [analysisResult, setAnalysisResult] = useState<AnalyzePetFoodIngredientsOutput | null>(mockAnalysisResult);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
