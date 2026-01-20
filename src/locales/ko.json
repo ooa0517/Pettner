@@ -107,16 +107,18 @@
       "treat": "간식",
       "supplement": "영양제"
     },
-    "ingredientsLabel": "원료 (또는 사진)",
+    "ingredientsLabel": "원료",
     "ingredientsPlaceholder": "제품의 원료 전체를 복사하여 붙여넣어 주세요...",
     "ingredientsDescription": "* '원료명' 및 '등록성분량'을 정확하게 복사해주세요.",
     "inputRequired": "원료를 입력하시거나 사진을 첨부해주세요.",
     "healthConditionsLabel": "반려동물의 기저질환 (선택)",
     "healthConditionsPlaceholder": "예: 신장질환, 피부 알러지. 여러 질환이 있다면 쉼표로 구분하여 입력하세요.",
-    "imageLabel": "성분 사진 (선택)",
-    "imageDescription": "* 더 정확한 '2차 검증'을 위해 선명한 사진을 첨부해주세요.",
+    "imageLabel": "성분 사진",
+    "imageDescription": "* 더 정확한 분석을 위해 선명한 성분표 사진을 첨부해주세요.",
     "analyzeButton": "성분 분석 시작하기",
-    "instruction": "* '원료명' 및 '등록성분량'이 선명하게 보이도록 촬영해주세요."
+    "instruction": "* '원료명' 및 '등록성분량'이 선명하게 보이도록 촬영해주세요.",
+    "orUploadPhoto": "또는 사진 업로드",
+    "imagePrompt": "클릭 또는 파일을 드래그하여 업로드하세요.<br/>(제품명, 원료명, 등록성분량)"
   },
   "analysisLoading": {
     "title": "성분을 분석하고 있습니다...",

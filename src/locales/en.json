@@ -107,16 +107,18 @@
       "treat": "Treat",
       "supplement": "Supplement"
     },
-    "ingredientsLabel": "Ingredients (or photo)",
+    "ingredientsLabel": "Ingredients",
     "ingredientsPlaceholder": "Copy and paste the full list of ingredients here...",
     "ingredientsDescription": "* Please copy the 'Ingredients' and 'Guaranteed Analysis' exactly as they appear.",
     "inputRequired": "Please enter ingredient text or upload a photo.",
     "healthConditionsLabel": "Pet's Pre-existing Conditions (Optional)",
     "healthConditionsPlaceholder": "e.g., kidney disease, skin allergies. Enter multiple conditions separated by commas.",
-    "imageLabel": "Ingredient Photo (Optional)",
-    "imageDescription": "* For more accurate '2nd verification', please attach a clear photo.",
+    "imageLabel": "Ingredient Photo",
+    "imageDescription": "* For more accurate analysis, please attach a clear photo of the ingredient list.",
     "analyzeButton": "Start Ingredient Analysis",
-    "instruction": "* Please take a clear picture of the 'Ingredients' and 'Guaranteed Analysis'."
+    "instruction": "* Please take a clear picture of the 'Ingredients' and 'Guaranteed Analysis'.",
+    "orUploadPhoto": "Or Upload a Photo",
+    "imagePrompt": "Click or drag file to this area to upload.<br/>(Product name, ingredients, guaranteed analysis)"
   },
   "analysisLoading": {
     "title": "Analyzing Ingredients...",

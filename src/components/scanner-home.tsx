@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Camera, Sparkles, HeartPulse, FileText, Package, Building, Pilcrow, Dog, Cat } from 'lucide-react';
+import { Camera, Sparkles, HeartPulse, FileText, Package, Building, Pilcrow, Dog, Cat, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -47,7 +47,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
       image: imageSchema,
     }).refine(data => data.ingredientsText || (data.image && data.image.length > 0), {
       message: t('scannerHome.inputRequired'),
-      path: ['ingredientsText'], 
+      path: ['image'], 
     });
   }, [t]);
 
@@ -62,6 +62,8 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
       healthConditions: '',
     },
   });
+
+  const imageFile = form.watch('image');
 
   const onSubmit = (data: AnalysisFormValues) => {
     onAnalyze(data);
@@ -173,13 +175,55 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                   <FormItem>
                     <FormLabel className="flex items-center gap-2"><FileText/>{t('scannerHome.ingredientsLabel')}</FormLabel>
                     <FormControl>
-                      <Textarea placeholder={t('scannerHome.ingredientsPlaceholder')} {...field} rows={6}/>
+                      <Textarea placeholder={t('scannerHome.ingredientsPlaceholder')} {...field} rows={4}/>
                     </FormControl>
                      <FormDescription>{t('scannerHome.ingredientsDescription')}</FormDescription>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
+
+             <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-card px-2 text-muted-foreground">
+                    {t('scannerHome.orUploadPhoto')}
+                    </span>
+                </div>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field: { onChange, value, ...rest } }) => (
+                  <FormItem>
+                      <FormLabel className="sr-only">{t('scannerHome.imageLabel')}</FormLabel>
+                      <FormControl>
+                        <div className="relative w-full h-36 border-2 border-dashed rounded-lg flex flex-col justify-center items-center text-center cursor-pointer hover:border-primary transition-colors bg-muted/20">
+                            <Upload className="h-8 w-8 text-muted-foreground" />
+                            <p className="mt-2 text-sm text-muted-foreground">
+                                {imageFile && imageFile.length > 0 ? (
+                                    <span className="font-semibold text-foreground">{imageFile[0].name}</span>
+                                ) : (
+                                    <span dangerouslySetInnerHTML={{ __html: t('scannerHome.imagePrompt') }} />
+                                )}
+                            </p>
+                            <Input 
+                                type="file" 
+                                accept="image/*" 
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                onChange={(e) => onChange(e.target.files)}
+                                {...rest}
+                            />
+                        </div>
+                      </FormControl>
+                      <FormDescription>{t('scannerHome.imageDescription')}</FormDescription>
+                      <FormMessage />
+                  </FormItem>
+              )}
+              />
+
             <FormField
                 control={form.control}
                 name="healthConditions"
@@ -192,20 +236,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="image"
-                render={({ field: { onChange, value, ...rest } }) => (
-                    <FormItem>
-                        <FormLabel className="flex items-center gap-2"><Camera/>{t('scannerHome.imageLabel')}</FormLabel>
-                        <FormControl>
-                           <Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files)} {...rest} />
-                        </FormControl>
-                        <FormDescription>{t('scannerHome.imageDescription')}</FormDescription>
-                         <FormMessage />
-                    </FormItem>
-                )}
-                />
+            
             <div className="text-center pt-4">
               <Button type="submit" size="lg" className="w-full md:w-auto text-lg py-7 px-8 rounded-full shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-shadow duration-300">
                 <Sparkles className="mr-3" />
