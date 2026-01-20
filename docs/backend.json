@@ -51,27 +51,114 @@
     },
     "AnalysisRecord": {
       "title": "Analysis Record",
-      "description": "Represents a single pet food analysis result.",
+      "description": "Represents a single pet food analysis event, storing both the original user input and the AI-generated output.",
       "type": "object",
       "properties": {
-        "productName": { "type": "string" },
-        "brandName": { "type": "string" },
-        "petType": { "type": "string" },
-        "lifeStage": { "type": "string" },
-        "specialClaims": { "type": "array", "items": { "type": "string" } },
-        "keyTakeaways": { "type": "array", "items": { "type": "string" } },
-        "summaryHeadline": { "type": "string" },
-        "ingredients": { "type": "object" },
-        "nutritionalAnalysis": { "type": "object" },
-        "hiddenInsights": { "type": "array", "items": { "type": "string" } },
-        "recommendations": { "type": "object" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "userInput": {
+          "type": "object",
+          "description": "The original data submitted by the user for analysis.",
+          "properties": {
+            "petType": {
+              "type": "string",
+              "enum": [
+                "dog",
+                "cat"
+              ]
+            },
+            "productName": {
+              "type": "string"
+            },
+            "brandName": {
+              "type": "string"
+            },
+            "foodType": {
+              "type": "string"
+            },
+            "ingredientsText": {
+              "type": "string"
+            },
+            "healthConditions": {
+              "type": "string"
+            },
+            "photoProvided": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "petType",
+            "productName"
+          ]
+        },
+        "analysisOutput": {
+          "type": "object",
+          "description": "The structured data returned from the AI analysis.",
+          "properties": {
+            "productName": {
+              "type": "string"
+            },
+            "brandName": {
+              "type": "string"
+            },
+            "petType": {
+              "type": "string"
+            },
+            "lifeStage": {
+              "type": "string"
+            },
+            "specialClaims": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "keyTakeaways": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "summaryHeadline": {
+              "type": "string"
+            },
+            "ingredients": {
+              "type": "object"
+            },
+            "nutritionalAnalysis": {
+              "type": "object"
+            },
+            "hiddenInsights": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "recommendations": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "productName",
+            "summaryHeadline"
+          ]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the analysis was created."
+        }
       },
-      "required": ["productName", "summaryHeadline", "createdAt"]
+      "required": [
+        "userInput",
+        "analysisOutput",
+        "createdAt"
+      ]
     }
   },
   "auth": {
-    "providers": ["email", "google.com"]
+    "providers": [
+      "email",
+      "google.com"
+    ]
   },
   "firestore": {
     "/users/{userId}": {

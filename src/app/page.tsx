@@ -56,7 +56,16 @@ export default function Home() {
         if (result.data) {
           setAnalysisResult(result.data);
           if (user && db) {
-            saveAnalysisToHistory(db, user.uid, result.data);
+            const userInputForHistory = {
+                petType: formData.petType,
+                productName: formData.productName,
+                brandName: formData.brandName || '',
+                foodType: formData.foodType || '',
+                ingredientsText: formData.ingredientsText || '',
+                healthConditions: formData.healthConditions || '',
+                photoProvided: !!file,
+            };
+            saveAnalysisToHistory(db, user.uid, userInputForHistory, result.data);
             toast({
               title: t('homePage.analysisCompleteTitle'),
               description: t('homePage.analysisCompleteDescription'),

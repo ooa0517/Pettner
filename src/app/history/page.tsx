@@ -17,9 +17,14 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { useLanguage } from '@/contexts/language-context';
 
-type AnalysisRecord = AnalyzePetFoodIngredientsOutput & {
+type AnalysisRecord = {
   id: string;
   createdAt: Timestamp;
+  analysisOutput: AnalyzePetFoodIngredientsOutput;
+  userInput: {
+    productName: string;
+    brandName: string;
+  }
 };
 
 export default function HistoryPage() {
@@ -98,8 +103,8 @@ export default function HistoryPage() {
               <Card key={item.id} className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-4 flex justify-between items-center">
                   <div>
-                    <p className="font-semibold text-lg">{item.productName}</p>
-                    <p className="text-sm text-muted-foreground">{item.brandName}</p>
+                    <p className="font-semibold text-lg">{item.analysisOutput.productName}</p>
+                    <p className="text-sm text-muted-foreground">{item.analysisOutput.brandName}</p>
                   </div>
                   <div className="text-right text-sm text-muted-foreground flex items-center gap-2">
                     <Clock className="h-4 w-4" />

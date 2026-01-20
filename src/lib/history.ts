@@ -2,16 +2,24 @@
 'use client';
 
 import { collection, addDoc, serverTimestamp, type Firestore } from 'firebase/firestore';
-import type { AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-food-ingredients';
+import type { AnalyzePetFoodIngredientsInput, AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
-export function saveAnalysisToHistory(db: Firestore, userId: string, analysisData: AnalyzePetFoodIngredientsOutput) {
+// This function now saves both the user's input and the AI's output.
+export function saveAnalysisToHistory(
+    db: Firestore, 
+    userId: string, 
+    userInput: Omit<AnalyzePetFoodIngredientsInput, 'language' | 'photoDataUri' | 'ingredientsText'> & { ingredientsText?: string; photoProvided: boolean }, 
+    analysisOutput: AnalyzePetFoodIngredientsOutput
+) {
   if (!userId) return;
 
   const historyCollectionRef = collection(db, 'users', userId, 'analysisHistory');
+  
   const dataToSave = {
-    ...analysisData,
+    userInput: userInput,
+    analysisOutput: analysisOutput,
     createdAt: serverTimestamp(),
   };
 
