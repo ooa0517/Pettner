@@ -2,8 +2,9 @@ import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/
 import { cn } from '@/lib/utils';
 
 type Ingredient = {
+  keyword: string;
   name: string;
-  reason: string; // Changed from reason to a more generic term if needed, but keeping for compatibility
+  description: string;
 };
 
 type IngredientItemProps = {
@@ -29,8 +30,8 @@ export default function IngredientItem({ value, title, icon, ingredients }: Ingr
                 "bg-success/10": value === 'positive',
                 "bg-destructive/10": value === 'cautionary',
             })}>
-              <p className="font-semibold text-foreground">{item.name}</p>
-              <p className="text-sm text-muted-foreground mt-1">{item.reason}</p>
+              <p className="font-semibold text-foreground">{item.keyword}</p>
+              <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
             </li>
           ))}
         </ul>

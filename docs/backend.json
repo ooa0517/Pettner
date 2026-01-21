@@ -58,40 +58,19 @@
           "type": "object",
           "description": "The original data submitted by the user for analysis.",
           "properties": {
-            "petType": {
-              "type": "string",
-              "enum": [
-                "dog",
-                "cat"
-              ]
-            },
-            "productName": {
-              "type": "string"
-            },
-            "brandName": {
-              "type": "string"
-            },
-            "foodType": {
-              "type": "string"
-            },
-            "ingredientsText": {
-              "type": "string"
-            },
-            "healthConditions": {
-              "type": "string"
-            },
-            "photoProvided": {
-              "type": "boolean"
-            }
+            "petType": { "type": "string", "enum": ["dog", "cat"] },
+            "productName": { "type": "string" },
+            "brandName": { "type": "string" },
+            "foodType": { "type": "string" },
+            "ingredientsText": { "type": "string" },
+            "healthConditions": { "type": "string" },
+            "photoProvided": { "type": "boolean" }
           },
-          "required": [
-            "petType",
-            "productName"
-          ]
+          "required": ["petType", "productName"]
         },
         "analysisOutput": {
           "type": "object",
-          "description": "The structured data returned from the AI analysis.",
+          "description": "The structured, user-friendly data returned from the AI analysis.",
           "properties": {
             "status": { "type": "string", "enum": ["success", "error"] },
             "productInfo": {
@@ -104,7 +83,7 @@
             "summary": {
               "type": "object",
               "properties": {
-                "headline": { "type": "string" },
+                "hashtags": { "type": "array", "items": { "type": "string" } },
                 "safetyRating": { "type": "string", "enum": ["Green", "Yellow", "Red"] }
               }
             },
@@ -116,8 +95,9 @@
                   "items": {
                     "type": "object",
                     "properties": {
+                      "keyword": { "type": "string" },
                       "name": { "type": "string" },
-                      "benefit": { "type": "string" }
+                      "description": { "type": "string" }
                     }
                   }
                 },
@@ -126,8 +106,9 @@
                   "items": {
                     "type": "object",
                     "properties": {
+                      "keyword": { "type": "string" },
                       "name": { "type": "string" },
-                      "risk": { "type": "string" }
+                      "description": { "type": "string" }
                     }
                   }
                 }
@@ -136,17 +117,24 @@
             "nutritionFacts": {
               "type": "object",
               "properties": {
-                "estimatedCalories": { "type": "string" },
+                "protein": { "type": "object", "properties": { "value": { "type": "string" }, "badge": { "type": "string" } } },
+                "fat": { "type": "object", "properties": { "value": { "type": "string" }, "badge": { "type": "string" } } },
+                "fiber": { "type": "object", "properties": { "value": { "type": "string" } } },
+                "ash": { "type": "object", "properties": { "value": { "type": "string" } } },
+                "moisture": { "type": "object", "properties": { "value": { "type": "string" } } },
                 "comment": { "type": "string" }
               }
             },
-            "expertInsight": { "type": "string" }
+            "expertInsight": {
+              "type": "object",
+              "properties": {
+                "goodPoint": { "type": "string" },
+                "cautionPoint": { "type": "string" },
+                "proTip": { "type": "string" }
+              }
+            }
           },
-          "required": [
-            "status",
-            "productInfo",
-            "summary"
-          ]
+          "required": ["status", "productInfo", "summary", "expertInsight"]
         },
         "createdAt": {
           "type": "string",
@@ -154,11 +142,7 @@
           "description": "The timestamp when the analysis was created."
         }
       },
-      "required": [
-        "userInput",
-        "analysisOutput",
-        "createdAt"
-      ]
+      "required": ["userInput", "analysisOutput", "createdAt"]
     }
   },
   "auth": {

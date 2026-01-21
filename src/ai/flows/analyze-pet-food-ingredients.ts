@@ -38,35 +38,52 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     brand: z.string().optional().describe("Detected Brand Name (optional)")
   }),
   summary: z.object({
-    headline: z.string().describe("A one-line impactful summary (e.g., '고단백이지만 식이알러지가 있다면 주의하세요.')"),
+    hashtags: z.array(z.string()).describe("Three hashtags that summarize the product's identity. e.g., ['#고기함량_깡패', '#관절튼튼', '#체중조절용']"),
     safetyRating: z.enum(['Green', 'Yellow', 'Red']).describe('Options: "Green" (Safe), "Yellow" (Caution), "Red" (Warning)')
   }),
   ingredientsAnalysis: z.object({
-    topIngredients: z.array(z.string()).describe("List the top 5 ingredients as an array of strings. e.g., ['닭고기', '쌀', '귀리', '완두콩', '고구마']"),
     positive: z.array(
       z.object({
-        name: z.string().describe("Ingredient Name (e.g., 가수분해 연어)"),
-        benefit: z.string().describe("Scientific explanation (e.g., 분자량을 쪼개 알러지 반응을 최소화한 단백질원입니다.)")
+        keyword: z.string().describe("Benefit-oriented keyword in one or two words. (e.g., '소화가 편안해요')"),
+        name: z.string().describe("Ingredient Name (e.g., '가수분해 연어')"),
+        description: z.string().describe("Easy-to-understand one-line explanation for the pet parent. (e.g., '연어를 잘게 쪼개서 알러지 반응을 줄여주는 착한 단백질이에요.')")
       })
-    ).describe("List up to 3 best ingredients"),
+    ).describe("List up to 3 best ingredients."),
     caution: z.array(
       z.object({
-        name: z.string().describe("Ingredient Name (e.g., BHA)"),
-        risk: z.string().describe("Risk explanation (e.g., 인공 산화방지제로, 민감한 반려동물에게 소화기 이슈 가능성이 있습니다.)")
+        keyword: z.string().describe("Risk-oriented keyword in one or two words. (e.g., '알러지 유발 가능')"),
+        name: z.string().describe("Ingredient Name (e.g., '옥수수 글루텐')"),
+        description: z.string().describe("Easy-to-understand one-line explanation for the pet parent. (e.g., '몇몇 아이들에게는 알러지를 일으킬 수 있는 식물성 단백질이에요.')")
       })
-    ).describe("List all potential risks")
+    ).describe("List all potential risks.")
   }),
   nutritionFacts: z.object({
-    estimatedCalories: z.string().describe("Estimated kcal/kg (if calc is possible, else '정보 부족')"),
-    protein: z.string().optional().describe("Crude Protein (조단백) percentage as a string, e.g., '30.0%' or '28.0% 이상'"),
-    fat: z.string().optional().describe("Crude Fat (조지방) percentage as a string, e.g., '15.0%' or '16.0% 이상'"),
-    fiber: z.string().optional().describe("Crude Fiber (조섬유) percentage as a string, e.g., '4.0%' or '5.0% 이하'"),
-    ash: z.string().optional().describe("Crude Ash (조회분) percentage as a string, e.g., '7.0%' or '8.0% 이하'"),
-    moisture: z.string().optional().describe("Moisture (수분) percentage as a string, e.g., '10.0%' or '12.0% 이하'"),
-    comment: z.string().describe("Brief comment on macronutrient balance (e.g., '조지방 함량이 높아 활동량이 적은 아이에겐 과할 수 있습니다.')")
+    protein: z.object({
+        value: z.string().optional().describe("Crude Protein (조단백) percentage as a string, e.g., '30.0% 이상'"),
+        badge: z.string().optional().describe("A friendly badge explaining the value. e.g., '근육 튼튼 💪'")
+    }),
+    fat: z.object({
+        value: z.string().optional().describe("Crude Fat (조지방) percentage as a string, e.g., '15.0% 이상'"),
+        badge: z.string().optional().describe("A friendly badge explaining the value. e.g., '에너지 뿜뿜 ⚡'")
+    }),
+    fiber: z.object({
+        value: z.string().optional().describe("Crude Fiber (조섬유) percentage as a string, e.g., '4.0% 이하'"),
+    }),
+    ash: z.object({
+        value: z.string().optional().describe("Crude Ash (조회분) percentage as a string, e.g., '7.0% 이하'"),
+    }),
+    moisture: z.object({
+        value: z.string().optional().describe("Moisture (수분) percentage as a string, e.g., '10.0% 이하'"),
+    }),
+    comment: z.string().describe("A brief, friendly comment on macronutrient balance. e.g., '튼튼한 성장기 아이에게는 딱 좋지만, 집돌이 댕댕이라면 양 조절이 필요해요!'")
   }),
-  expertInsight: z.string().describe("A short, professional advice paragraph based on the overall analysis.")
+  expertInsight: z.object({
+    goodPoint: z.string().describe("The single best feature of this product, in a friendly tone."),
+    cautionPoint: z.string().describe("The single most important caution point, in a friendly tone."),
+    proTip: z.string().describe("A practical tip for feeding, in a friendly tone.")
+  })
 });
+
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
 
 export async function analyzePetFoodIngredients(input: AnalyzePetFoodIngredientsInput): Promise<AnalyzePetFoodIngredientsOutput> {
@@ -76,10 +93,14 @@ export async function analyzePetFoodIngredients(input: AnalyzePetFoodIngredients
       return {
           status: 'error',
           productInfo: { name: input.productName || '제품명 미확인', brand: input.brandName },
-          summary: { headline: '분석할 정보가 부족합니다.', safetyRating: 'Red' },
-          ingredientsAnalysis: { topIngredients: [], positive: [], caution: [] },
-          nutritionFacts: { estimatedCalories: '정보 부족', comment: '성분 정보 없이는 영양 분석이 불가능합니다.' },
-          expertInsight: '원료 텍스트를 입력하거나 선명한 성분표 사진을 업로드해주세요.'
+          summary: { hashtags: ['#분석불가'], safetyRating: 'Red' },
+          ingredientsAnalysis: { positive: [], caution: [] },
+          nutritionFacts: { protein: {}, fat: {}, fiber: {}, ash: {}, moisture: {}, comment: '성분 정보 없이는 영양 분석이 불가능해요.' },
+          expertInsight: {
+            goodPoint: '입력된 정보가 부족해서 좋은 점을 찾지 못했어요.',
+            cautionPoint: '성분표를 읽을 수가 없어서 주의할 점을 알려드릴 수 없어요.',
+            proTip: '원료 텍스트를 입력하시거나, 성분표가 선명하게 나온 사진을 다시 올려주세요!'
+          }
       };
   }
   return analyzePetFoodIngredientsFlow(input);
@@ -89,60 +110,56 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `You are "Pettner AI," a highly advanced Veterinary Nutrition Specialist.
-Your task is to analyze pet food labels (ingredients, guaranteed analysis) and provide a scientific, fact-based assessment.
+  prompt: `You are "Pettner AI," a friendly and caring neighborhood veterinarian.
+Your task is to analyze a pet food label and explain it to a pet parent in a very easy, conversational, and friendly way.
 Your entire response, including all values in the final JSON output, MUST be in the language specified by this language code: '{{{language}}}'. (e.g., 'en' for English, 'ko' for Korean). The JSON keys must always be in camelCase as defined in the output schema.
 
+# Persona
+- **Tone & Manner**: Use a soft, conversational tone, like a friendly vet explaining things during a check-up. Use "~해요", "~네요", "~좋아요" styles.
+- **Language**: AVOID professional jargon (e.g., 가수분해, 킬레이트, GI지수). Instead, use benefit-oriented, easy-to-understand words that parents can relate to (e.g., '소화가 잘되는', '흡수가 빠른', '살이 덜 찌는').
+
 # Context
-- Target Species: This analysis is specifically for a {{{petType}}}. Apply all relevant physiological and nutritional standards for this species.
-- Source: You will be provided with information about a pet food product. This may include a product name, brand, food type, a text list of ingredients, and/or an image of the packaging.
-- Pet's Life Stage: You MUST consider the implications for all life stages (puppy/kitten, adult, senior) especially for "All Life Stages" products.
-- Reference Standard: AAFCO Guidelines, FEDIAF, and SCI-level Veterinary Nutrition Studies.
+- Target Species: This analysis is specifically for a {{{petType}}}.
+- Pet's Health: {{#if healthConditions}}The pet has pre-existing conditions: {{{healthConditions}}}. Your analysis MUST be extra gentle and considerate of these conditions, especially in the 'caution' and 'expertInsight' sections.{{/if}}
 
 # Analysis Rules
-1. **Strict Neutrality**: Do not blindly praise marketing terms (e.g., "Premium"). Analyze based on actual ingredients.
-2. **Toxic Check**: If the target is a DOG, check for Xylitol, Onion, Grapes, etc. If the target is a CAT, check for Lilies, Propylene Glycol, etc. and flag them in the 'caution' section.
-3. **Safety First**: If the image is too blurry or ingredient text is insufficient, you must return a JSON with "status": "error".
-4. **Health Condition Focus**: {{#if healthConditions}}This is the most critical part of the analysis. The pet has pre-existing conditions: {{{healthConditions}}}. Your entire assessment (especially 'caution' ingredients, 'safetyRating', and 'expertInsight') MUST be tailored to these specific conditions.{{/if}}
-5. **Species-Specific (CAT)**: {{#if (eq petType 'cat')}}This is a cat (obligate carnivore). Pay special attention to taurine, animal-based protein quality, carbohydrate levels, and urinary health impact.{{/if}}
+1. **Easy & Simple**: Always prioritize simple words over technical ones.
+2. **Safety First**: If the image is blurry or the text is insufficient, you must return a JSON with "status": "error".
+3. **Toxic Check**: Check for species-specific toxic ingredients (e.g., Xylitol for dogs, Lilies for cats) and flag them with the highest priority in the 'caution' section.
 
 # Input Data
-{{#if photoDataUri}}
-An image has been provided. This is the primary source of truth. Use OCR to extract all relevant information. If it is unreadable, set status to "error".
-{{/if}}
-{{#if ingredientsText}}
-A text-based list of ingredients has been provided. Use this as a key source of information.
-{{/if}}
-User-provided product details:
 - Product Name: {{{productName}}}
 - Brand: {{{brandName}}}
 - Food Type: {{{foodType}}}
+{{#if ingredientsText}}
+- Ingredients Text: {{{ingredientsText}}}
+{{/if}}
+{{#if photoDataUri}}
+- Product Image: {{media url=photoDataUri}} (Use OCR to extract info. This is the primary source.)
+{{/if}}
 
-# Task
-Based on all the provided information, generate a valid JSON object according to the output schema.
+# Task: Generate a valid JSON object based on the new, friendly output schema.
 
 - **status**: "success" if analysis is possible, "error" if not.
-- **productInfo**: Detect name and brand from the source. Fallback to user input or '미확인'.
-- **summary.headline**: A one-line impactful summary.
-- **summary.safetyRating**: "Green" for generally safe, "Yellow" if there are notable cautions (e.g., common allergens, high fat for neutered pets), "Red" if there are critical risks (e.g., toxic ingredients, severe contradictions for stated health conditions).
-- **ingredientsAnalysis.topIngredients**: Extract and list the first 5 ingredients from the ingredient list.
-- **ingredientsAnalysis.positive**: List up to 3 best ingredients with scientific benefits.
-- **ingredientsAnalysis.caution**: List ALL potentially risky ingredients (allergens, artificial additives, controversial items) with clear risk explanations.
-- **nutritionFacts**: Extract Crude Protein (조단백), Crude Fat (조지방), Crude Fiber (조섬유), Crude Ash (조회분), and Moisture (수분) from the 'Guaranteed Analysis' section. Provide them as string values.
-- **nutritionFacts.estimatedCalories**: Estimate kcal/kg if possible. Otherwise, '정보 부족'.
-- **nutritionFacts.comment**: Briefly comment on the macronutrient balance (protein, fat, carbs) relative to the pet type and life stage. For "All Life Stages" products, explain the pros and cons for puppy/kitten vs. adult/senior pets.
-- **expertInsight**: A short, professional advisory paragraph synthesizing the whole analysis. Offer actionable advice. For "All Life Stages" products, this insight must include guidance on adjusting feeding amounts for different life stages.
-
-Sources to analyze:
-{{#if ingredientsText}}
-User-provided text:
-{{{ingredientsText}}}
-{{/if}}
-
-{{#if photoDataUri}}
-Product image (for primary analysis or verification):
-{{media url=photoDataUri}}
-{{/if}}
+- **productInfo**: Detect name and brand. Fallback to user input or '미확인'.
+- **summary.hashtags**: Create three short, witty hashtags that capture the product's identity. (e.g., #활동량_많은_아이용, #고기함량_깡패, #관절튼튼_필수템)
+- **summary.safetyRating**: "Green", "Yellow", or "Red" based on overall safety.
+- **ingredientsAnalysis.positive**: List up to 3 best ingredients.
+  - "keyword": A benefit-oriented, catchy phrase. (e.g., "소화가 편안해요")
+  - "name": The ingredient name.
+  - "description": An easy one-line explanation for parents. (e.g., "입자가 작은 단백질이라 알러지 걱정을 덜어주는 착한 성분이에요.")
+- **ingredientsAnalysis.caution**: List ALL potentially risky ingredients.
+  - "keyword": A risk-oriented, intuitive phrase. (e.g., "알러지 유발 가능")
+  - "name": The ingredient name.
+  - "description": An easy one-line explanation of the risk. (e.g., "강아지에 따라 소화가 어렵거나 알러지 반응이 있을 수 있는 곡물이에요.")
+- **nutritionFacts**: Extract guaranteed analysis values.
+  - "protein.value", "fat.value", etc: The percentage as a string.
+  - "protein.badge", "fat.badge": A short, fun badge explaining the nutrient's role. (e.g., "근육 튼튼 💪", "에너지 뿜뿜 ⚡"). Only add badges for protein and fat.
+  - "comment": A friendly, easy-to-understand comment on the nutritional balance. (e.g., "에너지가 넘치는 성장기 친구들에게는 딱 좋은 영양 설계네요! 하지만 집에서 뒹굴뒹굴하기 좋아하는 친구라면 양을 조금 조절해주는 센스가 필요해요.")
+- **expertInsight**: Break down the final advice into three simple, actionable points.
+  - "goodPoint": The single best thing about this food.
+  - "cautionPoint": The one thing to be most careful about.
+  - "proTip": A practical "honey tip" from a vet.
 `,
 });
 
@@ -160,10 +177,14 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
       return {
           status: 'error',
           productInfo: { name: input.productName || '제품명 미확인', brand: input.brandName },
-          summary: { headline: 'AI 모델이 분석 결과를 생성하지 못했습니다.', safetyRating: 'Red' },
-          ingredientsAnalysis: { topIngredients: [], positive: [], caution: [] },
-          nutritionFacts: { estimatedCalories: '정보 부족', comment: 'AI 분석 중 오류가 발생했습니다.' },
-          expertInsight: '입력 내용을 확인하고 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요.'
+          summary: { hashtags: ['#분석오류'], safetyRating: 'Red' },
+          ingredientsAnalysis: { positive: [], caution: [] },
+          nutritionFacts: { protein: {}, fat: {}, fiber: {}, ash: {}, moisture: {}, comment: 'AI 모델이 분석 결과를 생성하지 못했어요.' },
+          expertInsight: {
+              goodPoint: 'AI 모델에 문제가 생겨 좋은 점을 찾지 못했어요.',
+              cautionPoint: '분석 중 오류가 발생해 주의할 점을 알려드릴 수 없어요.',
+              proTip: '입력 내용을 확인하고 다시 시도해주시거나, 잠시 후 이용해주세요!'
+          }
       };
     }
     

@@ -22,7 +22,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine, Cell } from 'recharts';
-import { CheckCircle2, AlertTriangle, FileText, Repeat, Sparkles, Dog, Cat, ShieldCheck, ShieldAlert, ShieldX, Camera, Star, BarChart3, ShoppingCart, Info, ChevronDown } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, FileText, Repeat, Sparkles, Dog, Cat, ShieldCheck, ShieldAlert, ShieldX, Camera, Star, BarChart3, ShoppingCart, Info, ThumbsUp, Lightbulb } from 'lucide-react';
 import IngredientItem from './ingredient-item';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
@@ -64,12 +64,12 @@ const SafetyRatingInfo = {
 const AAFCO_MIN_PROTEIN_ADULT = 18;
 const AAFCO_MIN_FAT_ADULT = 5.5;
 
-const NutrientWithTooltip = ({ name, value, tooltip, dmValue }: { name: string, value?: string, tooltip: string, dmValue?: string }) => {
+const NutrientWithTooltip = ({ name, value, badge, tooltip, dmValue }: { name: string, value?: string, badge?: string, tooltip: string, dmValue?: string }) => {
   const { t } = useLanguage();
   return (
-    <div className="flex justify-between items-center py-1">
+    <div className="flex justify-between items-center py-2">
       <div className="flex items-center gap-1.5">
-        <span>{name}</span>
+        <span className="font-semibold">{name}</span>
         <Popover>
           <PopoverTrigger asChild>
             <Info className="h-3.5 w-3.5 text-muted-foreground cursor-pointer hover:text-foreground" />
@@ -78,12 +78,15 @@ const NutrientWithTooltip = ({ name, value, tooltip, dmValue }: { name: string, 
         </Popover>
       </div>
       {value && (
-        <span className="font-semibold">
-          {value}
-          {dmValue && (
-            <span className="text-muted-foreground text-xs font-normal ml-1">{t('analysisResult.dmBasis', {value: dmValue})}</span>
-          )}
-        </span>
+        <div className="flex items-center gap-2">
+          {badge && <Badge variant="secondary" className="text-sm font-normal">{badge}</Badge>}
+          <span className="font-semibold">
+            {value}
+            {dmValue && (
+              <span className="text-muted-foreground text-xs font-normal ml-1">{t('analysisResult.dmBasis', {value: dmValue})}</span>
+            )}
+          </span>
+        </div>
       )}
     </div>
   );
@@ -96,19 +99,17 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
 
   const petType = input.petType.toLowerCase();
   const PetIcon = petType === 'cat' ? Cat : Dog;
-  const ratingDetails = SafetyRatingInfo[summary.safetyRating];
+  const ratingDetails = summary.safetyRating ? SafetyRatingInfo[summary.safetyRating] : SafetyRatingInfo.Yellow;
   const RatingIcon = ratingDetails.icon;
 
   const { chartData, proteinDM, fatDM } = useMemo(() => {
     const parseNutrient = (value?: string) => parseFloat(value?.replace(/[^0-9.]/g, '')) || 0;
     
-    const nutrientValue = (key: 'protein' | 'fat' | 'fiber' | 'ash' | 'moisture') => parseNutrient(nutritionFacts[key]);
-
-    const proteinValue = nutrientValue('protein');
-    const fatValue = nutrientValue('fat');
-    const fiberValue = nutrientValue('fiber');
-    const ashValue = nutrientValue('ash');
-    const moistureValue = nutrientValue('moisture') || 10;
+    const proteinValue = parseNutrient(nutritionFacts.protein?.value);
+    const fatValue = parseNutrient(nutritionFacts.fat?.value);
+    const fiberValue = parseNutrient(nutritionFacts.fiber?.value);
+    const ashValue = parseNutrient(nutritionFacts.ash?.value);
+    const moistureValue = parseNutrient(nutritionFacts.moisture?.value) || 10;
     
     const calculateDM = (value: number) => {
         if (moistureValue >= 100) return 0;
@@ -145,11 +146,11 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
                   <h1 className="text-3xl md:text-4xl font-extrabold font-headline tracking-tight mt-2">{t('analysisResult.analysisError.title')}</h1>
                 </CardHeader>
                 <CardContent className={cn("p-8", ratingDetails.bgColor)}>
-                  <p className="text-lg font-medium text-foreground/80">{summary.headline}</p>
+                  <p className="text-lg font-medium text-foreground/80">{expertInsight.cautionPoint}</p>
                 </CardContent>
             </Card>
             <div className="text-center pt-4">
-              <p className="text-sm text-muted-foreground text-center max-w-2xl mx-auto mb-4">{expertInsight}</p>
+              <p className="text-sm text-muted-foreground text-center max-w-2xl mx-auto mb-4">{expertInsight.proTip}</p>
               <Button onClick={onReset} variant="outline" size="lg">
                 <Repeat className="mr-2 h-4 w-4" />
                 {t('analysisResult.analyzeNewProduct')}
@@ -189,85 +190,60 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
             )}
           </CardHeader>
           <CardContent className="p-8 bg-muted/30">
-            <p className="text-lg font-medium text-foreground/80">{summary.headline}</p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {summary.hashtags.map((tag, index) => (
+                <Badge key={index} className="text-base px-4 py-1.5 bg-primary/10 text-primary border-primary/20 hover:bg-primary/20">{tag}</Badge>
+              ))}
+            </div>
           </CardContent>
         </Card>
 
-        <Card className={cn("shadow-lg", ratingDetails.bgColor, ratingDetails.borderColor)}>
-          <CardHeader>
-            <CardTitle className={cn("flex items-center gap-3 text-xl font-headline", ratingDetails.color)}>
-              <RatingIcon />
-              {t(ratingDetails.titleKey)}
-            </CardTitle>
-            <CardDescription>{t(ratingDetails.descriptionKey)}</CardDescription>
-          </CardHeader>
-        </Card>
-        
-        {ingredientsAnalysis.topIngredients && ingredientsAnalysis.topIngredients.length > 0 && (
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-xl font-headline">
-                <Star className="text-primary"/>
-                {t('analysisResult.topIngredients')}
-              </CardTitle>
-              <CardDescription>{t('analysisResult.topIngredientsDesc')}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              {ingredientsAnalysis.topIngredients.map((ingredient, index) => (
-                <Badge key={index} variant="secondary" className="text-base px-3 py-1">{`#${index + 1} ${ingredient}`}</Badge>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
         <div className="grid md:grid-cols-2 gap-8">
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-xl font-headline">
-                <FileText className="text-primary" />
-                {t('analysisResult.ingredientAnalysis')}
-              </CardTitle>
-              <CardDescription>{t('analysisResult.ingredientAnalysisDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Accordion type="single" collapsible defaultValue="positive" className="w-full">
-                {ingredientsAnalysis.positive && ingredientsAnalysis.positive.length > 0 && (
-                  <IngredientItem
-                    value="positive"
-                    title={t('analysisResult.positiveIngredients')}
-                    icon={<CheckCircle2 className="text-success" />}
-                    ingredients={ingredientsAnalysis.positive.map(i => ({ name: i.name, reason: i.benefit }))}
-                  />
-                )}
-                {ingredientsAnalysis.caution && ingredientsAnalysis.caution.length > 0 && (
-                  <IngredientItem
-                    value="cautionary"
-                    title={t('analysisResult.cautionaryIngredients')}
-                    icon={<AlertTriangle className="text-destructive" />}
-                    ingredients={ingredientsAnalysis.caution.map(i => ({ name: i.name, reason: i.risk }))}
-                  />
-                )}
-              </Accordion>
-            </CardContent>
-          </Card>
-
-          <div className="space-y-8">
+            <Card className="shadow-lg">
+                <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-xl font-headline">
+                    <FileText className="text-primary" />
+                    {t('analysisResult.ingredientAnalysis')}
+                </CardTitle>
+                <CardDescription>{t('analysisResult.ingredientAnalysisDescription')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <Accordion type="single" collapsible defaultValue="positive" className="w-full">
+                    {ingredientsAnalysis.positive && ingredientsAnalysis.positive.length > 0 && (
+                    <IngredientItem
+                        value="positive"
+                        title={t('analysisResult.positiveIngredients')}
+                        icon={<CheckCircle2 className="text-success" />}
+                        ingredients={ingredientsAnalysis.positive}
+                    />
+                    )}
+                    {ingredientsAnalysis.caution && ingredientsAnalysis.caution.length > 0 && (
+                    <IngredientItem
+                        value="cautionary"
+                        title={t('analysisResult.cautionaryIngredients')}
+                        icon={<AlertTriangle className="text-destructive" />}
+                        ingredients={ingredientsAnalysis.caution}
+                    />
+                    )}
+                </Accordion>
+                </CardContent>
+            </Card>
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl font-headline">
                   <BarChart3 className="text-primary" />
                   {t('analysisResult.nutritionProfile')}
                 </CardTitle>
+                 <CardDescription>{t('analysisResult.nutritionProfileDescription')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                  <div>
-                    <h4 className="font-semibold text-muted-foreground text-sm uppercase tracking-wider">{t('analysisResult.guaranteedAnalysis')}</h4>
-                     <div className="mt-2 space-y-1 text-sm divide-y divide-border/50">
-                        <NutrientWithTooltip name={t('analysisResult.protein')} value={nutritionFacts.protein} tooltip={t('analysisResult.tooltips.protein')} dmValue={proteinDM.toFixed(1)} />
-                        <NutrientWithTooltip name={t('analysisResult.fat')} value={nutritionFacts.fat} tooltip={t('analysisResult.tooltips.fat')} dmValue={fatDM.toFixed(1)} />
-                        <NutrientWithTooltip name={t('analysisResult.fiber')} value={nutritionFacts.fiber} tooltip={t('analysisResult.tooltips.fiber')} />
-                        <NutrientWithTooltip name={t('analysisResult.ash')} value={nutritionFacts.ash} tooltip={t('analysisResult.tooltips.ash')} />
-                        <NutrientWithTooltip name={t('analysisResult.moisture')} value={nutritionFacts.moisture} tooltip={t('analysisResult.tooltips.moisture')} />
+                     <div className="space-y-1 text-sm divide-y divide-border/50">
+                        <NutrientWithTooltip name={t('analysisResult.protein')} value={nutritionFacts.protein?.value} badge={nutritionFacts.protein?.badge} tooltip={t('analysisResult.tooltips.protein')} dmValue={proteinDM.toFixed(1)} />
+                        <NutrientWithTooltip name={t('analysisResult.fat')} value={nutritionFacts.fat?.value} badge={nutritionFacts.fat?.badge} tooltip={t('analysisResult.tooltips.fat')} dmValue={fatDM.toFixed(1)} />
+                        <NutrientWithTooltip name={t('analysisResult.fiber')} value={nutritionFacts.fiber?.value} tooltip={t('analysisResult.tooltips.fiber')} />
+                        <NutrientWithTooltip name={t('analysisResult.ash')} value={nutritionFacts.ash?.value} tooltip={t('analysisResult.tooltips.ash')} />
+                        <NutrientWithTooltip name={t('analysisResult.moisture')} value={nutritionFacts.moisture?.value} tooltip={t('analysisResult.tooltips.moisture')} />
                      </div>
                  </div>
 
@@ -326,21 +302,40 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
                 </div>
               </CardContent>
             </Card>
-
-            <Card className="shadow-lg bg-gradient-to-br from-primary/10 to-accent/10">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-xl font-headline">
-                  <Sparkles className="text-primary" />
-                   {t('analysisResult.expertInsights')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                 <p className="text-base">{expertInsight}</p>
-              </CardContent>
-            </Card>
-          </div>
         </div>
 
+        <Card className="shadow-lg bg-gradient-to-br from-primary/5 to-accent/5">
+            <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-xl font-headline">
+                <Sparkles className="text-primary" />
+                {t('analysisResult.expertInsights')}
+            </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="flex items-start gap-4 p-4 rounded-lg bg-green-500/10">
+                    <div className="p-2 bg-white rounded-full"><ThumbsUp className="text-green-600"/></div>
+                    <div>
+                        <h4 className="font-bold text-green-700">{t('analysisResult.goodPointTitle')}</h4>
+                        <p className="mt-1 text-foreground/80">{expertInsight.goodPoint}</p>
+                    </div>
+                </div>
+                 <div className="flex items-start gap-4 p-4 rounded-lg bg-yellow-500/10">
+                    <div className="p-2 bg-white rounded-full"><AlertTriangle className="text-yellow-600"/></div>
+                    <div>
+                        <h4 className="font-bold text-yellow-700">{t('analysisResult.cautionPointTitle')}</h4>
+                        <p className="mt-1 text-foreground/80">{expertInsight.cautionPoint}</p>
+                    </div>
+                </div>
+                 <div className="flex items-start gap-4 p-4 rounded-lg bg-sky-500/10">
+                    <div className="p-2 bg-white rounded-full"><Lightbulb className="text-sky-600"/></div>
+                    <div>
+                        <h4 className="font-bold text-sky-700">{t('analysisResult.proTipTitle')}</h4>
+                        <p className="mt-1 text-foreground/80">{expertInsight.proTip}</p>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+        
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-xl font-headline">
