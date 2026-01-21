@@ -17,12 +17,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
@@ -355,35 +349,15 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
             </CardTitle>
           </CardHeader>
           <CardContent>
-             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="w-full font-bold" size="lg">
-                  {t('analysisResult.buyNow')}
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="center" className="w-56">
-                <DropdownMenuItem onClick={() => {
-                  const query = encodeURIComponent(productInfo.name);
-                  window.open(`https://www.coupang.com/np/search?component=&q=${query}&channel=user`, '_blank');
+             <Button 
+                className="w-full font-bold" 
+                size="lg" 
+                onClick={() => {
+                    const query = encodeURIComponent(productInfo.name);
+                    window.open(`https://search.shopping.naver.com/search/all?query=${query}`, '_blank');
                 }}>
-                  {t('analysisResult.searchOnCoupang')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
-                  const query = encodeURIComponent(productInfo.name);
-                  window.open(`https://www.amazon.com/s?k=${query}`, '_blank');
-                }}>
-                  {t('analysisResult.searchOnAmazon')}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
-                  const query = encodeURIComponent(productInfo.name);
-                  window.open(`https://search.shopping.naver.com/search/all?query=${query}`, '_blank');
-                }}>
-                  {t('analysisResult.searchOnNaver')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
+                {t('analysisResult.findBestPrice')}
+              </Button>
             <p className="mt-4 text-xs text-muted-foreground text-center">
               {t('analysisResult.affiliateDisclaimer')}
             </p>
