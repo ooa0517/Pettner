@@ -149,7 +149,7 @@
     "expertInsights": "Expert Insight",
     "disclaimer": "<strong>Disclaimer:</strong> This analysis is for informational purposes and cannot replace professional medical advice from a veterinarian. If your pet has any health issues, please consult a professional veterinarian.",
     "analyzeNewProduct": "Analyze a New Product",
-    "buyNow": "Shop Now at Best Price",
+    "buyNow": "Buy Now",
     "buyNowTitle": "Check Prices",
     "searchOnCoupang": "Search on Coupang",
     "searchOnAmazon": "Search on Amazon",
@@ -165,6 +165,13 @@
       "yellowDesc": "Caution is advised. Contains ingredients that may not be suitable for all pets.",
       "red": "Safety Rating: Red",
       "redDesc": "Warning. Contains potentially harmful ingredients or is unsuitable for the pet's condition."
+    },
+    "tooltips": {
+      "protein": "An essential nutrient that builds and maintains body tissues like muscles, skin, and fur. 'Crude protein' includes non-protein nitrogen compounds in addition to pure protein.",
+      "fat": "Used as an energy source and is crucial for absorbing fat-soluble vitamins and maintaining cell function. It also serves as a source of essential fatty acids like Omega-3 and Omega-6.",
+      "fiber": "Indigestible carbohydrates that promote intestinal movement and aid in bowel function. Adequate crude fiber has a positive effect on gut health and constipation prevention.",
+      "ash": "Refers to the total amount of minerals remaining after the feed is incinerated. These are inorganic components essential for bone and body functions, such as calcium, phosphorus, and magnesium.",
+      "moisture": "The amount of water contained in the feed. A higher moisture content helps with hydration, while it is also a crucial figure to consider when calculating nutrient content on a dry matter (DM) basis."
     }
   },
   "firebaseError": {

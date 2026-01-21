@@ -12,12 +12,23 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ReferenceLine } from 'recharts';
-import { CheckCircle2, AlertTriangle, FileText, Repeat, Sparkles, Dog, Cat, ShieldCheck, ShieldAlert, ShieldX, Camera, Star, BarChart3, ShoppingCart } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ReferenceLine, Cell } from 'recharts';
+import { CheckCircle2, AlertTriangle, FileText, Repeat, Sparkles, Dog, Cat, ShieldCheck, ShieldAlert, ShieldX, Camera, Star, BarChart3, ShoppingCart, Info, ChevronDown } from 'lucide-react';
 import IngredientItem from './ingredient-item';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
@@ -59,6 +70,32 @@ const SafetyRatingInfo = {
 const AAFCO_MIN_PROTEIN_ADULT = 18;
 const AAFCO_MIN_FAT_ADULT = 5.5;
 
+const NutrientWithTooltip = ({ name, value, tooltip, dmValue }: { name: string, value?: string, tooltip: string, dmValue?: string }) => {
+  const { t } = useLanguage();
+  return (
+    <div className="flex justify-between items-center py-1">
+      <div className="flex items-center gap-1.5">
+        <span>{name}</span>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-pointer hover:text-foreground" />
+          </PopoverTrigger>
+          <PopoverContent className="text-sm max-w-xs" side="top" align="center">{tooltip}</PopoverContent>
+        </Popover>
+      </div>
+      {value && (
+        <span className="font-semibold">
+          {value}
+          {dmValue && (
+            <span className="text-muted-foreground text-xs font-normal ml-1">{t('analysisResult.dmBasis', {value: dmValue})}</span>
+          )}
+        </span>
+      )}
+    </div>
+  );
+};
+
+
 export default function AnalysisResult({ result, input, onReset }: AnalysisResultProps) {
   const { t } = useLanguage();
   const { productInfo, summary, ingredientsAnalysis, nutritionFacts, expertInsight } = result;
@@ -68,14 +105,16 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
   const ratingDetails = SafetyRatingInfo[summary.safetyRating];
   const RatingIcon = ratingDetails.icon;
 
-  const { chartData, proteinDM, fatDM, nutrientValues } = useMemo(() => {
+  const { chartData, proteinDM, fatDM } = useMemo(() => {
     const parseNutrient = (value?: string) => parseFloat(value?.replace(/[^0-9.]/g, '')) || 0;
     
-    const proteinValue = parseNutrient(nutritionFacts.protein);
-    const fatValue = parseNutrient(nutritionFacts.fat);
-    const fiberValue = parseNutrient(nutritionFacts.fiber);
-    const ashValue = parseNutrient(nutritionFacts.ash);
-    const moistureValue = parseNutrient(nutritionFacts.moisture) || 10; // Assume 10% if not present
+    const nutrientValue = (key: 'protein' | 'fat' | 'fiber' | 'ash' | 'moisture') => parseNutrient(nutritionFacts[key]);
+
+    const proteinValue = nutrientValue('protein');
+    const fatValue = nutrientValue('fat');
+    const fiberValue = nutrientValue('fiber');
+    const ashValue = nutrientValue('ash');
+    const moistureValue = nutrientValue('moisture') || 10;
     
     const calculateDM = (value: number) => {
         if (moistureValue >= 100) return 0;
@@ -86,18 +125,20 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
     const fatDM = calculateDM(fatValue);
 
     const chartData = [
-      { name: t('analysisResult.protein'), [t('analysisResult.guaranteedAnalysis')]: proteinValue, aafco: AAFCO_MIN_PROTEIN_ADULT },
-      { name: t('analysisResult.fat'), [t('analysisResult.guaranteedAnalysis')]: fatValue, aafco: AAFCO_MIN_FAT_ADULT },
+      { name: t('analysisResult.protein'), value: proteinValue },
+      { name: t('analysisResult.fat'), value: fatValue },
+      { name: t('analysisResult.fiber'), value: fiberValue },
+      { name: t('analysisResult.ash'), value: ashValue },
     ];
     
-    const nutrientValues = { proteinValue, fatValue, fiberValue, ashValue, moistureValue };
-
-    return { chartData, proteinDM, fatDM, nutrientValues };
+    return { chartData, proteinDM, fatDM };
   }, [nutritionFacts, t]);
   
-  const chartConfig = useMemo(() => ({
-      [t('analysisResult.guaranteedAnalysis')]: { label: t('analysisResult.guaranteedAnalysis'), color: 'hsl(var(--chart-1))' },
-  }), [t]);
+  const chartConfig = {
+    value: { label: t('analysisResult.guaranteedAnalysis') },
+  };
+
+  const CHART_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
   
   if (result.status === 'error') {
      return (
@@ -226,13 +267,13 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
               </CardHeader>
               <CardContent className="space-y-6">
                  <div>
-                    <h4 className="font-semibold text-muted-foreground text-sm">{t('analysisResult.guaranteedAnalysis')}</h4>
-                     <div className="mt-2 space-y-1 text-sm">
-                        <div className="flex justify-between"><span>{t('analysisResult.protein')}</span><span className="font-semibold">{nutritionFacts.protein} <span className="text-muted-foreground text-xs font-normal">{t('analysisResult.dmBasis', {value: proteinDM.toFixed(1)})}</span></span></div>
-                        <div className="flex justify-between"><span>{t('analysisResult.fat')}</span><span className="font-semibold">{nutritionFacts.fat} <span className="text-muted-foreground text-xs font-normal">{t('analysisResult.dmBasis', {value: fatDM.toFixed(1)})}</span></span></div>
-                        <div className="flex justify-between"><span>{t('analysisResult.fiber')}</span><span className="font-semibold">{nutritionFacts.fiber}</span></div>
-                        <div className="flex justify-between"><span>{t('analysisResult.ash')}</span><span className="font-semibold">{nutritionFacts.ash}</span></div>
-                        <div className="flex justify-between"><span>{t('analysisResult.moisture')}</span><span className="font-semibold">{nutritionFacts.moisture}</span></div>
+                    <h4 className="font-semibold text-muted-foreground text-sm uppercase tracking-wider">{t('analysisResult.guaranteedAnalysis')}</h4>
+                     <div className="mt-2 space-y-1 text-sm divide-y divide-border/50">
+                        <NutrientWithTooltip name={t('analysisResult.protein')} value={nutritionFacts.protein} tooltip={t('analysisResult.tooltips.protein')} dmValue={proteinDM.toFixed(1)} />
+                        <NutrientWithTooltip name={t('analysisResult.fat')} value={nutritionFacts.fat} tooltip={t('analysisResult.tooltips.fat')} dmValue={fatDM.toFixed(1)} />
+                        <NutrientWithTooltip name={t('analysisResult.fiber')} value={nutritionFacts.fiber} tooltip={t('analysisResult.tooltips.fiber')} />
+                        <NutrientWithTooltip name={t('analysisResult.ash')} value={nutritionFacts.ash} tooltip={t('analysisResult.tooltips.ash')} />
+                        <NutrientWithTooltip name={t('analysisResult.moisture')} value={nutritionFacts.moisture} tooltip={t('analysisResult.tooltips.moisture')} />
                      </div>
                  </div>
 
@@ -251,19 +292,19 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
                         axisLine={false}
                         tickMargin={10}
                         minTickGap={10}
+                        className="text-xs"
                       />
-                      <XAxis dataKey={t('analysisResult.guaranteedAnalysis')} type="number" />
+                      <XAxis dataKey="value" type="number" unit="%" />
                       <ChartTooltip
                         cursor={{ fill: 'hsl(var(--muted))' }}
                         content={<ChartTooltipContent indicator="dot" />}
                       />
-                      <Legend />
                       <ReferenceLine
                         y={t('analysisResult.protein')}
                         x={AAFCO_MIN_PROTEIN_ADULT}
                         stroke="hsl(var(--muted-foreground))"
                         strokeDasharray="3 3"
-                        strokeWidth={1}
+                        strokeWidth={1.5}
                       >
                          <ReferenceLine.Label position="insideTopRight" fontSize="10" fill="hsl(var(--muted-foreground))" >{t('analysisResult.aaffcoMin')}</ReferenceLine.Label>
                       </ReferenceLine>
@@ -272,9 +313,13 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
                          x={AAFCO_MIN_FAT_ADULT}
                          stroke="hsl(var(--muted-foreground))"
                          strokeDasharray="3 3"
-                         strokeWidth={1}
+                         strokeWidth={1.5}
                        />
-                      <Bar dataKey={t('analysisResult.guaranteedAnalysis')} radius={4} />
+                      <Bar dataKey="value" radius={4}>
+                         {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                        ))}
+                      </Bar>
                     </BarChart>
                   </ChartContainer>
                 ) : (
@@ -282,7 +327,7 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
                 )}
                 
                 <div className="border-t pt-4">
-                  <h4 className="font-semibold text-muted-foreground text-sm">{t('analysisResult.nutritionalInsights')}</h4>
+                  <h4 className="font-semibold text-muted-foreground text-sm uppercase tracking-wider">{t('analysisResult.nutritionalInsights')}</h4>
                   <p className="mt-2 text-base">{nutritionFacts.comment}</p>
                 </div>
               </CardContent>
@@ -310,38 +355,35 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Button 
-                variant="outline"
-                className="w-full justify-center gap-2 font-bold hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/50"
-                onClick={() => {
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="w-full font-bold" size="lg">
+                  {t('analysisResult.buyNow')}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="center" className="w-56">
+                <DropdownMenuItem onClick={() => {
                   const query = encodeURIComponent(productInfo.name);
                   window.open(`https://www.coupang.com/np/search?component=&q=${query}&channel=user`, '_blank');
-                }}
-              >
-                {t('analysisResult.searchOnCoupang')}
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-center gap-2 font-bold hover:bg-gray-800/10 hover:text-gray-900 hover:border-gray-800/50"
-                onClick={() => {
+                }}>
+                  {t('analysisResult.searchOnCoupang')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
                   const query = encodeURIComponent(productInfo.name);
                   window.open(`https://www.amazon.com/s?k=${query}`, '_blank');
-                }}
-              >
-                {t('analysisResult.searchOnAmazon')}
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full justify-center gap-2 font-bold hover:bg-green-500/10 hover:text-green-600 hover:border-green-500/50"
-                onClick={() => {
+                }}>
+                  {t('analysisResult.searchOnAmazon')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
                   const query = encodeURIComponent(productInfo.name);
                   window.open(`https://search.shopping.naver.com/search/all?query=${query}`, '_blank');
-                }}
-              >
-                {t('analysisResult.searchOnNaver')}
-              </Button>
-            </div>
+                }}>
+                  {t('analysisResult.searchOnNaver')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <p className="mt-4 text-xs text-muted-foreground text-center">
               {t('analysisResult.affiliateDisclaimer')}
             </p>
