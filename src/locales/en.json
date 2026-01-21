@@ -150,6 +150,11 @@
     "disclaimer": "<strong>Disclaimer:</strong> This analysis is for informational purposes and cannot replace professional medical advice from a veterinarian. If your pet has any health issues, please consult a professional veterinarian.",
     "analyzeNewProduct": "Analyze a New Product",
     "buyNow": "Shop Now at Best Price",
+    "buyNowTitle": "Check Prices",
+    "searchOnCoupang": "Search on Coupang",
+    "searchOnAmazon": "Search on Amazon",
+    "searchOnNaver": "Search on Naver Shopping",
+    "affiliateDisclaimer": "When you purchase a product through these links, Pettner may earn a commission as part of our affiliate activities.",
     "analysisError": {
       "title": "Analysis Failed"
     },

@@ -98,11 +98,6 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
   const chartConfig = useMemo(() => ({
       [t('analysisResult.guaranteedAnalysis')]: { label: t('analysisResult.guaranteedAnalysis'), color: 'hsl(var(--chart-1))' },
   }), [t]);
-
-  const handlePurchaseClick = () => {
-    const query = encodeURIComponent(`${productInfo.brand || ''} ${productInfo.name}`);
-    window.open(`https://www.google.com/search?tbm=shop&q=${query}`, '_blank');
-  };
   
   if (result.status === 'error') {
      return (
@@ -131,7 +126,7 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
 
   return (
     <>
-      <div className="space-y-8 animate-in fade-in duration-500 pb-28">
+      <div className="space-y-8 animate-in fade-in duration-500">
         <Card className="text-center shadow-2xl shadow-primary/10 border-primary/20 overflow-hidden">
           <CardHeader className="p-8 bg-card relative">
              <div className="flex justify-center items-center gap-2 text-muted-foreground font-semibold">
@@ -306,6 +301,52 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
             </Card>
           </div>
         </div>
+
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-3 text-xl font-headline">
+              <ShoppingCart className="text-primary"/>
+              {t('analysisResult.buyNowTitle')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Button 
+                variant="outline"
+                className="w-full justify-center gap-2 font-bold hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/50"
+                onClick={() => {
+                  const query = encodeURIComponent(productInfo.name);
+                  window.open(`https://www.coupang.com/np/search?component=&q=${query}&channel=user`, '_blank');
+                }}
+              >
+                {t('analysisResult.searchOnCoupang')}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-center gap-2 font-bold hover:bg-gray-800/10 hover:text-gray-900 hover:border-gray-800/50"
+                onClick={() => {
+                  const query = encodeURIComponent(productInfo.name);
+                  window.open(`https://www.amazon.com/s?k=${query}`, '_blank');
+                }}
+              >
+                {t('analysisResult.searchOnAmazon')}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-center gap-2 font-bold hover:bg-green-500/10 hover:text-green-600 hover:border-green-500/50"
+                onClick={() => {
+                  const query = encodeURIComponent(productInfo.name);
+                  window.open(`https://search.shopping.naver.com/search/all?query=${query}`, '_blank');
+                }}
+              >
+                {t('analysisResult.searchOnNaver')}
+              </Button>
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground text-center">
+              {t('analysisResult.affiliateDisclaimer')}
+            </p>
+          </CardContent>
+        </Card>
         
         <div className="text-center pt-4">
             <p className="text-xs text-muted-foreground text-center max-w-2xl mx-auto mb-4" dangerouslySetInnerHTML={{ __html: t('analysisResult.disclaimer') }} />
@@ -314,13 +355,6 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
               {t('analysisResult.analyzeNewProduct')}
             </Button>
         </div>
-      </div>
-      
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t z-10 flex justify-center">
-         <Button onClick={handlePurchaseClick} size="lg" className="w-full max-w-md shadow-lg">
-            <ShoppingCart className="mr-2 h-5 w-5"/>
-            {t('analysisResult.buyNow')}
-         </Button>
       </div>
     </>
   );
