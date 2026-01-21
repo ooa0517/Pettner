@@ -61,6 +61,8 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     protein: z.string().optional().describe("Crude Protein (조단백) percentage as a string, e.g., '30.0%' or '28.0% 이상'"),
     fat: z.string().optional().describe("Crude Fat (조지방) percentage as a string, e.g., '15.0%' or '16.0% 이상'"),
     fiber: z.string().optional().describe("Crude Fiber (조섬유) percentage as a string, e.g., '4.0%' or '5.0% 이하'"),
+    ash: z.string().optional().describe("Crude Ash (조회분) percentage as a string, e.g., '7.0%' or '8.0% 이하'"),
+    moisture: z.string().optional().describe("Moisture (수분) percentage as a string, e.g., '10.0%' or '12.0% 이하'"),
     comment: z.string().describe("Brief comment on macronutrient balance (e.g., '조지방 함량이 높아 활동량이 적은 아이에겐 과할 수 있습니다.')")
   }),
   expertInsight: z.string().describe("A short, professional advice paragraph based on the overall analysis.")
@@ -126,7 +128,7 @@ Based on all the provided information, generate a valid JSON object according to
 - **ingredientsAnalysis.topIngredients**: Extract and list the first 5 ingredients from the ingredient list.
 - **ingredientsAnalysis.positive**: List up to 3 best ingredients with scientific benefits.
 - **ingredientsAnalysis.caution**: List ALL potentially risky ingredients (allergens, artificial additives, controversial items) with clear risk explanations.
-- **nutritionFacts**: Extract Crude Protein (조단백), Crude Fat (조지방), and Crude Fiber (조섬유) from the 'Guaranteed Analysis' section. Provide them as string values.
+- **nutritionFacts**: Extract Crude Protein (조단백), Crude Fat (조지방), Crude Fiber (조섬유), Crude Ash (조회분), and Moisture (수분) from the 'Guaranteed Analysis' section. Provide them as string values.
 - **nutritionFacts.estimatedCalories**: Estimate kcal/kg if possible. Otherwise, '정보 부족'.
 - **nutritionFacts.comment**: Briefly comment on the macronutrient balance (protein, fat, carbs) relative to the pet type and life stage. For "All Life Stages" products, explain the pros and cons for puppy/kitten vs. adult/senior pets.
 - **expertInsight**: A short, professional advisory paragraph synthesizing the whole analysis. Offer actionable advice. For "All Life Stages" products, this insight must include guidance on adjusting feeding amounts for different life stages.

@@ -138,13 +138,18 @@
     "protein": "Protein",
     "fat": "Fat",
     "fiber": "Fiber",
+    "ash": "Ash",
+    "moisture": "Moisture",
     "others": "Others",
     "noData": "Not enough information to display a chart.",
+    "dmBasis": "(DM: {value}%)",
+    "aaffcoMin": "AAFCO Min. (Adult)",
     "estimatedCalories": "Estimated Calories",
     "nutritionalInsights": "Nutritional Insights",
     "expertInsights": "Expert Insight",
     "disclaimer": "<strong>Disclaimer:</strong> This analysis is for informational purposes and cannot replace professional medical advice from a veterinarian. If your pet has any health issues, please consult a professional veterinarian.",
     "analyzeNewProduct": "Analyze a New Product",
+    "buyNow": "Shop Now at Best Price",
     "analysisError": {
       "title": "Analysis Failed"
     },
