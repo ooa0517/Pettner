@@ -42,6 +42,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     safetyRating: z.enum(['Green', 'Yellow', 'Red']).describe('Options: "Green" (Safe), "Yellow" (Caution), "Red" (Warning)')
   }),
   ingredientsAnalysis: z.object({
+    topIngredients: z.array(z.string()).describe("List the top 5 ingredients as an array of strings. e.g., ['닭고기', '쌀', '귀리', '완두콩', '고구마']"),
     positive: z.array(
       z.object({
         name: z.string().describe("Ingredient Name (e.g., 가수분해 연어)"),
@@ -57,6 +58,9 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
   }),
   nutritionFacts: z.object({
     estimatedCalories: z.string().describe("Estimated kcal/kg (if calc is possible, else '정보 부족')"),
+    protein: z.string().optional().describe("Crude Protein (조단백) percentage as a string, e.g., '30.0%' or '28.0% 이상'"),
+    fat: z.string().optional().describe("Crude Fat (조지방) percentage as a string, e.g., '15.0%' or '16.0% 이상'"),
+    fiber: z.string().optional().describe("Crude Fiber (조섬유) percentage as a string, e.g., '4.0%' or '5.0% 이하'"),
     comment: z.string().describe("Brief comment on macronutrient balance (e.g., '조지방 함량이 높아 활동량이 적은 아이에겐 과할 수 있습니다.')")
   }),
   expertInsight: z.string().describe("A short, professional advice paragraph based on the overall analysis.")
@@ -71,7 +75,7 @@ export async function analyzePetFoodIngredients(input: AnalyzePetFoodIngredients
           status: 'error',
           productInfo: { name: input.productName || '제품명 미확인', brand: input.brandName },
           summary: { headline: '분석할 정보가 부족합니다.', safetyRating: 'Red' },
-          ingredientsAnalysis: { positive: [], caution: [] },
+          ingredientsAnalysis: { topIngredients: [], positive: [], caution: [] },
           nutritionFacts: { estimatedCalories: '정보 부족', comment: '성분 정보 없이는 영양 분석이 불가능합니다.' },
           expertInsight: '원료 텍스트를 입력하거나 선명한 성분표 사진을 업로드해주세요.'
       };
@@ -90,6 +94,7 @@ Your entire response, including all values in the final JSON output, MUST be in 
 # Context
 - Target Species: This analysis is specifically for a {{{petType}}}. Apply all relevant physiological and nutritional standards for this species.
 - Source: You will be provided with information about a pet food product. This may include a product name, brand, food type, a text list of ingredients, and/or an image of the packaging.
+- Pet's Life Stage: You MUST consider the implications for all life stages (puppy/kitten, adult, senior) especially for "All Life Stages" products.
 - Reference Standard: AAFCO Guidelines, FEDIAF, and SCI-level Veterinary Nutrition Studies.
 
 # Analysis Rules
@@ -118,11 +123,13 @@ Based on all the provided information, generate a valid JSON object according to
 - **productInfo**: Detect name and brand from the source. Fallback to user input or '미확인'.
 - **summary.headline**: A one-line impactful summary.
 - **summary.safetyRating**: "Green" for generally safe, "Yellow" if there are notable cautions (e.g., common allergens, high fat for neutered pets), "Red" if there are critical risks (e.g., toxic ingredients, severe contradictions for stated health conditions).
+- **ingredientsAnalysis.topIngredients**: Extract and list the first 5 ingredients from the ingredient list.
 - **ingredientsAnalysis.positive**: List up to 3 best ingredients with scientific benefits.
 - **ingredientsAnalysis.caution**: List ALL potentially risky ingredients (allergens, artificial additives, controversial items) with clear risk explanations.
+- **nutritionFacts**: Extract Crude Protein (조단백), Crude Fat (조지방), and Crude Fiber (조섬유) from the 'Guaranteed Analysis' section. Provide them as string values.
 - **nutritionFacts.estimatedCalories**: Estimate kcal/kg if possible. Otherwise, '정보 부족'.
-- **nutritionFacts.comment**: Briefly comment on the macronutrient balance (protein, fat, carbs) relative to the pet type and life stage.
-- **expertInsight**: A short, professional advisory paragraph synthesizing the whole analysis. Offer actionable advice.
+- **nutritionFacts.comment**: Briefly comment on the macronutrient balance (protein, fat, carbs) relative to the pet type and life stage. For "All Life Stages" products, explain the pros and cons for puppy/kitten vs. adult/senior pets.
+- **expertInsight**: A short, professional advisory paragraph synthesizing the whole analysis. Offer actionable advice. For "All Life Stages" products, this insight must include guidance on adjusting feeding amounts for different life stages.
 
 Sources to analyze:
 {{#if ingredientsText}}
@@ -152,7 +159,7 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
           status: 'error',
           productInfo: { name: input.productName || '제품명 미확인', brand: input.brandName },
           summary: { headline: 'AI 모델이 분석 결과를 생성하지 못했습니다.', safetyRating: 'Red' },
-          ingredientsAnalysis: { positive: [], caution: [] },
+          ingredientsAnalysis: { topIngredients: [], positive: [], caution: [] },
           nutritionFacts: { estimatedCalories: '정보 부족', comment: 'AI 분석 중 오류가 발생했습니다.' },
           expertInsight: '입력 내용을 확인하고 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요.'
       };
