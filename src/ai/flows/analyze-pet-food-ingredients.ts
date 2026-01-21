@@ -32,51 +32,50 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
 export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngredientsInputSchema>;
 
 const AnalyzePetFoodIngredientsOutputSchema = z.object({
-  productName: z.string().describe('The estimated product name.'),
-  brandName: z.string().describe('The brand name of the product.'),
-  petType: z.string().describe('The target pet type (e.g., Dog, Cat).'),
-  lifeStage: z.string().describe('The target life stage (e.g., Puppy, Adult, Senior).'),
-  specialClaims: z.array(z.string()).describe('Any special claims made on the packaging (e.g., Grain-Free, Organic).'),
-  keyTakeaways: z.array(z.string()).describe("The most critical scientific facts and essential information. Summarizes the 2-3 most important points from a veterinary perspective."),
-  summaryHeadline: z.string().describe('A one-line scientific summary of the pet food.'),
-  ingredients: z.object({
+  status: z.enum(['success', 'error']).describe("success or error if unreadable"),
+  productInfo: z.object({
+    name: z.string().describe("Detected Product Name (or '제품명 미확인')"),
+    brand: z.string().optional().describe("Detected Brand Name (optional)")
+  }),
+  summary: z.object({
+    headline: z.string().describe("A one-line impactful summary (e.g., '고단백이지만 식이알러지가 있다면 주의하세요.')"),
+    safetyRating: z.enum(['Green', 'Yellow', 'Red']).describe('Options: "Green" (Safe), "Yellow" (Caution), "Red" (Warning)')
+  }),
+  ingredientsAnalysis: z.object({
     positive: z.array(
       z.object({
-        name: z.string().describe('The name of the positive ingredient.'),
-        reason: z.string().describe('The scientific reason for the positive assessment.'),
+        name: z.string().describe("Ingredient Name (e.g., 가수분해 연어)"),
+        benefit: z.string().describe("Scientific explanation (e.g., 분자량을 쪼개 알러지 반응을 최소화한 단백질원입니다.)")
       })
-    ).describe('List of positive ingredients and their reasons.'),
-    cautionary: z.array(
+    ).describe("List up to 3 best ingredients"),
+    caution: z.array(
       z.object({
-        name: z.string().describe('The name of the cautionary ingredient.'),
-        reason: z.string().describe('The scientific reason for caution and potential concerns.'),
+        name: z.string().describe("Ingredient Name (e.g., BHA)"),
+        risk: z.string().describe("Risk explanation (e.g., 인공 산화방지제로, 민감한 반려동물에게 소화기 이슈 가능성이 있습니다.)")
       })
-    ).describe('List of cautionary ingredients and their reasons.'),
-  }).describe('Details of ingredients, both positive and cautionary.'),
-  nutritionalAnalysis: z.object({
-    estimatedCalories: z.string().describe('Estimated calorie count of the pet food.'),
-    insights: z.array(z.string()).describe('Expert comments on the nutritional balance.'),
-  }).describe('Nutritional analysis of the pet food.'),
-  hiddenInsights: z.array(z.string()).describe('Hidden details or professional insights about the pet food.'),
-  recommendations: z.object({
-    introduction: z.string().describe("A brief introduction explaining that no food is perfect and these are suggestions to improve the current diet."),
-    supplementaryIngredients: z.array(
-      z.object({
-        name: z.string().describe("Recommended supplementary ingredient name (e.g., Omega-3 fatty acids)."),
-        reason: z.string().describe("The scientific reason for recommending this ingredient."),
-      })
-    ).describe("List of recommended nutritional ingredients to supplement the current diet."),
-    alternativeProductTypes: z.array(
-      z.object({
-        type: z.string().describe("An alternative product type to consider (e.g., Hydrolyzed protein diet)."),
-        reason: z.string().describe("The reason for recommending this product type."),
-      })
-    ).describe("List of alternative product types to consider as an alternative to the current product."),
-  }).describe("Improvement suggestions based on the analysis. Recommends supplementary ingredients or alternative product types.")
+    ).describe("List all potential risks")
+  }),
+  nutritionFacts: z.object({
+    estimatedCalories: z.string().describe("Estimated kcal/kg (if calc is possible, else '정보 부족')"),
+    comment: z.string().describe("Brief comment on macronutrient balance (e.g., '조지방 함량이 높아 활동량이 적은 아이에겐 과할 수 있습니다.')")
+  }),
+  expertInsight: z.string().describe("A short, professional advice paragraph based on the overall analysis.")
 });
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
 
 export async function analyzePetFoodIngredients(input: AnalyzePetFoodIngredientsInput): Promise<AnalyzePetFoodIngredientsOutput> {
+  // If the image is too blurry to read ingredients, return an error status.
+  // This logic is simplified here. A real implementation might involve a preliminary check.
+  if (!input.ingredientsText && !input.photoDataUri) {
+      return {
+          status: 'error',
+          productInfo: { name: input.productName || '제품명 미확인', brand: input.brandName },
+          summary: { headline: '분석할 정보가 부족합니다.', safetyRating: 'Red' },
+          ingredientsAnalysis: { positive: [], caution: [] },
+          nutritionFacts: { estimatedCalories: '정보 부족', comment: '성분 정보 없이는 영양 분석이 불가능합니다.' },
+          expertInsight: '원료 텍스트를 입력하거나 선명한 성분표 사진을 업로드해주세요.'
+      };
+  }
   return analyzePetFoodIngredientsFlow(input);
 }
 
@@ -84,69 +83,46 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `You are a world-renowned authority in veterinary science, specializing in canine and feline genomics, molecular biology, and clinical nutrition. Your analysis must be strictly objective, evidence-based, and directly reference established guidelines (e.g., AAFCO, NRC, FEDIAF) and findings from peer-reviewed scientific literature.
+  prompt: `You are "Pettner AI," a highly advanced Veterinary Nutrition Specialist.
+Your task is to analyze pet food labels (ingredients, guaranteed analysis) and provide a scientific, fact-based assessment.
+Your entire response, including all values in the final JSON output, MUST be in the language specified by this language code: '{{{language}}}'. (e.g., 'en' for English, 'ko' for Korean). The JSON keys must always be in camelCase as defined in the output schema.
 
-IMPORTANT: Your entire response, including all values in the final JSON output, MUST be in the language specified by this language code: '{{{language}}}'. (e.g., 'en' for English, 'ko' for Korean). The JSON keys must always be in camelCase as defined in the output schema.
+# Context
+- Target Species: This analysis is specifically for a {{{petType}}}. Apply all relevant physiological and nutritional standards for this species.
+- Source: You will be provided with information about a pet food product. This may include a product name, brand, food type, a text list of ingredients, and/or an image of the packaging.
+- Reference Standard: AAFCO Guidelines, FEDIAF, and SCI-level Veterinary Nutrition Studies.
 
-This analysis is specifically for a {{{petType}}}. Apply all relevant physiological and nutritional standards for this species.
+# Analysis Rules
+1. **Strict Neutrality**: Do not blindly praise marketing terms (e.g., "Premium"). Analyze based on actual ingredients.
+2. **Toxic Check**: If the target is a DOG, check for Xylitol, Onion, Grapes, etc. If the target is a CAT, check for Lilies, Propylene Glycol, etc. and flag them in the 'caution' section.
+3. **Safety First**: If the image is too blurry or ingredient text is insufficient, you must return a JSON with "status": "error".
+4. **Health Condition Focus**: {{#if healthConditions}}This is the most critical part of the analysis. The pet has pre-existing conditions: {{{healthConditions}}}. Your entire assessment (especially 'caution' ingredients, 'safetyRating', and 'expertInsight') MUST be tailored to these specific conditions.{{/if}}
+5. **Species-Specific (CAT)**: {{#if (eq petType 'cat')}}This is a cat (obligate carnivore). Pay special attention to taurine, animal-based protein quality, carbohydrate levels, and urinary health impact.{{/if}}
 
-You will be provided with information about a pet food product (food, supplement, or treat). This may include a product name, brand, food type, a text list of ingredients, and/or an image of the packaging.
-
+# Input Data
 {{#if photoDataUri}}
-An image has been provided. This image is the primary source of truth for the ingredient list and guaranteed analysis. Use your vision capabilities to extract all relevant information from it.
+An image has been provided. This is the primary source of truth. Use OCR to extract all relevant information. If it is unreadable, set status to "error".
 {{/if}}
-
 {{#if ingredientsText}}
-A text-based list of ingredients has been provided by the user. Use this as a key source of information.
+A text-based list of ingredients has been provided. Use this as a key source of information.
 {{/if}}
-
-{{#if (and photoDataUri ingredientsText)}}
-Both an image and text have been provided. The image serves as the definitive source for "2nd verification". Cross-reference the user-provided text with the information extracted from the image. If there are discrepancies, prioritize the information from the image.
-{{/if}}
-
 User-provided product details:
-{{#if productName}}
 - Product Name: {{{productName}}}
-{{/if}}
-{{#if brandName}}
 - Brand: {{{brandName}}}
-{{/if}}
-{{#if foodType}}
 - Food Type: {{{foodType}}}
-{{/if}}
 
-Your task is to analyze this product. Provide a highly detailed and professional breakdown. For each ingredient, analyze its biological impact at a cellular and systemic level. Consider potential interactions and effects on metabolic pathways. For cautionary ingredients, specify the biochemical mechanisms of concern.
+# Task
+Based on all the provided information, generate a valid JSON object according to the output schema.
 
-Your analysis should also include considerations for genetic predispositions. For example, mention if certain ingredients are beneficial or risky for breeds with known genetic tendencies (e.g., copper storage disease in Bedlington Terriers, urolithiasis in Dalmatians).
-
-Life Stage-Specific Analysis:
-Your analysis must be tailored to the product's stated life stage.
-- If the product is for a specific stage (e.g., 'Puppy', 'Senior'), all your nutritional insights and recommendations must align with the needs of that stage.
-- **Crucially, if the product is labeled for 'All Life Stages' (전연령용), you must provide a more nuanced analysis. Explain that 'All Life Stages' formulas are typically designed to meet the high nutritional demands of growing puppies/kittens. Then, in the 'nutritionalAnalysis.insights' and 'keyTakeaways' sections, you must detail what this means for different life stages:**
-  - **For Puppies/Kittens:** Is it adequate for growth?
-  - **For Adults:** Is it potentially too high in calories or certain nutrients for a typical adult? Mention the importance of portion control.
-  - **For Seniors:** Are there concerns about high calories, phosphorus, or sodium for an aging pet?
-This nuanced breakdown is essential to prevent user confusion.
-
-{{#if healthConditions}}
-IMPORTANT: The pet has the following pre-existing health conditions: {{{healthConditions}}}.
-This is the most critical part of the analysis. Your entire assessment, especially the 'cautionary ingredients', 'keyTakeaways', and 'recommendations' sections, MUST be tailored to a pet with this specific combination of conditions. You must consider potential conflicts. For example, a high-protein diet might be good for an active dog but dangerous for one with kidney disease. If a user lists 'kidney disease, skin allergies', you must flag high phosphorus/protein AND identify potential allergens.
-{{/if}}
-
-{{#if (eq petType 'cat')}}
-IMPORTANT: This is a cat. You must apply a different, more stringent set of criteria due to their unique physiology as an obligate carnivore. Pay special attention to:
-- Taurine: Explicitly check for and comment on the presence and source of taurine, as it is an essential amino acid for cats.
-- Protein Source: Prioritize and evaluate the quality of animal-based proteins over plant-based ones. Note the specific types of meat (e.g., muscle meat vs. by-products).
-- Carbohydrates: Assess the level and type of carbohydrates, noting that cats have limited ability to digest them.
-- Harmful Ingredients: Actively look for and flag ingredients that are toxic or inappropriate for cats, such as certain essential oils, propylene glycol, and excessive plant matter.
-- Urinary Health: Consider how the overall formulation might impact urinary pH and urinary tract health.
-{{/if}}
-
-Crucially, since no single food is perfect, you must provide recommendations for improvement based on your analysis. This should include suggestions for supplementary ingredients (like specific vitamins, oils, or probiotics) and/or alternative types of products (e.g., "hydrolyzed protein food for allergies", "single protein source food") that could address any identified shortcomings.
-
-Most importantly, you must provide a "keyTakeaways" section. This must contain the 2-3 most critical, evidence-based points from a veterinary perspective that a pet owner absolutely must know for the health and safety of their pet.
-
-The final output must be a structured JSON object as defined in the schema.
+- **status**: "success" if analysis is possible, "error" if not.
+- **productInfo**: Detect name and brand from the source. Fallback to user input or '미확인'.
+- **summary.headline**: A one-line impactful summary.
+- **summary.safetyRating**: "Green" for generally safe, "Yellow" if there are notable cautions (e.g., common allergens, high fat for neutered pets), "Red" if there are critical risks (e.g., toxic ingredients, severe contradictions for stated health conditions).
+- **ingredientsAnalysis.positive**: List up to 3 best ingredients with scientific benefits.
+- **ingredientsAnalysis.caution**: List ALL potentially risky ingredients (allergens, artificial additives, controversial items) with clear risk explanations.
+- **nutritionFacts.estimatedCalories**: Estimate kcal/kg if possible. Otherwise, '정보 부족'.
+- **nutritionFacts.comment**: Briefly comment on the macronutrient balance (protein, fat, carbs) relative to the pet type and life stage.
+- **expertInsight**: A short, professional advisory paragraph synthesizing the whole analysis. Offer actionable advice.
 
 Sources to analyze:
 {{#if ingredientsText}}
@@ -169,6 +145,19 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await analyzePetFoodIngredientsPrompt(input);
-    return output!;
+    
+    // Fallback mechanism in case the model fails to produce a valid output
+    if (!output) {
+      return {
+          status: 'error',
+          productInfo: { name: input.productName || '제품명 미확인', brand: input.brandName },
+          summary: { headline: 'AI 모델이 분석 결과를 생성하지 못했습니다.', safetyRating: 'Red' },
+          ingredientsAnalysis: { positive: [], caution: [] },
+          nutritionFacts: { estimatedCalories: '정보 부족', comment: 'AI 분석 중 오류가 발생했습니다.' },
+          expertInsight: '입력 내용을 확인하고 다시 시도해주세요. 문제가 지속되면 관리자에게 문의하세요.'
+      };
+    }
+    
+    return output;
   }
 );

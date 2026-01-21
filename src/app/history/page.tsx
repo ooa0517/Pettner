@@ -49,10 +49,12 @@ export default function HistoryPage() {
           const historyCollectionRef = collection(db, 'users', user.uid, 'analysisHistory');
           const q = query(historyCollectionRef, orderBy('createdAt', 'desc'));
           const querySnapshot = await getDocs(q);
-          const historyData = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          } as AnalysisRecord));
+          const historyData = querySnapshot.docs
+            .map(doc => ({
+              id: doc.id,
+              ...doc.data(),
+            } as AnalysisRecord))
+            .filter(item => item.analysisOutput && item.analysisOutput.productInfo); // Filter out malformed data
           setHistory(historyData);
         } catch (err) {
           console.error("Error fetching history: ", err);
@@ -103,8 +105,8 @@ export default function HistoryPage() {
               <Card key={item.id} className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-4 flex justify-between items-center">
                   <div>
-                    <p className="font-semibold text-lg">{item.analysisOutput.productName}</p>
-                    <p className="text-sm text-muted-foreground">{item.analysisOutput.brandName}</p>
+                    <p className="font-semibold text-lg">{item.analysisOutput.productInfo.name}</p>
+                    <p className="text-sm text-muted-foreground">{item.analysisOutput.productInfo.brand}</p>
                   </div>
                   <div className="text-right text-sm text-muted-foreground flex items-center gap-2">
                     <Clock className="h-4 w-4" />

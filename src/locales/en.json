@@ -126,8 +126,6 @@
   },
   "analysisResult": {
     "productAnalyzed": "Analyzed Product",
-    "checkThis": "Must Check!",
-    "checkThisDescription": "This is the most important key information from the analysis.",
     "ingredientAnalysis": "Detailed Ingredient Analysis",
     "ingredientAnalysisDescription": "Here is a list of key ingredients from the analysis.",
     "positiveIngredients": "Positive Ingredients",
@@ -135,13 +133,20 @@
     "nutritionProfile": "Nutrition Profile",
     "estimatedCalories": "Estimated Calories",
     "nutritionalInsights": "Nutritional Insights",
-    "expertInsights": "Expert Insights",
-    "aiRecommendations": "Improvement Suggestions",
-    "recommendationsIntro": "There's no perfect food in this world. The recommendations below are veterinary nutritional suggestions to supplement the current diet and help make better choices.",
+    "expertInsights": "Expert Insight",
     "disclaimer": "<strong>Disclaimer:</strong> This analysis is for informational purposes and cannot replace professional medical advice from a veterinarian. If your pet has any health issues, please consult a professional veterinarian.",
     "analyzeNewProduct": "Analyze a New Product",
-    "recommendedSupplements": "Recommended Supplementary Ingredients",
-    "alternativeProducts": "Alternative Product Types"
+    "analysisError": {
+      "title": "Analysis Failed"
+    },
+    "safetyRating": {
+      "green": "Safety Rating: Green",
+      "greenDesc": "Generally considered safe based on the provided ingredients.",
+      "yellow": "Safety Rating: Yellow",
+      "yellowDesc": "Caution is advised. Contains ingredients that may not be suitable for all pets.",
+      "red": "Safety Rating: Red",
+      "redDesc": "Warning. Contains potentially harmful ingredients or is unsuitable for the pet's condition."
+    }
   },
   "firebaseError": {
     "title": "Firebase Configuration Required",

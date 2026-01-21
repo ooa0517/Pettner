@@ -93,52 +93,59 @@
           "type": "object",
           "description": "The structured data returned from the AI analysis.",
           "properties": {
-            "productName": {
-              "type": "string"
-            },
-            "brandName": {
-              "type": "string"
-            },
-            "petType": {
-              "type": "string"
-            },
-            "lifeStage": {
-              "type": "string"
-            },
-            "specialClaims": {
-              "type": "array",
-              "items": {
-                "type": "string"
+            "status": { "type": "string", "enum": ["success", "error"] },
+            "productInfo": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "brand": { "type": "string" }
               }
             },
-            "keyTakeaways": {
-              "type": "array",
-              "items": {
-                "type": "string"
+            "summary": {
+              "type": "object",
+              "properties": {
+                "headline": { "type": "string" },
+                "safetyRating": { "type": "string", "enum": ["Green", "Yellow", "Red"] }
               }
             },
-            "summaryHeadline": {
-              "type": "string"
-            },
-            "ingredients": {
-              "type": "object"
-            },
-            "nutritionalAnalysis": {
-              "type": "object"
-            },
-            "hiddenInsights": {
-              "type": "array",
-              "items": {
-                "type": "string"
+            "ingredientsAnalysis": {
+              "type": "object",
+              "properties": {
+                "positive": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": { "type": "string" },
+                      "benefit": { "type": "string" }
+                    }
+                  }
+                },
+                "caution": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": { "type": "string" },
+                      "risk": { "type": "string" }
+                    }
+                  }
+                }
               }
             },
-            "recommendations": {
-              "type": "object"
-            }
+            "nutritionFacts": {
+              "type": "object",
+              "properties": {
+                "estimatedCalories": { "type": "string" },
+                "comment": { "type": "string" }
+              }
+            },
+            "expertInsight": { "type": "string" }
           },
           "required": [
-            "productName",
-            "summaryHeadline"
+            "status",
+            "productInfo",
+            "summary"
           ]
         },
         "createdAt": {

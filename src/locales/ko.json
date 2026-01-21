@@ -126,22 +126,27 @@
   },
   "analysisResult": {
     "productAnalyzed": "분석된 제품",
-    "checkThis": "반드시 확인하세요!",
-    "checkThisDescription": "분석 결과 중 가장 중요한 핵심 정보입니다.",
     "ingredientAnalysis": "성분 상세 분석",
     "ingredientAnalysisDescription": "분석된 핵심 성분 목록입니다.",
     "positiveIngredients": "긍정적인 성분",
     "cautionaryIngredients": "주의가 필요한 성분",
     "nutritionProfile": "영양 프로필",
     "estimatedCalories": "추정 칼로리",
-    "nutritionalInsights": "영양학적 인사이트",
-    "expertInsights": "전문가 인사이트",
-    "aiRecommendations": "맞춤 개선 제안",
-    "recommendationsIntro": "이 세상에 완벽한 사료는 없습니다. 아래 내용은 현재 식단을 보완하고 더 나은 선택을 돕기 위한 수의 영양학적 제안입니다.",
+    "nutritionalInsights": "영양학적 코멘트",
+    "expertInsights": "전문가 총평",
     "disclaimer": "<strong>면책 조항:</strong> 이 분석은 정보 제공 목적으로, 수의사의 전문적인 의학적 조언을 대체할 수 없습니다. 반려동물의 건강에 이상이 있을 경우, 반드시 전문 수의사와 상담하시기 바랍니다.",
     "analyzeNewProduct": "새로운 제품 분석하기",
-    "recommendedSupplements": "추천 보충 성분",
-    "alternativeProducts": "대안 제품 유형"
+    "analysisError": {
+      "title": "분석 실패"
+    },
+    "safetyRating": {
+      "green": "안전 등급: Green",
+      "greenDesc": "입력된 성분 기준 전반적으로 안전하다고 판단됩니다.",
+      "yellow": "안전 등급: Yellow",
+      "yellowDesc": "주의가 필요합니다. 모든 반려동물에게 적합하지 않을 수 있는 성분이 포함되어 있습니다.",
+      "red": "안전 등급: Red",
+      "redDesc": "경고. 잠재적으로 유해하거나 반려동물의 상태에 부적합한 성분이 포함되어 있습니다."
+    }
   },
   "firebaseError": {
     "title": "Firebase 설정 필요",

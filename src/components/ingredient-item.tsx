@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 type Ingredient = {
   name: string;
-  reason: string;
+  reason: string; // Changed from reason to a more generic term if needed, but keeping for compatibility
 };
 
 type IngredientItemProps = {
