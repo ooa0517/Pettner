@@ -95,7 +95,7 @@ const NutrientWithTooltip = ({ name, value, badge, tooltip, dmValue }: { name: s
 
 export default function AnalysisResult({ result, input, onReset }: AnalysisResultProps) {
   const { t } = useLanguage();
-  const { productInfo, summary, ingredientsAnalysis, nutritionFacts, expertInsight } = result;
+  const { productInfo, summary, ingredientsAnalysis, nutritionFacts, expertInsight, topIngredients } = result;
 
   const petType = input.petType.toLowerCase();
   const PetIcon = petType === 'cat' ? Cat : Dog;
@@ -197,6 +197,23 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
             </div>
           </CardContent>
         </Card>
+
+        {topIngredients && topIngredients.length > 0 && (
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-xl font-headline">
+                <Star className="text-primary"/>
+                {t('analysisResult.topIngredients')}
+              </CardTitle>
+              <CardDescription>{t('analysisResult.topIngredientsDesc')}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-3">
+              {topIngredients.map((ing, index) => (
+                <Badge key={index} variant="secondary" className="text-base py-2 px-4">{ing}</Badge>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid md:grid-cols-2 gap-8">
             <Card className="shadow-lg">

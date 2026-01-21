@@ -64,7 +64,8 @@
             "foodType": { "type": "string" },
             "ingredientsText": { "type": "string" },
             "healthConditions": { "type": "string" },
-            "photoProvided": { "type": "boolean" }
+            "photoProvided": { "type": "boolean" },
+            "lifeStage": { "type": "string" }
           },
           "required": ["petType", "productName"]
         },
@@ -86,6 +87,9 @@
                 "hashtags": { "type": "array", "items": { "type": "string" } },
                 "safetyRating": { "type": "string", "enum": ["Green", "Yellow", "Red"] }
               }
+            },
+            "topIngredients": {
+                "type": "array", "items": { "type": "string" }
             },
             "ingredientsAnalysis": {
               "type": "object",

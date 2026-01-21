@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Camera, Sparkles, HeartPulse, FileText, Package, Building, Pilcrow, Dog, Cat, Upload } from 'lucide-react';
+import { Camera, Sparkles, HeartPulse, FileText, Package, Building, Pilcrow, Dog, Cat, Upload, ChevronDown, Baby, Bone, Elderly } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,6 +20,7 @@ type AnalysisFormValues = {
   productName: string;
   brandName: string;
   foodType: string;
+  lifeStage: 'PUPPY' | 'ADULT' | 'SENIOR' | 'ALL_STAGES';
   ingredientsText: string;
   healthConditions: string;
   image?: FileList;
@@ -42,6 +43,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
       productName: z.string().min(1, { message: t('scannerHome.productNameRequired') }),
       brandName: z.string().optional(),
       foodType: z.string().optional(),
+      lifeStage: z.enum(['PUPPY', 'ADULT', 'SENIOR', 'ALL_STAGES'], { required_error: t('scannerHome.lifeStageRequired') }),
       ingredientsText: z.string().optional(),
       healthConditions: z.string().optional(),
       image: imageSchema,
@@ -58,6 +60,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
       productName: '',
       brandName: '',
       foodType: 'dry',
+      lifeStage: 'ADULT',
       ingredientsText: '',
       healthConditions: '',
     },
@@ -144,7 +147,9 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                 )}
               />
             </div>
-             <FormField
+
+            <div className="grid md:grid-cols-2 gap-4">
+               <FormField
                 control={form.control}
                 name="foodType"
                 render={({ field }) => (
@@ -168,6 +173,30 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="lifeStage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2"><HeartPulse/>{t('scannerHome.lifeStageLabel')}</FormLabel>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={t('scannerHome.lifeStagePlaceholder')} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="PUPPY">{t('scannerHome.lifeStages.puppy')}</SelectItem>
+                          <SelectItem value="ADULT">{t('scannerHome.lifeStages.adult')}</SelectItem>
+                          <SelectItem value="SENIOR">{t('scannerHome.lifeStages.senior')}</SelectItem>
+                           <SelectItem value="ALL_STAGES">{t('scannerHome.lifeStages.all')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
                 control={form.control}
                 name="ingredientsText"

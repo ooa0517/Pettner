@@ -10,7 +10,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 export function saveAnalysisToHistory(
     db: Firestore, 
     userId: string, 
-    userInput: Omit<AnalyzePetFoodIngredientsInput, 'language' | 'photoDataUri' | 'ingredientsText'> & { ingredientsText?: string; photoProvided: boolean }, 
+    userInput: Omit<AnalyzePetFoodIngredientsInput, 'language' | 'photoDataUri' | 'ingredientsText' | 'brandName' | 'foodType' | 'healthConditions'> & { ingredientsText?: string; brandName?: string, foodType?: string, healthConditions?: string, photoProvided: boolean }, 
     analysisOutput: AnalyzePetFoodIngredientsOutput
 ) {
   if (!userId) return;

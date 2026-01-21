@@ -107,6 +107,15 @@
       "treat": "Treat",
       "supplement": "Supplement"
     },
+    "lifeStageLabel": "Life Stage",
+    "lifeStagePlaceholder": "Select a life stage",
+    "lifeStageRequired": "Please select a life stage.",
+    "lifeStages": {
+      "puppy": "Puppy/Kitten (Under 1)",
+      "adult": "Adult (1-7 years)",
+      "senior": "Senior (Over 7)",
+      "all": "All Life Stages"
+    },
     "ingredientsLabel": "Ingredients",
     "ingredientsPlaceholder": "Copy and paste the full list of ingredients here...",
     "ingredientsDescription": "* Please copy the 'Ingredients' and 'Guaranteed Analysis' exactly as they appear.",

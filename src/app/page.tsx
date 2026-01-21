@@ -17,6 +17,7 @@ type AnalysisFormData = {
   productName: string;
   brandName: string;
   foodType: string;
+  lifeStage: 'PUPPY' | 'ADULT' | 'SENIOR' | 'ALL_STAGES';
   ingredientsText: string;
   healthConditions: string;
   image?: FileList;
@@ -29,7 +30,8 @@ const mockInput: AnalyzePetFoodIngredientsInput = {
   brandName: '오리젠',
   ingredientsText: '신선한 태평양 고등어, 신선한 태평양 청어, 신선한 태평양 아귀, 신선한 아카디안 레드피쉬, 신선한 가자미, 통 고등어(건조), 통 청어(건조), 대구(건조), 청대구(건조), 알래스카 명태(건조), 해바라기유, 붉은 렌틸콩, 녹색 렌틸콩, 녹색 완두콩, 렌틸콩 섬유질, 병아리콩, 노란 완두콩, 강황, 치커리 뿌리, 민들레 뿌리, 주니퍼 베리, 사르사 뿌리, 로즈힙',
   photoDataUri: 'https://picsum.photos/seed/petfoodlabel/400/600',
-  language: 'ko'
+  language: 'ko',
+  lifeStage: 'ALL_STAGES'
 };
 
 const mockResult: AnalyzePetFoodIngredientsOutput = {
@@ -42,6 +44,7 @@ const mockResult: AnalyzePetFoodIngredientsOutput = {
     "hashtags": ["#생선살듬뿍", "#튼튼피부", "#활동량많은아이"],
     "safetyRating": "Green"
   },
+  "topIngredients": ["신선한 태평양 고등어", "신선한 태평양 청어", "신선한 태평양 아귀", "신선한 아카디안 레드피쉬", "신선한 가자미"],
   "ingredientsAnalysis": {
     "positive": [
       {
@@ -79,12 +82,12 @@ const mockResult: AnalyzePetFoodIngredientsOutput = {
     "fiber": { "value": "4.0% 이하" },
     "ash": { "value": "8.0% 이하" },
     "moisture": { "value": "12.0% 이하" },
-    "comment": "에너지가 넘치는 성장기 친구들에게는 딱 좋은 영양 설계네요! 하지만 집에서 뒹굴뒹굴하기 좋아하는 친구라면 양을 조금 조절해주는 센스가 필요해요."
+    "comment": "이 사료는 전연령용이지만, 영양 기준은 활동량이 많은 성견에게 가장 적합해 보여요. 에너지가 넘치는 성장기 친구들에게도 좋지만, 활동량이 적거나 나이가 많은 아이에게는 칼로리가 높을 수 있으니 양 조절이 중요해요!"
   },
   "expertInsight": {
-    "goodPoint": "신선한 생선이 듬뿍 들어가 있어서, 다른 사료보다 오메가-3 같은 좋은 지방산을 챙겨주기 정말 좋아요.",
-    "cautionPoint": "단백질 함량이 높은 편이라, 우리 아이가 하루 종일 뛰어다니는 댕댕이가 아니라면 살이 찔 수 있어요!",
-    "proTip": "처음 먹일 땐 평소 주던 양보다 10% 정도 적게 시작해서, 아이의 몸무게와 활동량을 보며 조절해주세요."
+    "goodPoint": "신선한 생선이 듬뿍 들어가 있어서, 다른 사료보다 오메가-3 같은 좋은 지방산을 챙겨주기 정말 좋아요. 피부와 털 건강에 큰 도움이 될 거예요.",
+    "cautionPoint": "단백질 함량이 높아 신장이 약한 아이에게는 부담이 될 수 있어요. 전연령용 사료는 영양 요구치가 가장 높은 성장기 기준에 맞춰져 있으니, 우리 아이의 나이와 활동량을 꼭 고려해주세요.",
+    "proTip": "처음 먹일 땐 평소 주던 양보다 10% 정도 적게 시작해서, 아이의 몸무게와 활동량을 보며 조절해주세요. 특히 실내 생활을 많이 하는 아이라면 살이 찌지 않도록 신경 써주시는 게 좋아요."
   }
 };
 
@@ -111,6 +114,7 @@ export default function Home() {
         productName: formData.productName,
         brandName: formData.brandName,
         foodType: formData.foodType,
+        lifeStage: formData.lifeStage,
         ingredientsText: formData.ingredientsText,
         healthConditions: formData.healthConditions,
         language: language,
@@ -131,6 +135,7 @@ export default function Home() {
                 productName: formData.productName,
                 brandName: formData.brandName || '',
                 foodType: formData.foodType || '',
+                lifeStage: formData.lifeStage || '',
                 ingredientsText: formData.ingredientsText || '',
                 healthConditions: formData.healthConditions || '',
                 photoProvided: !!file,

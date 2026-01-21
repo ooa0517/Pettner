@@ -26,6 +26,7 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
     ),
   healthConditions: z.string().optional().describe('Any known pre-existing health conditions of the pet (e.g., "kidney disease, skin allergies").'),
   language: z.string().optional().default('ko').describe("The language for the analysis output, e.g., 'en' for English, 'ko' for Korean."),
+  lifeStage: z.enum(['PUPPY', 'ADULT', 'SENIOR', 'ALL_STAGES']).optional().describe('The life stage of the pet. (e.g. PUPPY/KITTEN, ADULT, SENIOR, ALL_STAGES)'),
 }).refine(data => data.ingredientsText || data.photoDataUri, {
   message: 'Either ingredientsText or photoDataUri must be provided.',
 });
@@ -41,6 +42,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     hashtags: z.array(z.string()).describe("Three hashtags that summarize the product's identity. e.g., ['#고기함량_깡패', '#관절튼튼', '#체중조절용']"),
     safetyRating: z.enum(['Green', 'Yellow', 'Red']).describe('Options: "Green" (Safe), "Yellow" (Caution), "Red" (Warning)')
   }),
+  topIngredients: z.array(z.string()).describe("The top 5 ingredients listed on the label."),
   ingredientsAnalysis: z.object({
     positive: z.array(
       z.object({
@@ -94,6 +96,7 @@ export async function analyzePetFoodIngredients(input: AnalyzePetFoodIngredients
           status: 'error',
           productInfo: { name: input.productName || '제품명 미확인', brand: input.brandName },
           summary: { hashtags: ['#분석불가'], safetyRating: 'Red' },
+          topIngredients: [],
           ingredientsAnalysis: { positive: [], caution: [] },
           nutritionFacts: { protein: {}, fat: {}, fiber: {}, ash: {}, moisture: {}, comment: '성분 정보 없이는 영양 분석이 불가능해요.' },
           expertInsight: {
@@ -110,22 +113,25 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `You are "Pettner AI," a friendly and caring neighborhood veterinarian.
+  prompt: `You are "Pettner AI," a friendly and caring neighborhood veterinarian with 20 years of experience.
 Your task is to analyze a pet food label and explain it to a pet parent in a very easy, conversational, and friendly way.
 Your entire response, including all values in the final JSON output, MUST be in the language specified by this language code: '{{{language}}}'. (e.g., 'en' for English, 'ko' for Korean). The JSON keys must always be in camelCase as defined in the output schema.
 
 # Persona
-- **Tone & Manner**: Use a soft, conversational tone, like a friendly vet explaining things during a check-up. Use "~해요", "~네요", "~좋아요" styles.
+- **Role**: A friendly, veteran veterinarian explaining things in a consultation room.
+- **Tone & Manner**: Use a soft, conversational tone, like a friendly vet explaining things during a check-up. Use "~해요", "~네요", "~좋아요" styles. AVOID formal, written styles like "~합니다".
 - **Language**: AVOID professional jargon (e.g., 가수분해, 킬레이트, GI지수). Instead, use benefit-oriented, easy-to-understand words that parents can relate to (e.g., '소화가 잘되는', '흡수가 빠른', '살이 덜 찌는').
 
 # Context
 - Target Species: This analysis is specifically for a {{{petType}}}.
+- Pet's Life Stage: {{#if lifeStage}}The pet is in the '{{{lifeStage}}}' stage. Your analysis should be tailored to this.{{/if}}
 - Pet's Health: {{#if healthConditions}}The pet has pre-existing conditions: {{{healthConditions}}}. Your analysis MUST be extra gentle and considerate of these conditions, especially in the 'caution' and 'expertInsight' sections.{{/if}}
 
 # Analysis Rules
-1. **Easy & Simple**: Always prioritize simple words over technical ones.
-2. **Safety First**: If the image is blurry or the text is insufficient, you must return a JSON with "status": "error".
-3. **Toxic Check**: Check for species-specific toxic ingredients (e.g., Xylitol for dogs, Lilies for cats) and flag them with the highest priority in the 'caution' section.
+1.  **Easy & Simple**: Always prioritize simple words over technical ones.
+2.  **Safety First**: If the image is blurry or the text is insufficient, you must return a JSON with "status": "error".
+3.  **Toxic Check**: Check for species-specific toxic ingredients (e.g., Xylitol for dogs, Lilies for cats) and flag them with the highest priority in the 'caution' section.
+4.  **All Life Stages Food**: If a product is for "all life stages", it's usually formulated for puppies/kittens (the most demanding stage). You MUST explain the pros and cons for different life stages in the 'expertInsight' section. For example, it might be too high in calories for a less active adult or senior pet.
 
 # Input Data
 - Product Name: {{{productName}}}
@@ -144,6 +150,7 @@ Your entire response, including all values in the final JSON output, MUST be in 
 - **productInfo**: Detect name and brand. Fallback to user input or '미확인'.
 - **summary.hashtags**: Create three short, witty hashtags that capture the product's identity. (e.g., #활동량_많은_아이용, #고기함량_깡패, #관절튼튼_필수템)
 - **summary.safetyRating**: "Green", "Yellow", or "Red" based on overall safety.
+- **topIngredients**: Extract the first 5 ingredients from the ingredient list.
 - **ingredientsAnalysis.positive**: List up to 3 best ingredients.
   - "keyword": A benefit-oriented, catchy phrase. (e.g., "소화가 편안해요")
   - "name": The ingredient name.
@@ -178,6 +185,7 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
           status: 'error',
           productInfo: { name: input.productName || '제품명 미확인', brand: input.brandName },
           summary: { hashtags: ['#분석오류'], safetyRating: 'Red' },
+          topIngredients: [],
           ingredientsAnalysis: { positive: [], caution: [] },
           nutritionFacts: { protein: {}, fat: {}, fiber: {}, ash: {}, moisture: {}, comment: 'AI 모델이 분석 결과를 생성하지 못했어요.' },
           expertInsight: {
