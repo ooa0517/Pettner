@@ -148,8 +148,9 @@
     "originalImage": "분석 원본",
     "disclaimer": "<strong>면책 조항:</strong> 이 분석은 정보 제공 목적으로, 수의사의 전문적인 의학적 조언을 대체할 수 없습니다. 반려동물의 건강에 이상이 있을 경우, 반드시 전문 수의사와 상담하시기 바랍니다.",
     "analyzeNewProduct": "새로운 제품 분석하기",
-    "buyNowSectionTitle": "제품 구매하기",
-    "searchOnNaver": "네이버 쇼핑에서 최저가 검색",
+    "buyNowSectionTitle": "구매하러 가기",
+    "searchOnCoupang": "쿠팡에서 구매하기",
+    "searchOnAmazon": "아마존에서 검색하기",
     "affiliateDisclaimer": "링크를 통해 제품 구매 시, Pettner는 제휴 활동의 일환으로 일정액의 수수료를 제공받을 수 있습니다.",
     "analysisError": {
       "title": "분석 실패",
@@ -175,7 +176,11 @@
     },
     "prosTitle": "상세 분석 (좋은 점)",
     "consTitle": "상세 분석 (아쉬운 점)",
-    "allIngredientsTitle": "전체 원재료 보기"
+    "allIngredientsTitle": "전체 원재료 보기",
+    "radarChartTitle": "이런 아이에게 추천해요",
+    "radarChartDescription": "각 항목에 대한 적합도를 점수로 나타냈어요.",
+    "feedingGuideTitle": "일일 권장 급여량 가이드",
+    "feedingGuideDescription": "아이의 성장 단계와 몸무게에 맞는 하루 권장 급여량이에요."
   },
   "firebaseError": {
     "title": "Firebase 설정 필요",
