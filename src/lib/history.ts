@@ -6,11 +6,24 @@ import type { AnalyzePetFoodIngredientsInput, AnalyzePetFoodIngredientsOutput } 
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
-// This function now saves both the user's input and the AI's output.
+// This type represents what is actually saved in Firestore.
+// It's a subset of the full form input, tailored for history.
+type UserInputForHistory = {
+    petType: 'dog' | 'cat';
+    productName: string;
+    brandName: string;
+    foodType: string;
+    lifeStage: 'PUPPY' | 'ADULT' | 'SENIOR' | 'ALL_STAGES';
+    ingredientsText: string;
+    healthConditions: string;
+    photoProvided: boolean;
+};
+
+
 export function saveAnalysisToHistory(
     db: Firestore, 
     userId: string, 
-    userInput: Omit<AnalyzePetFoodIngredientsInput, 'language' | 'photoDataUri' | 'ingredientsText' | 'brandName' | 'foodType' | 'healthConditions'> & { ingredientsText?: string; brandName?: string, foodType?: string, healthConditions?: string, photoProvided: boolean }, 
+    userInput: UserInputForHistory, 
     analysisOutput: AnalyzePetFoodIngredientsOutput
 ) {
   if (!userId) return;

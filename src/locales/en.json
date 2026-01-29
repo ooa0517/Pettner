@@ -74,6 +74,12 @@
     "noHistoryTitle": "No Analysis History",
     "noHistoryDescription": "Go to the home page to analyze a new product."
   },
+  "historyDetailPage": {
+    "notFound": "Analysis record not found.",
+    "fetchError": "An error occurred while fetching the analysis.",
+    "backToHistory": "Back to Analysis History",
+    "backToHistoryShort": "Back to History"
+  },
   "homePage": {
     "analysisCompleteTitle": "Analysis Complete!",
     "analysisCompleteDescription": "The result has been saved to 'My Analysis History'.",

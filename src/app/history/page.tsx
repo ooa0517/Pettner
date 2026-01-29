@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
 import { collection, query, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Loader2, FileText, Clock } from 'lucide-react';
+import { Loader2, FileText, Clock, Cat, Dog } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -14,17 +14,24 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-food-ingredients';
+import type { AnalyzePetFoodIngredientsOutput, AnalyzePetFoodIngredientsInput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { useLanguage } from '@/contexts/language-context';
+import Link from 'next/link';
+
+type StoredUserInput = Omit<AnalyzePetFoodIngredientsInput, 'language' | 'photoDataUri' | 'ingredientsText' | 'brandName' | 'foodType' | 'healthConditions' | 'lifeStage'> & { 
+    ingredientsText?: string; 
+    brandName?: string;
+    foodType?: string;
+    healthConditions?: string;
+    lifeStage?: 'PUPPY' | 'ADULT' | 'SENIOR' | 'ALL_STAGES';
+    photoProvided: boolean;
+};
 
 type AnalysisRecord = {
   id: string;
   createdAt: Timestamp;
   analysisOutput: AnalyzePetFoodIngredientsOutput;
-  userInput: {
-    productName: string;
-    brandName: string;
-  }
+  userInput: StoredUserInput;
 };
 
 export default function HistoryPage() {
@@ -101,22 +108,29 @@ export default function HistoryPage() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {history.map((item) => (
-              <Card key={item.id} className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardContent className="p-4 flex justify-between items-center">
-                  <div>
-                    <p className="font-semibold text-lg">{item.analysisOutput.productInfo.name}</p>
-                    <p className="text-sm text-muted-foreground">{item.analysisOutput.productInfo.brand}</p>
-                  </div>
-                  <div className="text-right text-sm text-muted-foreground flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    <span>
-                      {item.createdAt?.toDate().toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US')}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {history.map((item) => {
+              const PetIcon = item.userInput.petType === 'cat' ? Cat : Dog;
+              return (
+              <Link href={`/history/${item.id}`} key={item.id}>
+                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardContent className="p-4 flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                      <PetIcon className="h-8 w-8 text-muted-foreground" />
+                      <div>
+                        <p className="font-semibold text-lg">{item.analysisOutput.productInfo.name}</p>
+                        <p className="text-sm text-muted-foreground">{item.analysisOutput.productInfo.brand}</p>
+                      </div>
+                    </div>
+                    <div className="text-right text-sm text-muted-foreground flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>
+                        {item.createdAt?.toDate().toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US')}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            )})}
           </div>
         )}
       </div>

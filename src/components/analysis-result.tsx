@@ -14,18 +14,20 @@ import {
 } from "@/components/ui/dialog"
 import { ChartContainer, ChartRadar, ChartRadarChart, ChartPolarGrid, ChartPolarAngleAxis, ChartPolarRadiusAxis, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Repeat, Camera, Dog, Cat, ShoppingCart, Lightbulb, ThumbsUp, ThumbsDown, Bone, Heart, Activity, Rabbit, Weight, Scale, Baby, GitCommitHorizontal } from 'lucide-react';
+import { Repeat, Camera, Dog, Cat, ShoppingCart, Lightbulb, ThumbsUp, ThumbsDown, Bone, Heart, Activity, Rabbit, Weight, Scale, Baby, GitCommitHorizontal, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
 import React from 'react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 type AnalysisResultProps = {
   result: AnalyzePetFoodIngredientsOutput;
   input: AnalyzePetFoodIngredientsInput;
   onReset: () => void;
+  resetButtonText?: string;
 };
 
-export default function AnalysisResult({ result, input, onReset }: AnalysisResultProps) {
+export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
   const { t } = useLanguage();
   const { productInfo, summary, allIngredients, pros, cons, radarChart, feedingGuide, expertInsight } = result;
 
@@ -62,7 +64,7 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
               <p className="text-sm text-muted-foreground text-center max-w-2xl mx-auto mb-4">{expertInsight.proTip}</p>
               <Button onClick={onReset} variant="outline" size="lg">
                 <Repeat className="mr-2 h-4 w-4" />
-                {t('analysisResult.analyzeNewProduct')}
+                {resetButtonText || t('analysisResult.analyzeNewProduct')}
               </Button>
           </div>
         </div>
@@ -308,7 +310,7 @@ export default function AnalysisResult({ result, input, onReset }: AnalysisResul
             <p className="text-xs text-muted-foreground text-center max-w-2xl mx-auto mb-4" dangerouslySetInnerHTML={{ __html: t('analysisResult.disclaimer') }} />
             <Button onClick={onReset} variant="outline" size="lg">
               <Repeat className="mr-2 h-4 w-4" />
-              {t('analysisResult.analyzeNewProduct')}
+              {resetButtonText || t('analysisResult.analyzeNewProduct')}
             </Button>
         </div>
       </div>
