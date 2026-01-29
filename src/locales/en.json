@@ -131,59 +131,38 @@
   },
   "analysisLoading": {
     "title": "Analyzing Ingredients...",
-    "description": "We are carefully examining the food ingredients<br/>based on the latest scientific papers and nutritional guidelines."
+    "description": "We are carefully examining the food ingredients<br/>based on the latest scientific papers and nutritional guidelines.",
+    "titleV2": "Your Personalized Report is Being Generated...",
+    "descriptionV2": "Our AI vet is thoroughly examining the ingredients <br/> to create a detailed report just for your pet."
   },
   "analysisResult": {
     "productAnalyzed": "Analyzed Product",
     "originalImage": "Analysis Source",
-    "topIngredients": "Top 5 Main Ingredients",
-    "topIngredientsDesc": "The first 5 ingredients that make up the largest portion of the product.",
-    "ingredientAnalysis": "Detailed Ingredient Analysis",
-    "ingredientAnalysisDescription": "Here's a breakdown of the key ingredients, explained simply!",
-    "positiveIngredients": "Good Ingredients",
-    "cautionaryIngredients": "Ingredients to Check",
-    "nutritionProfile": "Nutrition Profile",
-    "nutritionProfileDescription": "Let's see what the numbers mean for our furry friend.",
-    "guaranteedAnalysis": "Guaranteed Analysis",
-    "protein": "Protein",
-    "fat": "Fat",
-    "fiber": "Fiber",
-    "ash": "Ash",
-    "moisture": "Moisture",
-    "others": "Others",
-    "noData": "Not enough information to display a chart.",
-    "dmBasis": "(DM: {value}%)",
-    "aaffcoMin": "AAFCO Min. (Adult)",
-    "estimatedCalories": "Estimated Calories",
-    "nutritionalInsights": "What does this mean?",
-    "expertInsights": "Vet's Summary",
-    "goodPointTitle": "This is great!",
-    "cautionPointTitle": "Be careful with this!",
-    "proTipTitle": "Vet's Honey Tip",
     "disclaimer": "<strong>Disclaimer:</strong> This analysis is for informational purposes and cannot replace professional medical advice from a veterinarian. If your pet has any health issues, please consult a professional veterinarian.",
     "analyzeNewProduct": "Analyze a New Product",
-    "buyNow": "Buy Now",
     "buyNowTitle": "Check Prices",
     "findBestPrice": "Find Best Price",
     "affiliateDisclaimer": "When you purchase a product through these links, Pettner may earn a commission as part of our affiliate activities.",
     "analysisError": {
-      "title": "Analysis Failed"
+      "title": "Analysis Failed",
+      "defaultMessage": "An error occurred during analysis."
     },
-    "safetyRating": {
-      "green": "Safety Rating: Green",
-      "greenDesc": "Generally considered safe based on the provided ingredients.",
-      "yellow": "Safety Rating: Yellow",
-      "yellowDesc": "Caution is advised. Contains ingredients that may not be suitable for all pets.",
-      "red": "Safety Rating: Red",
-      "redDesc": "Warning. Contains potentially harmful ingredients or is unsuitable for the pet's condition."
+    "recommendationTitle": "Recommended For",
+    "recommendationDescription": "This chart shows how suitable this product is for different needs.",
+    "prosTitle": "Pros",
+    "consTitle": "Cons",
+    "allIngredientsTitle": "Full Ingredient List",
+    "feedingGuideTitle": "Daily Feeding Guide",
+    "feedingGuideDescription": "This is a general guideline. Adjust according to your pet's activity level and condition.",
+    "weight": "Weight",
+    "dailyAmount": "Daily Amount",
+    "estimatedCalories": "Est. Calories",
+    "lifeStages": {
+        "puppy": "Puppy",
+        "adult": "Adult",
+        "senior": "Senior"
     },
-    "tooltips": {
-      "protein": "An essential nutrient that builds and maintains body tissues like muscles, skin, and fur. 'Crude protein' includes non-protein nitrogen compounds in addition to pure protein.",
-      "fat": "Used as an energy source and is crucial for absorbing fat-soluble vitamins and maintaining cell function. It also serves as a source of essential fatty acids like Omega-3 and Omega-6.",
-      "fiber": "Indigestible carbohydrates that promote intestinal movement and aid in bowel function. Adequate crude fiber has a positive effect on gut health and constipation prevention.",
-      "ash": "Refers to the total amount of minerals remaining after the feed is incinerated. These are inorganic components essential for bone and body functions, such as calcium, phosphorus, and magnesium.",
-      "moisture": "The amount of water contained in the feed. A higher moisture content helps with hydration, while it is also a crucial figure to consider when calculating nutrient content on a dry matter (DM) basis."
-    }
+    "proTipTitle": "Vet's Pro Tip"
   },
   "firebaseError": {
     "title": "Firebase Configuration Required",

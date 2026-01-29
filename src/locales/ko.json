@@ -131,59 +131,38 @@
   },
   "analysisLoading": {
     "title": "성분을 분석하고 있습니다...",
-    "description": "최신 과학 논문과 영양학 가이드라인을 기반으로<br/>사료 성분을 꼼꼼하게 살펴보고 있습니다."
+    "description": "최신 과학 논문과 영양학 가이드라인을 기반으로<br/>사료 성분을 꼼꼼하게 살펴보고 있습니다.",
+    "titleV2": "맞춤 분석 리포트를 만들고 있어요...",
+    "descriptionV2": "AI 수의사 선생님이 우리 아이만을 위한<br/>상세 리포트를 작성하기 위해 성분을 꼼꼼히 보고있어요."
   },
   "analysisResult": {
     "productAnalyzed": "분석된 제품",
     "originalImage": "분석 원본",
-    "topIngredients": "Top 5 주원료",
-    "topIngredientsDesc": "가장 많은 함량을 차지하는 상위 5개 원료입니다.",
-    "ingredientAnalysis": "성분 상세 분석",
-    "ingredientAnalysisDescription": "핵심 성분들을 알기 쉽게 풀어서 설명해 드릴게요!",
-    "positiveIngredients": "좋은 점",
-    "cautionaryIngredients": "확인이 필요한 점",
-    "nutritionProfile": "영양 프로필",
-    "nutritionProfileDescription": "숫자들이 우리 아이에게 어떤 의미인지 살펴볼까요?",
-    "guaranteedAnalysis": "보증 성분량",
-    "protein": "조단백",
-    "fat": "조지방",
-    "fiber": "조섬유",
-    "ash": "조회분",
-    "moisture": "수분",
-    "others": "기타",
-    "noData": "차트를 표시하기에 정보가 충분하지 않습니다.",
-    "dmBasis": "(건물 기준: {value}%)",
-    "aaffcoMin": "AAFCO 최소 기준 (성견)",
-    "estimatedCalories": "추정 칼로리",
-    "nutritionalInsights": "이게 무슨 뜻인가요?",
-    "expertInsights": "수의사 선생님 총정리",
-    "goodPointTitle": "이게 정말 좋아요",
-    "cautionPointTitle": "이건 조심하세요",
-    "proTipTitle": "수의사의 꿀팁",
     "disclaimer": "<strong>면책 조항:</strong> 이 분석은 정보 제공 목적으로, 수의사의 전문적인 의학적 조언을 대체할 수 없습니다. 반려동물의 건강에 이상이 있을 경우, 반드시 전문 수의사와 상담하시기 바랍니다.",
     "analyzeNewProduct": "새로운 제품 분석하기",
-    "buyNow": "제품 구매하기",
     "buyNowTitle": "최저가 확인하기",
     "findBestPrice": "최저가 구매하기",
     "affiliateDisclaimer": "링크를 통해 제품 구매 시, Pettner는 제휴 활동의 일환으로 일정액의 수수료를 제공받을 수 있습니다.",
     "analysisError": {
-      "title": "분석 실패"
+      "title": "분석 실패",
+      "defaultMessage": "분석 중 오류가 발생했습니다."
     },
-    "safetyRating": {
-      "green": "안전 등급: Green",
-      "greenDesc": "입력된 성분 기준 전반적으로 안전하다고 판단됩니다.",
-      "yellow": "안전 등급: Yellow",
-      "yellowDesc": "주의가 필요합니다. 모든 반려동물에게 적합하지 않을 수 있는 성분이 포함되어 있습니다.",
-      "red": "안전 등급: Red",
-      "redDesc": "경고. 잠재적으로 유해하거나 반려동물의 상태에 부적합한 성분이 포함되어 있습니다."
+    "recommendationTitle": "이런 아이에게 추천해요",
+    "recommendationDescription": "이 제품이 어떤 부분에 강점이 있는지 차트로 보여드릴게요.",
+    "prosTitle": "좋은 점",
+    "consTitle": "아쉬운 점",
+    "allIngredientsTitle": "전체 원재료 보기",
+    "feedingGuideTitle": "하루 권장 급여량 가이드",
+    "feedingGuideDescription": "일반적인 기준이며, 아이의 활동량과 컨디션에 따라 조절해주세요.",
+    "weight": "체중",
+    "dailyAmount": "하루 급여량",
+    "estimatedCalories": "예상 칼로리",
+    "lifeStages": {
+        "puppy": "퍼피",
+        "adult": "어덜트",
+        "senior": "시니어"
     },
-    "tooltips": {
-      "protein": "근육, 피부, 털 같은 아이의 몸을 만들고 튼튼하게 유지해주는 가장 중요한 영양소예요. '조단백'은 순수한 단백질 외에 아미노산 같은 다른 영양소까지 포함된 수치랍니다.",
-      "fat": "아이들이 활발하게 뛰어놀 수 있는 에너지원이 되고, 비타민 흡수와 세포 건강에도 꼭 필요해요. 오메가-3, 오메가-6 같은 착한 지방산도 여기서 얻을 수 있어요.",
-      "fiber": "소화되지는 않지만 장을 청소하고 응가를 잘 만들도록 도와주는 '식이섬유'예요. 장 건강과 변비 예방에 좋은 역할을 한답니다.",
-      "ash": "사료를 태우고 남는 미네랄 덩어리예요. 뼈를 튼튼하게 하는 칼슘, 인, 마그네슘 같은 필수적인 무기질 성분들이랍니다.",
-      "moisture": "사료에 들어있는 물의 양이에요. 수분 함량이 높으면 물을 잘 안 마시는 아이들의 음수량 보충에 도움이 돼요. 건사료의 영양 함량을 다른 사료와 정확하게 비교할 때 꼭 확인해야 하는 수치이기도 해요."
-    }
+    "proTipTitle": "수의사의 프로팁"
   },
   "firebaseError": {
     "title": "Firebase 설정 필요",

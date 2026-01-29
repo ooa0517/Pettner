@@ -1,8 +1,7 @@
 'use server';
 
 /**
- * @fileOverview Analyzes pet food ingredients from an image, providing a summary, ingredient details,
- * nutritional insights, and hidden details.
+ * @fileOverview Analyzes pet food ingredients from an image, providing a comprehensive, user-friendly report.
  *
  * - analyzePetFoodIngredients - A function that handles the pet food ingredient analysis process.
  * - AnalyzePetFoodIngredientsInput - The input type for the analyzePetFoodIngredients function.
@@ -39,32 +38,30 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     brand: z.string().optional().describe("Detected Brand Name (optional)")
   }),
   summary: z.object({
-    hashtags: z.array(z.string()).describe("Three hashtags that summarize the product's identity. e.g., ['#고기함량_깡패', '#관절튼튼', '#체중조절용']"),
-    safetyRating: z.enum(['Green', 'Yellow', 'Red']).describe('Options: "Green" (Safe), "Yellow" (Caution), "Red" (Warning)')
+    hashtags: z.array(z.string()).describe("Three hashtags that summarize the product's identity. e.g., ['#고기함량_깡패', '#관절튼튼', '#체중조절용']")
   }),
-  topIngredients: z.array(z.string()).describe("The top 5 ingredients listed on the label."),
-  ingredientsAnalysis: z.object({
-    positive: z.array(
-      z.object({
-        keyword: z.string().describe("Benefit-oriented keyword in one or two words. (e.g., '소화가 편안해요')"),
-        name: z.string().describe("Ingredient Name (e.g., '가수분해 연어')"),
-        description: z.string().describe("Easy-to-understand one-line explanation for the pet parent. (e.g., '연어를 잘게 쪼개서 알러지 반응을 줄여주는 착한 단백질이에요.')")
-      })
-    ).describe("List up to 3 best ingredients."),
-    caution: z.array(
-      z.object({
-        keyword: z.string().describe("Risk-oriented keyword in one or two words. (e.g., '알러지 유발 가능')"),
-        name: z.string().describe("Ingredient Name (e.g., '옥수수 글루텐')"),
-        description: z.string().describe("Easy-to-understand one-line explanation for the pet parent. (e.g., '몇몇 아이들에게는 알러지를 일으킬 수 있는 식물성 단백질이에요.')")
-      })
-    ).describe("List all potential risks.")
-  }),
-  nutritionFacts: z.object({
-    comment: z.string().describe("A friendly, comprehensive comment on the overall macronutrient balance, explaining what it means for different types of pets (e.g., active, senior). e.g., '단백질과 지방 함량이 높아 활동량이 많은 아이나 성장기 아이에게 좋은 에너지원이 될 수 있어요. 하지만 칼로리가 높은 편이라, 실내 생활 위주의 반려견이나 체중 조절이 필요한 경우 급여량 조절에 신경 써주시는 게 좋아요.'")
-  }),
-  expertInsight: z.object({
-    goodPoint: z.string().describe("The single best feature of this product, in a friendly tone."),
-    cautionPoint: z.string().describe("The single most important caution point, in a friendly tone."),
+  allIngredients: z.array(z.string()).describe("A complete list of all ingredients found on the label."),
+  pros: z.array(z.string()).describe("A list of key benefits of this product, explained in an easy-to-understand way."),
+  cons: z.array(z.string()).describe("A list of potential drawbacks or points of caution for this product, explained in an easy-to-understand way."),
+  radarChart: z.array(z.object({
+      attribute: z.string().describe("The attribute being scored."),
+      score: z.number().min(1).max(5).describe("A score from 1 (Not suitable) to 5 (Highly suitable).")
+  })).describe("Data for a radar chart. You MUST provide scores for these 5 exact attributes in Korean: '피부/모질', '소화기 건강', '체중 관리', '관절 강화', '활동 에너지'."),
+  feedingGuide: z.object({
+      puppy: z.array(z.object({
+          weight: z.string().describe("Weight range in kg, e.g., '1-5kg'"),
+          amount: z.string().describe("Recommended daily amount in grams, e.g., '80-120g'"),
+      })).optional(),
+      adult: z.array(z.object({
+          weight: z.string().describe("Weight range in kg, e.g., '5-10kg'"),
+          amount: z.string().describe("Recommended daily amount in grams, e.g., '100-150g'"),
+      })).optional(),
+      senior: z.array(z.object({
+          weight: z.string().describe("Weight range in kg, e.g., '5-10kg'"),
+          amount: z.string().describe("Recommended daily amount in grams, e.g., '90-130g'"),
+      })).optional()
+  }).describe("A guide for daily feeding amounts based on life stage and weight. Calculate based on estimated calories and general pet needs if not explicitly on the label. Provide at least 3 weight ranges per life stage."),
+   expertInsight: z.object({
     proTip: z.string().describe("A practical tip for feeding, in a friendly tone.")
   })
 });
@@ -72,19 +69,17 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
 
 export async function analyzePetFoodIngredients(input: AnalyzePetFoodIngredientsInput): Promise<AnalyzePetFoodIngredientsOutput> {
-  // If the image is too blurry to read ingredients, return an error status.
-  // This logic is simplified here. A real implementation might involve a preliminary check.
   if (!input.ingredientsText && !input.photoDataUri) {
       return {
           status: 'error',
           productInfo: { name: input.productName || '제품명 미확인', brand: input.brandName },
-          summary: { hashtags: ['#분석불가'], safetyRating: 'Red' },
-          topIngredients: [],
-          ingredientsAnalysis: { positive: [], caution: [] },
-          nutritionFacts: { comment: '성분 정보 없이는 영양 분석이 불가능해요.' },
+          summary: { hashtags: ['#분석불가'] },
+          allIngredients: [],
+          pros: [],
+          cons: ["입력된 정보가 부족하여 분석할 수 없습니다."],
+          radarChart: [],
+          feedingGuide: {},
           expertInsight: {
-            goodPoint: '입력된 정보가 부족해서 좋은 점을 찾지 못했어요.',
-            cautionPoint: '성분표를 읽을 수가 없어서 주의할 점을 알려드릴 수 없어요.',
             proTip: '원료 텍스트를 입력하시거나, 성분표가 선명하게 나온 사진을 다시 올려주세요!'
           }
       };
@@ -108,13 +103,12 @@ Your entire response, including all values in the final JSON output, MUST be in 
 # Context
 - Target Species: This analysis is specifically for a {{{petType}}}.
 - Pet's Life Stage: {{#if lifeStage}}The pet is in the '{{{lifeStage}}}' stage. Your analysis should be tailored to this.{{/if}}
-- Pet's Health: {{#if healthConditions}}The pet has pre-existing conditions: {{{healthConditions}}}. Your analysis MUST be extra gentle and considerate of these conditions, especially in the 'caution' and 'expertInsight' sections.{{/if}}
+- Pet's Health: {{#if healthConditions}}The pet has pre-existing conditions: {{{healthConditions}}}. Your analysis MUST be extra gentle and considerate of these conditions.{{/if}}
 
 # Analysis Rules
-1.  **Easy & Simple**: Always prioritize simple words over technical ones.
-2.  **Safety First**: If the image is blurry or the text is insufficient, you must return a JSON with "status": "error".
-3.  **Toxic Check**: Check for species-specific toxic ingredients (e.g., Xylitol for dogs, Lilies for cats) and flag them with the highest priority in the 'caution' section.
-4.  **All Life Stages Food**: If a product is for "all life stages", it's usually formulated for puppies/kittens (the most demanding stage). You MUST explain the pros and cons for different life stages in the 'expertInsight' section. For example, it might be too high in calories for a less active adult or senior pet.
+1.  **Safety First**: If the image is blurry or the text is insufficient, you must return a JSON with "status": "error".
+2.  **Toxic Check**: Check for species-specific toxic ingredients (e.g., Xylitol for dogs, Lilies for cats) and list them in the 'cons' section.
+3.  **All Life Stages Food**: If a product is for "all life stages", it's usually formulated for puppies/kittens. You MUST explain the pros and cons for different life stages in your analysis.
 
 # Input Data
 - Product Name: {{{productName}}}
@@ -132,21 +126,12 @@ Your entire response, including all values in the final JSON output, MUST be in 
 - **status**: "success" if analysis is possible, "error" if not.
 - **productInfo**: Detect name and brand. Fallback to user input or '미확인'.
 - **summary.hashtags**: Create three short, witty hashtags that capture the product's identity. (e.g., #활동량_많은_아이용, #고기함량_깡패, #관절튼튼_필수템)
-- **summary.safetyRating**: "Green", "Yellow", or "Red" based on overall safety.
-- **topIngredients**: Extract the first 5 ingredients from the ingredient list.
-- **ingredientsAnalysis.positive**: List up to 3 best ingredients.
-  - "keyword": A benefit-oriented, catchy phrase. (e.g., "소화가 편안해요")
-  - "name": The ingredient name.
-  - "description": An easy one-line explanation for parents. (e.g., "입자가 작은 단백질이라 알러지 걱정을 덜어주는 착한 성분이에요.")
-- **ingredientsAnalysis.caution**: List ALL potentially risky ingredients.
-  - "keyword": A risk-oriented, intuitive phrase. (e.g., "알러지 유발 가능")
-  - "name": The ingredient name.
-  - "description": An easy one-line explanation of the risk. (e.g., "강아지에 따라 소화가 어렵거나 알러지 반응이 있을 수 있는 곡물이에요.")
-- **nutritionFacts.comment**: Based on the guaranteed analysis, provide a friendly and comprehensive summary of the overall nutritional balance. Explain what the protein and fat levels mean in practical terms and for which types of pets (e.g., active, senior, growing) this food is suitable. Avoid jargon. (e.g., "단백질과 지방 함량이 높아 활동량이 많은 아이나 성장기 아이에게 좋은 에너지원이 될 수 있어요. 하지만 칼로리가 높은 편이라, 실내 생활 위주의 반려견이나 체중 조절이 필요한 경우 급여량 조절에 신경 써주시는 게 좋아요.")
-- **expertInsight**: Break down the final advice into three simple, actionable points.
-  - "goodPoint": The single best thing about this food.
-  - "cautionPoint": The one thing to be most careful about.
-  - "proTip": A practical "honey tip" from a vet.
+- **allIngredients**: List ALL ingredients extracted from the label, in the order they appear.
+- **pros**: List 2-4 key benefits. Explain them simply. (e.g., "신선한 생선이 듬뿍 들어있어, 피부와 털을 반짝이게 하는 오메가3가 풍부해요.")
+- **cons**: List 2-4 potential drawbacks. Explain them simply. (e.g., "단백질 함량이 높아 신장이 약한 아이에게는 부담이 될 수 있어요.")
+- **radarChart**: Provide a score from 1 (not suitable) to 5 (highly suitable) for the following 5 attributes IN KOREAN: '피부/모질', '소화기 건강', '체중 관리', '관절 강화', '활동 에너지'. Your scoring should be based on the ingredients and nutritional profile.
+- **feedingGuide**: Provide a daily feeding guide. If not on the label, estimate it. Provide at least 3 weight ranges for each life stage (puppy, adult, senior) if applicable.
+- **expertInsight.proTip**: A single, practical "honey tip" from a vet.
 `,
 });
 
@@ -164,14 +149,14 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
       return {
           status: 'error',
           productInfo: { name: input.productName || '제품명 미확인', brand: input.brandName },
-          summary: { hashtags: ['#분석오류'], safetyRating: 'Red' },
-          topIngredients: [],
-          ingredientsAnalysis: { positive: [], caution: [] },
-          nutritionFacts: { comment: 'AI 모델이 분석 결과를 생성하지 못했어요.' },
+          summary: { hashtags: ['#분석오류'] },
+          allIngredients: [],
+          pros: [],
+          cons: ["AI 모델이 분석 결과를 생성하지 못했습니다."],
+          radarChart: [],
+          feedingGuide: {},
           expertInsight: {
-              goodPoint: 'AI 모델에 문제가 생겨 좋은 점을 찾지 못했어요.',
-              cautionPoint: '분석 중 오류가 발생해 주의할 점을 알려드릴 수 없어요.',
-              proTip: '입력 내용을 확인하고 다시 시도해주시거나, 잠시 후 이용해주세요!'
+            proTip: '입력 내용을 확인하고 다시 시도해주시거나, 잠시 후 이용해주세요!'
           }
       };
     }

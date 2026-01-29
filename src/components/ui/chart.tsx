@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -355,6 +356,13 @@ function getPayloadConfigFromPayload(
     : config[key as keyof typeof config]
 }
 
+const ChartRadar = RechartsPrimitive.Radar
+const ChartRadarChart = RechartsPrimitive.RadarChart
+const ChartPolarGrid = RechartsPrimitive.PolarGrid
+const ChartPolarAngleAxis = RechartsPrimitive.PolarAngleAxis
+const ChartPolarRadiusAxis = RechartsPrimitive.PolarRadiusAxis
+
+
 export {
   ChartContainer,
   ChartTooltip,
@@ -362,4 +370,9 @@ export {
   ChartLegend,
   ChartLegendContent,
   ChartStyle,
+  ChartRadar,
+  ChartRadarChart,
+  ChartPolarGrid,
+  ChartPolarAngleAxis,
+  ChartPolarRadiusAxis
 }

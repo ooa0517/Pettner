@@ -84,56 +84,75 @@
             "summary": {
               "type": "object",
               "properties": {
-                "hashtags": { "type": "array", "items": { "type": "string" } },
-                "safetyRating": { "type": "string", "enum": ["Green", "Yellow", "Red"] }
+                "hashtags": { "type": "array", "items": { "type": "string" } }
               }
             },
-            "topIngredients": {
-                "type": "array", "items": { "type": "string" }
+            "allIngredients": {
+              "type": "array",
+              "items": { "type": "string" }
             },
-            "ingredientsAnalysis": {
-              "type": "object",
-              "properties": {
-                "positive": {
-                  "type": "array",
-                  "items": {
+            "pros": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "cons": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "radarChart": {
+                "type": "array",
+                "items": {
                     "type": "object",
                     "properties": {
-                      "keyword": { "type": "string" },
-                      "name": { "type": "string" },
-                      "description": { "type": "string" }
-                    }
-                  }
-                },
-                "caution": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "keyword": { "type": "string" },
-                      "name": { "type": "string" },
-                      "description": { "type": "string" }
-                    }
-                  }
+                        "attribute": { "type": "string" },
+                        "score": { "type": "number" }
+                    },
+                    "required": ["attribute", "score"]
                 }
-              }
             },
-            "nutritionFacts": {
-              "type": "object",
-              "properties": {
-                "comment": { "type": "string" }
-              }
+            "feedingGuide": {
+                "type": "object",
+                "properties": {
+                    "puppy": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "weight": { "type": "string" },
+                                "amount": { "type": "string" }
+                            }
+                        }
+                    },
+                    "adult": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "weight": { "type": "string" },
+                                "amount": { "type": "string" }
+                            }
+                        }
+                    },
+                    "senior": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "weight": { "type": "string" },
+                                "amount": { "type": "string" }
+                            }
+                        }
+                    }
+                }
             },
             "expertInsight": {
               "type": "object",
               "properties": {
-                "goodPoint": { "type": "string" },
-                "cautionPoint": { "type": "string" },
                 "proTip": { "type": "string" }
               }
             }
           },
-          "required": ["status", "productInfo", "summary", "expertInsight"]
+          "required": ["status", "productInfo", "summary"]
         },
         "createdAt": {
           "type": "string",
