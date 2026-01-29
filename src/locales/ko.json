@@ -10,7 +10,9 @@
     "myAccount": "내 계정",
     "analysisHistory": "분석 기록",
     "error": "오류",
-    "confirm": "확인"
+    "confirm": "확인",
+    "dog": "강아지",
+    "cat": "고양이"
   },
   "header": {
     "title": "Pettner",
@@ -146,29 +148,34 @@
     "originalImage": "분석 원본",
     "disclaimer": "<strong>면책 조항:</strong> 이 분석은 정보 제공 목적으로, 수의사의 전문적인 의학적 조언을 대체할 수 없습니다. 반려동물의 건강에 이상이 있을 경우, 반드시 전문 수의사와 상담하시기 바랍니다.",
     "analyzeNewProduct": "새로운 제품 분석하기",
-    "buyNowTitle": "최저가 확인하기",
-    "findBestPrice": "최저가 구매하기",
+    "buyNowSectionTitle": "제품 구매하기",
+    "searchOnNaver": "네이버 쇼핑에서 최저가 검색",
     "affiliateDisclaimer": "링크를 통해 제품 구매 시, Pettner는 제휴 활동의 일환으로 일정액의 수수료를 제공받을 수 있습니다.",
     "analysisError": {
       "title": "분석 실패",
       "defaultMessage": "분석 중 오류가 발생했습니다."
     },
-    "recommendationTitle": "이런 아이에게 추천해요",
-    "recommendationDescription": "이 제품이 어떤 부분에 강점이 있는지 차트로 보여드릴게요.",
-    "prosTitle": "좋은 점",
-    "consTitle": "아쉬운 점",
-    "allIngredientsTitle": "전체 원재료 보기",
-    "feedingGuideTitle": "하루 권장 급여량 가이드",
-    "feedingGuideDescription": "일반적인 기준이며, 아이의 활동량과 컨디션에 따라 조절해주세요.",
-    "weight": "체중",
-    "dailyAmount": "하루 급여량",
-    "estimatedCalories": "예상 칼로리",
-    "lifeStages": {
-        "puppy": "퍼피",
-        "adult": "어덜트",
-        "senior": "시니어"
+    "expertReviewTitle": "수의사 총평",
+    "bestPoint": "이런 점이 정말 좋아요",
+    "cautionPoint": "이런 점은 조심하세요",
+    "vetTip": "수의사의 꿀팁",
+    "topIngredientsTitle": "Top 5 주원료",
+    "topIngredientsDescription": "가장 많이 포함된 5가지 원료로, 어떤 음식인지 파악할 수 있어요.",
+    "nutritionProfileTitle": "영양 프로필",
+    "nutritionProfileDescription": "보증성분량을 아이들이 이해하기 쉽게 풀어서 설명해 드릴게요.",
+    "dmBasis": "건물 기준",
+    "protein": "단백질",
+    "fat": "지방",
+    "aafcoDisclaimer": "미국사료협회(AAFCO) 성견 기준 최소치와 비교했어요.",
+    "nutrientTooltips": {
+        "단백": "근육, 피부, 털 건강에 필수! 몸을 구성하는 가장 중요한 벽돌이에요.",
+        "지방": "주요 에너지원! 비타민 흡수를 돕고 체온을 유지하는 역할을 해요.",
+        "섬유": "소화를 돕고 건강한 응가를 만들어요. 장운동을 활발하게 해 변비를 예방해요.",
+        "회분": "뼈와 치아에 필수적인 칼슘, 인 같은 미네랄이 얼마나 들었는지 보여줘요."
     },
-    "proTipTitle": "수의사의 프로팁"
+    "prosTitle": "상세 분석 (좋은 점)",
+    "consTitle": "상세 분석 (아쉬운 점)",
+    "allIngredientsTitle": "전체 원재료 보기"
   },
   "firebaseError": {
     "title": "Firebase 설정 필요",

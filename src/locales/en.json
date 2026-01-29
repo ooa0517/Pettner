@@ -10,7 +10,9 @@
     "myAccount": "My Account",
     "analysisHistory": "Analysis History",
     "error": "Error",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "dog": "Dog",
+    "cat": "Cat"
   },
   "header": {
     "title": "Pettner",
@@ -146,29 +148,34 @@
     "originalImage": "Analysis Source",
     "disclaimer": "<strong>Disclaimer:</strong> This analysis is for informational purposes and cannot replace professional medical advice from a veterinarian. If your pet has any health issues, please consult a professional veterinarian.",
     "analyzeNewProduct": "Analyze a New Product",
-    "buyNowTitle": "Check Prices",
-    "findBestPrice": "Find Best Price",
+    "buyNowSectionTitle": "Purchase Product",
+    "searchOnNaver": "Search on Naver Shopping",
     "affiliateDisclaimer": "When you purchase a product through these links, Pettner may earn a commission as part of our affiliate activities.",
     "analysisError": {
       "title": "Analysis Failed",
       "defaultMessage": "An error occurred during analysis."
     },
-    "recommendationTitle": "Recommended For",
-    "recommendationDescription": "This chart shows how suitable this product is for different needs.",
-    "prosTitle": "Pros",
-    "consTitle": "Cons",
-    "allIngredientsTitle": "Full Ingredient List",
-    "feedingGuideTitle": "Daily Feeding Guide",
-    "feedingGuideDescription": "This is a general guideline. Adjust according to your pet's activity level and condition.",
-    "weight": "Weight",
-    "dailyAmount": "Daily Amount",
-    "estimatedCalories": "Est. Calories",
-    "lifeStages": {
-        "puppy": "Puppy",
-        "adult": "Adult",
-        "senior": "Senior"
+    "expertReviewTitle": "Vet's Summary",
+    "bestPoint": "What's great",
+    "cautionPoint": "What to watch out for",
+    "vetTip": "Vet's Pro Tip",
+    "topIngredientsTitle": "Top 5 Main Ingredients",
+    "topIngredientsDescription": "The first 5 ingredients make up the majority of the food.",
+    "nutritionProfileTitle": "Nutrition Profile",
+    "nutritionProfileDescription": "An easy-to-understand breakdown of the guaranteed analysis.",
+    "dmBasis": "DM basis",
+    "protein": "Protein",
+    "fat": "Fat",
+    "aafcoDisclaimer": "Compared to AAFCO minimum standards for adult {petType}.",
+    "nutrientTooltips": {
+      "단백": "Essential for muscle, skin, and hair health. It's the building block of the body.",
+      "지방": "The main energy source. It helps absorb vitamins and maintain body temperature.",
+      "섬유": "Aids in digestion and helps with healthy bowel movements. Prevents constipation.",
+      "회분": "Represents the mineral content, like calcium and phosphorus, which are essential for bones and teeth."
     },
-    "proTipTitle": "Vet's Pro Tip"
+    "prosTitle": "Detailed Pros",
+    "consTitle": "Detailed Cons",
+    "allIngredientsTitle": "Full Ingredient List"
   },
   "firebaseError": {
     "title": "Firebase Configuration Required",
