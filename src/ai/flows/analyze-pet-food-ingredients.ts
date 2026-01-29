@@ -60,24 +60,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     ).describe("List all potential risks.")
   }),
   nutritionFacts: z.object({
-    protein: z.object({
-        value: z.string().optional().describe("Crude Protein (조단백) percentage as a string, e.g., '30.0% 이상'"),
-        badge: z.string().optional().describe("A friendly badge explaining the value. e.g., '근육 튼튼 💪'")
-    }),
-    fat: z.object({
-        value: z.string().optional().describe("Crude Fat (조지방) percentage as a string, e.g., '15.0% 이상'"),
-        badge: z.string().optional().describe("A friendly badge explaining the value. e.g., '에너지 뿜뿜 ⚡'")
-    }),
-    fiber: z.object({
-        value: z.string().optional().describe("Crude Fiber (조섬유) percentage as a string, e.g., '4.0% 이하'"),
-    }),
-    ash: z.object({
-        value: z.string().optional().describe("Crude Ash (조회분) percentage as a string, e.g., '7.0% 이하'"),
-    }),
-    moisture: z.object({
-        value: z.string().optional().describe("Moisture (수분) percentage as a string, e.g., '10.0% 이하'"),
-    }),
-    comment: z.string().describe("A brief, friendly comment on macronutrient balance. e.g., '튼튼한 성장기 아이에게는 딱 좋지만, 집돌이 댕댕이라면 양 조절이 필요해요!'")
+    comment: z.string().describe("A friendly, comprehensive comment on the overall macronutrient balance, explaining what it means for different types of pets (e.g., active, senior). e.g., '단백질과 지방 함량이 높아 활동량이 많은 아이나 성장기 아이에게 좋은 에너지원이 될 수 있어요. 하지만 칼로리가 높은 편이라, 실내 생활 위주의 반려견이나 체중 조절이 필요한 경우 급여량 조절에 신경 써주시는 게 좋아요.'")
   }),
   expertInsight: z.object({
     goodPoint: z.string().describe("The single best feature of this product, in a friendly tone."),
@@ -98,7 +81,7 @@ export async function analyzePetFoodIngredients(input: AnalyzePetFoodIngredients
           summary: { hashtags: ['#분석불가'], safetyRating: 'Red' },
           topIngredients: [],
           ingredientsAnalysis: { positive: [], caution: [] },
-          nutritionFacts: { protein: {}, fat: {}, fiber: {}, ash: {}, moisture: {}, comment: '성분 정보 없이는 영양 분석이 불가능해요.' },
+          nutritionFacts: { comment: '성분 정보 없이는 영양 분석이 불가능해요.' },
           expertInsight: {
             goodPoint: '입력된 정보가 부족해서 좋은 점을 찾지 못했어요.',
             cautionPoint: '성분표를 읽을 수가 없어서 주의할 점을 알려드릴 수 없어요.',
@@ -159,10 +142,7 @@ Your entire response, including all values in the final JSON output, MUST be in 
   - "keyword": A risk-oriented, intuitive phrase. (e.g., "알러지 유발 가능")
   - "name": The ingredient name.
   - "description": An easy one-line explanation of the risk. (e.g., "강아지에 따라 소화가 어렵거나 알러지 반응이 있을 수 있는 곡물이에요.")
-- **nutritionFacts**: Extract guaranteed analysis values.
-  - "protein.value", "fat.value", etc: The percentage as a string.
-  - "protein.badge", "fat.badge": A short, fun badge explaining the nutrient's role. (e.g., "근육 튼튼 💪", "에너지 뿜뿜 ⚡"). Only add badges for protein and fat.
-  - "comment": A friendly, easy-to-understand comment on the nutritional balance. (e.g., "에너지가 넘치는 성장기 친구들에게는 딱 좋은 영양 설계네요! 하지만 집에서 뒹굴뒹굴하기 좋아하는 친구라면 양을 조금 조절해주는 센스가 필요해요.")
+- **nutritionFacts.comment**: Based on the guaranteed analysis, provide a friendly and comprehensive summary of the overall nutritional balance. Explain what the protein and fat levels mean in practical terms and for which types of pets (e.g., active, senior, growing) this food is suitable. Avoid jargon. (e.g., "단백질과 지방 함량이 높아 활동량이 많은 아이나 성장기 아이에게 좋은 에너지원이 될 수 있어요. 하지만 칼로리가 높은 편이라, 실내 생활 위주의 반려견이나 체중 조절이 필요한 경우 급여량 조절에 신경 써주시는 게 좋아요.")
 - **expertInsight**: Break down the final advice into three simple, actionable points.
   - "goodPoint": The single best thing about this food.
   - "cautionPoint": The one thing to be most careful about.
@@ -187,7 +167,7 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
           summary: { hashtags: ['#분석오류'], safetyRating: 'Red' },
           topIngredients: [],
           ingredientsAnalysis: { positive: [], caution: [] },
-          nutritionFacts: { protein: {}, fat: {}, fiber: {}, ash: {}, moisture: {}, comment: 'AI 모델이 분석 결과를 생성하지 못했어요.' },
+          nutritionFacts: { comment: 'AI 모델이 분석 결과를 생성하지 못했어요.' },
           expertInsight: {
               goodPoint: 'AI 모델에 문제가 생겨 좋은 점을 찾지 못했어요.',
               cautionPoint: '분석 중 오류가 발생해 주의할 점을 알려드릴 수 없어요.',

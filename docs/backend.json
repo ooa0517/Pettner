@@ -121,11 +121,6 @@
             "nutritionFacts": {
               "type": "object",
               "properties": {
-                "protein": { "type": "object", "properties": { "value": { "type": "string" }, "badge": { "type": "string" } } },
-                "fat": { "type": "object", "properties": { "value": { "type": "string" }, "badge": { "type": "string" } } },
-                "fiber": { "type": "object", "properties": { "value": { "type": "string" } } },
-                "ash": { "type": "object", "properties": { "value": { "type": "string" } } },
-                "moisture": { "type": "object", "properties": { "value": { "type": "string" } } },
                 "comment": { "type": "string" }
               }
             },
