@@ -1,4 +1,4 @@
-
+AIzaSyBG9g4T0WiOimSyhozOkrP-NC5M8A3K-es
 # 🐾 Pettner 베타 서비스 출시 매뉴얼
 
 Pettner 성분 분석기 베타 서비스에 오신 것을 환영합니다!
