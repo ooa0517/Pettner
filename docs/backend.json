@@ -1,192 +1,79 @@
-
 {
   "entities": {
-    "UserProfile": {
-      "title": "User Profile",
-      "description": "Represents a user's profile information.",
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
       "type": "object",
+      "description": "Represents a user of the Pettner Ingredient Analyzer application.",
       "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity."
+        },
         "email": {
           "type": "string",
-          "format": "email",
-          "description": "The user's email address."
+          "description": "Email address of the user.",
+          "format": "email"
         },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The timestamp when the user profile was created."
-        }
-      },
-      "required": ["email", "createdAt"]
-    },
-    "PetProfile": {
-      "title": "Pet Profile",
-      "description": "Represents a pet's profile information.",
-      "type": "object",
-      "properties": {
         "name": {
           "type": "string",
-          "description": "The pet's name."
-        },
-        "petType": {
-          "type": "string",
-          "enum": ["Dog", "Cat"],
-          "description": "The type of pet."
-        },
-        "breed": {
-          "type": "string",
-          "description": "The pet's breed."
-        },
-        "birthDate": {
-          "type": "string",
-          "format": "date",
-          "description": "The pet's date of birth."
-        },
-        "healthConditions": {
-          "type": "string",
-          "description": "Any known health conditions of the pet."
-        }
-      },
-      "required": ["name", "petType"]
-    },
-    "AnalysisRecord": {
-      "title": "Analysis Record",
-      "description": "Represents a single pet food analysis event, storing both the original user input and the AI-generated output.",
-      "type": "object",
-      "properties": {
-        "userInput": {
-          "type": "object",
-          "description": "The original data submitted by the user for analysis.",
-          "properties": {
-            "petType": { "type": "string", "enum": ["dog", "cat"] },
-            "productName": { "type": "string" },
-            "brandName": { "type": "string" },
-            "foodType": { "type": "string" },
-            "ingredientsText": { "type": "string" },
-            "healthConditions": { "type": "string" },
-            "photoProvided": { "type": "boolean" },
-            "lifeStage": { "type": "string" }
-          },
-          "required": ["petType", "productName"]
-        },
-        "analysisOutput": {
-          "type": "object",
-          "description": "The structured, user-friendly data returned from the AI analysis.",
-          "properties": {
-            "status": { "type": "string", "enum": ["success", "error"] },
-            "productInfo": {
-              "type": "object",
-              "properties": {
-                "name": { "type": "string" },
-                "brand": { "type": "string" }
-              }
-            },
-            "summary": {
-              "type": "object",
-              "properties": {
-                "hashtags": { "type": "array", "items": { "type": "string" } }
-              }
-            },
-            "allIngredients": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "pros": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "cons": {
-              "type": "array",
-              "items": { "type": "string" }
-            },
-            "radarChart": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "attribute": { "type": "string" },
-                        "score": { "type": "number" }
-                    },
-                    "required": ["attribute", "score"]
-                }
-            },
-            "feedingGuide": {
-                "type": "object",
-                "properties": {
-                    "puppy": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "weight": { "type": "string" },
-                                "amount": { "type": "string" }
-                            }
-                        }
-                    },
-                    "adult": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "weight": { "type": "string" },
-                                "amount": { "type": "string" }
-                            }
-                        }
-                    },
-                    "senior": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "weight": { "type": "string" },
-                                "amount": { "type": "string" }
-                            }
-                        }
-                    }
-                }
-            },
-            "expertInsight": {
-              "type": "object",
-              "properties": {
-                "proTip": { "type": "string" }
-              }
-            }
-          },
-          "required": ["status", "productInfo", "summary"]
+          "description": "Full name of the user."
         },
         "createdAt": {
           "type": "string",
-          "format": "date-time",
-          "description": "The timestamp when the analysis was created."
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
         }
       },
-      "required": ["userInput", "analysisOutput", "createdAt"]
+      "required": [
+        "id",
+        "email",
+        "name",
+        "createdAt"
+      ]
     }
   },
   "auth": {
     "providers": [
-      "email",
-      "google.com"
+      "password",
+      "anonymous"
     ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": {
-        "$ref": "#/entities/UserProfile"
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile data. Uses path-based ownership for security: only the authenticated user can access their own profile.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user.  Corresponds to the Firebase Auth UID."
+            }
+          ]
+        }
       },
-      "description": "Stores public profile information for each user, keyed by their UID."
-    },
-    "/users/{userId}/pets/{petId}": {
-      "schema": {
-        "$ref": "#/entities/PetProfile"
-      },
-      "description": "Stores profile information for each of a user's pets."
-    },
-    "/users/{userId}/analysisHistory/{analysisId}": {
-      "schema": {
-        "$ref": "#/entities/AnalysisRecord"
-      },
-      "description": "Stores the history of all analysis records for a user."
-    }
+      {
+        "path": "/products/{productId}",
+        "definition": {
+          "entityName": "Product",
+          "schema": {
+            "$ref": "#/backend/entities/Product"
+          },
+          "description": "Stores AI analysis results for pet food products. The data in this collection is readable by any authenticated user, but creation should be restricted to authenticated users.",
+          "params": [
+            {
+              "name": "productId",
+              "description": "The unique identifier for the product analysis result."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support the Pettner Ingredient Analyzer MVP, focusing on secure user authentication and storage of AI analysis results for pet food ingredients. The primary goal is to facilitate the creation of a data-driven pet healthcare curation platform. We ensure authorization independence via denormalization and support required query patterns through structural segregation.\n\n1.  **Users Collection:** User data is stored in a dedicated `/users/{userId}` collection. Path-based ownership ensures that only the authenticated user can access their data.\n2.  **Products Collection:** The AI analysis results for pet food ingredients are stored in the `/products/{productId}` collection. This allows for efficient storage and querying of analyzed product data.  Since no user owns a product, this collection is at the root.\n\n**Authorization Independence (Denormalization):**\nThere is no explicit collaborative data in this phase of the application, meaning that no data needs to be denormalized. Future phases involving user-generated content or collaborative features would require appropriate denormalization strategies (e.g., copying user IDs into product documents to indicate who initiated the analysis).\n\n**Querying and Security:**\nThe structure supports secure listing of products because the `products` collection does not store any user-specific data. Security rules on the `/products/{productId}` path will ensure that only authenticated users can create new documents (analysis requests), but the data itself is globally accessible for reading. In future phases with user-generated analysis or reviews, more sophisticated security rules and potentially denormalized authorization data would be needed."
   }
 }
