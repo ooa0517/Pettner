@@ -1,8 +1,8 @@
 
 {
-  "name": "Pettner - 수의 영양학 성분 분석기",
+  "name": "Pettner | 수의 영양학 기반 성분 분석기",
   "short_name": "Pettner",
-  "description": "AI 수의사가 들려주는 우리 아이 사료 성분 이야기",
+  "description": "AI 수의사 선생님이 분석해주는 우리 아이 맞춤 영양 리포트",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -17,8 +17,7 @@
     {
       "src": "https://picsum.photos/seed/pettner-pwa-512/512/512",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     }
   ]
 }

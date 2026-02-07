@@ -1,5 +1,27 @@
-# Firebase Studio
 
-This is a NextJS starter in Firebase Studio.
+# 🐾 Pettner 베타 서비스 출시 매뉴얼
 
-To get started, take a look at src/app/page.tsx.
+Pettner 성분 분석기 베타 서비스에 오신 것을 환영합니다!
+
+## 1. 베타 테스터 초대 방법 (`ooa0517@gmail.com` 등)
+현재 개발 환경의 **미리보기 URL**을 복사하여 전달하면 즉시 이용이 가능합니다.
+- **접속 링크:** [미리보기 창 상단의 URL을 복사하세요]
+- **이용 방법:** 위 링크로 접속 -> 회원가입 -> 사료/간식 분석 시작!
+
+## 2. 주요 기능
+- **AI 성분 분석:** 사진 한 장으로 수의사가 설명해주듯 쉬운 분석 리포트 생성
+- **맞춤 급여 가이드:** 아이의 생애주기(퍼피/어덜트/시니어) 및 몸무게별 권장 급여량 확인
+- **최저가 구매 연동:** 분석 결과 하단에서 쿠팡/아마존 최저가 즉시 확인
+- **분석 히스토리:** 과거에 분석했던 기록을 언제든 다시 확인
+
+## 3. 피드백 수집
+사용 중 불편한 점이나 개선 제안은 헤더의 **'피드백 보내기'** 버튼을 통해 언제든 알려주세요.
+
+## 4. 정식 배포 가이드 (Firebase App Hosting)
+1. Firebase Console 접속
+2. App Hosting 메뉴에서 본 GitHub 저장소 연결
+3. 환경 변수(.env 내용) 설정 후 배포
+4. 생성된 고유 도메인(예: `pettner.web.app`)을 테스터들에게 공유
+
+---
+© 2024 Pettner Team. All rights reserved.
