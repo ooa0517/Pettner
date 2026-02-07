@@ -1,6 +1,6 @@
 'use client';
 
-import { PawPrint, LogOut, LayoutDashboard, ChevronDown, History, Globe } from 'lucide-react';
+import { PawPrint, LogOut, LayoutDashboard, ChevronDown, History, Globe, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/auth-context';
@@ -43,6 +43,13 @@ export default function Header() {
           </h1>
         </Link>
         <div className="flex items-center gap-1 sm:gap-2">
+          <Button variant="ghost" size="sm" asChild className="hidden md:flex text-muted-foreground hover:text-primary">
+            <a href="mailto:support@pettner.ai" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              {t('header.feedback')}
+            </a>
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -66,7 +73,7 @@ export default function Header() {
                      <AvatarImage src={user.photoURL || undefined} />
                      <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
                    </Avatar>
-                   <span className="hidden md:inline">{user.email}</span>
+                   <span className="hidden lg:inline text-sm">{user.email}</span>
                    <ChevronDown className="h-4 w-4 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
@@ -93,14 +100,14 @@ export default function Header() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <>
+            <div className="flex items-center gap-1">
               <Button asChild variant="ghost" size="sm" disabled={!isFirebaseReady}>
                 <Link href="/login">{t('common.login')}</Link>
               </Button>
-              <Button asChild size="sm" disabled={!isFirebaseReady}>
+              <Button asChild size="sm" disabled={!isFirebaseReady} className="rounded-full px-4">
                 <Link href="/signup">{t('common.signup')}</Link>
               </Button>
-            </>
+            </div>
           )}
         </div>
       </div>

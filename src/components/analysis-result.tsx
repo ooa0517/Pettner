@@ -1,4 +1,6 @@
 
+'use client';
+
 import Image from 'next/image';
 import type { AnalyzePetFoodIngredientsOutput, AnalyzePetFoodIngredientsInput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { Button } from '@/components/ui/button';
@@ -24,12 +26,13 @@ import {
 } from "@/components/ui/dialog"
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Repeat, Camera, Dog, Cat, Lightbulb, ThumbsUp, ThumbsDown, Bone, List, Sparkles, Scale, Info } from 'lucide-react';
+import { Repeat, Camera, Dog, Cat, Lightbulb, ThumbsUp, ThumbsDown, Bone, List, Sparkles, Scale, Info, Share2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
 import React from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { useToast } from '@/hooks/use-toast';
 
 
 type AnalysisResultProps = {
@@ -73,12 +76,34 @@ const AmazonIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const { productInfo, summary, allIngredients, pros, cons, radarChart, feedingGuide, expertInsight } = result;
 
   const petType = input.petType.toLowerCase();
   const PetIcon = petType === 'cat' ? Cat : Dog;
 
   const top5Ingredients = allIngredients.slice(0, 5);
+
+  const handleShare = async () => {
+    const shareData = {
+      title: 'Pettner Ingredient Analysis',
+      text: `${productInfo.name} 분석 리포트예요!`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: t('analysisResult.shareSuccess'),
+        });
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+    }
+  };
 
   if (result.status === 'error') {
      return (
@@ -121,24 +146,31 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 <span>{productInfo.brand || t('analysisResult.productAnalyzed')}</span>
              </div>
             <h1 className="text-3xl md:text-4xl font-extrabold font-headline tracking-tight mt-2">{productInfo.name}</h1>
-            {input.photoDataUri && (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="absolute top-4 right-4 h-auto p-2">
-                    <Camera className="w-4 h-4 mr-2"/>
-                    {t('analysisResult.originalImage')}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-3xl">
-                  <DialogHeader>
-                    <DialogTitle>{t('analysisResult.originalImage')}</DialogTitle>
-                  </DialogHeader>
-                  <div className="relative w-full mt-4" style={{'paddingBottom': '150%'}}>
-                    <Image src={input.photoDataUri} alt="Ingredient Label" fill className="object-contain" />
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
+            
+            <div className="flex justify-center gap-2 mt-4">
+              {input.photoDataUri && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-auto p-2">
+                      <Camera className="w-4 h-4 mr-2"/>
+                      {t('analysisResult.originalImage')}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-3xl">
+                    <DialogHeader>
+                      <DialogTitle>{t('analysisResult.originalImage')}</DialogTitle>
+                    </DialogHeader>
+                    <div className="relative w-full mt-4" style={{'paddingBottom': '150%'}}>
+                      <Image src={input.photoDataUri} alt="Ingredient Label" fill className="object-contain" />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
+              <Button variant="outline" size="sm" onClick={handleShare} className="h-auto p-2">
+                <Share2 className="w-4 h-4 mr-2" />
+                {t('analysisResult.shareReport')}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="p-8 bg-muted/30">
             <div className="flex flex-wrap gap-2 justify-center">

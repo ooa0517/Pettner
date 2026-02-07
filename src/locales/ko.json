@@ -1,7 +1,7 @@
 
 {
   "metadata": {
-    "title": "Pettner 성분 분석기 - Beta"
+    "title": "Pettner 성분 분석기 - 베타 서비스"
   },
   "common": {
     "login": "로그인",
@@ -12,13 +12,15 @@
     "error": "오류",
     "confirm": "확인",
     "dog": "강아지",
-    "cat": "고양이"
+    "cat": "고양이",
+    "share": "공유하기"
   },
   "header": {
     "title": "Pettner",
     "firebaseErrorTitle": "Firebase 설정 오류",
     "firebaseErrorDescription": "Firebase가 설정되지 않았습니다. 인증 기능이 동작하지 않습니다. `.env` 파일에 Firebase 프로젝트 정보를 올바르게 입력했는지 확인해주세요.",
-    "accountManagement": "계정 관리"
+    "accountManagement": "계정 관리",
+    "feedback": "피드백 보내기"
   },
   "loginPage": {
     "title": "로그인",
@@ -183,7 +185,9 @@
     "feedingGuideTitle": "일일 권장 급여량",
     "feedingGuideDescription": "성장 단계와 몸무게에 따른 권장 급여량입니다.",
     "weightRange": "몸무게",
-    "dailyAmount": "급여량"
+    "dailyAmount": "급여량",
+    "shareReport": "리포트 공유하기",
+    "shareSuccess": "링크가 복사되었습니다!"
   },
   "firebaseError": {
     "title": "Firebase 설정 필요",
