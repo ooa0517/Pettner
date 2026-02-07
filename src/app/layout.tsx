@@ -2,6 +2,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Providers } from '@/contexts/providers';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const viewport: Viewport = {
   themeColor: '#4B45ED',
@@ -56,7 +57,9 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="https://picsum.photos/seed/pettner-pwa-192/192/192" />
       </head>
       <body className="font-body antialiased">
-        <Providers>{children}</Providers>
+        <FirebaseClientProvider>
+          <Providers>{children}</Providers>
+        </FirebaseClientProvider>
       </body>
     </html>
   );

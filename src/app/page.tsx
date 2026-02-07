@@ -10,8 +10,7 @@ import AnalysisLoading from '@/components/analysis-loading';
 import OnboardingSurvey from '@/components/onboarding-survey';
 import LandingPage from '@/components/landing-page';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/auth-context';
-import { db } from '@/lib/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { saveAnalysisToHistory } from '@/lib/history';
 import { useLanguage } from '@/contexts/language-context';
 
@@ -28,7 +27,8 @@ type AnalysisFormData = {
 
 export default function Home() {
   const { language, t } = useLanguage();
-  const { user, loading: authLoading } = useAuth();
+  const { user, isUserLoading } = useUser();
+  const db = useFirestore();
   
   const [step, setStep] = useState<'landing' | 'survey' | 'input' | 'loading' | 'result'>('landing');
   const [analysisResult, setAnalysisResult] = useState<AnalyzePetFoodIngredientsOutput | null>(null);
@@ -36,12 +36,12 @@ export default function Home() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!isUserLoading && user) {
       setStep('survey');
-    } else if (!authLoading && !user) {
+    } else if (!isUserLoading && !user) {
       setStep('landing');
     }
-  }, [user, authLoading]);
+  }, [user, isUserLoading]);
 
   const handleAnalysis = async (formData: AnalysisFormData) => {
     setStep('loading');
@@ -128,7 +128,7 @@ export default function Home() {
     setStep('input');
   };
 
-  if (authLoading) return null;
+  if (isUserLoading) return null;
 
   return (
     <div className="flex flex-col items-center justify-center flex-grow p-4 md:p-8">

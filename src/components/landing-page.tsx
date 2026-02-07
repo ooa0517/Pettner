@@ -1,26 +1,35 @@
 
 'use client';
 
-import { PawPrint, Apple, Mail, MessageCircle } from 'lucide-react';
+import { PawPrint, Apple, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuth } from '@/firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 
 export default function LandingPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const auth = useAuth();
 
   const handleGoogleLogin = async () => {
-    if (!auth) return;
+    if (!auth) {
+        toast({ variant: 'destructive', title: '로그인 실패', description: 'Firebase가 초기화되지 않았습니다.' });
+        return;
+    }
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast({ variant: 'destructive', title: '로그인 실패', description: '다시 시도해주세요.' });
+      toast({ 
+        variant: 'destructive', 
+        title: '로그인 실패', 
+        description: error.code === 'auth/operation-not-allowed' 
+            ? 'Firebase 콘솔에서 Google 로그인을 활성화해주세요.' 
+            : '다시 시도해주세요.' 
+      });
     }
   };
 

@@ -1,10 +1,10 @@
+
 'use client';
 
 import { PawPrint, LogOut, LayoutDashboard, ChevronDown, History, Globe, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/auth-context';
-import { auth } from '@/lib/firebase';
+import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import {
@@ -19,7 +19,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useLanguage } from '@/contexts/language-context';
 
 export default function Header() {
-  const { user, loading, isFirebaseReady } = useAuth();
+  const { user, isUserLoading } = useUser();
+  const auth = useAuth();
   const router = useRouter();
   const { setLanguage, t } = useLanguage();
 
@@ -63,7 +64,7 @@ export default function Header() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {loading ? (
+          {isUserLoading ? (
             <div className="h-9 w-32 bg-muted rounded-md animate-pulse" />
           ) : user ? (
             <DropdownMenu>
@@ -101,10 +102,10 @@ export default function Header() {
             </DropdownMenu>
           ) : (
             <div className="flex items-center gap-1">
-              <Button asChild variant="ghost" size="sm" disabled={!isFirebaseReady}>
+              <Button asChild variant="ghost" size="sm">
                 <Link href="/login">{t('common.login')}</Link>
               </Button>
-              <Button asChild size="sm" disabled={!isFirebaseReady} className="rounded-full px-4">
+              <Button asChild size="sm" className="rounded-full px-4">
                 <Link href="/signup">{t('common.signup')}</Link>
               </Button>
             </div>
