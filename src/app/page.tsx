@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -36,10 +35,13 @@ export default function Home() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!isUserLoading && user) {
-      setStep('survey');
-    } else if (!isUserLoading && !user) {
-      setStep('landing');
+    if (!isUserLoading) {
+      if (user) {
+        // Only show survey if we haven't shown it this session, or just move to input
+        setStep('survey');
+      } else {
+        setStep('landing');
+      }
     }
   }, [user, isUserLoading]);
 
@@ -70,6 +72,7 @@ export default function Home() {
         if (result.data) {
           setAnalysisResult(result.data);
           setResultInput(input);
+          
           if (user && db && result.data.status === 'success') {
             const userInputForHistory = {
                 petType: formData.petType,
@@ -83,6 +86,7 @@ export default function Home() {
             };
             saveAnalysisToHistory(db, user.uid, userInputForHistory, result.data);
           }
+          
           setStep('result');
           toast({
             title: t('homePage.analysisCompleteTitle'),
@@ -128,7 +132,13 @@ export default function Home() {
     setStep('input');
   };
 
-  if (isUserLoading) return null;
+  if (isUserLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <AnalysisLoading />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center flex-grow p-4 md:p-8">

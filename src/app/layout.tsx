@@ -1,4 +1,3 @@
-
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Providers } from '@/contexts/providers';
@@ -34,12 +33,6 @@ export const metadata: Metadata = {
         alt: 'Pettner 분석기 미리보기',
       },
     ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Pettner | 반려동물 사료 성분 분석기',
-    description: '수의사가 알려주는 진짜 사료 이야기',
-    images: ['https://picsum.photos/seed/pettner-og/1200/630'],
   },
 };
 

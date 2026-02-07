@@ -1,9 +1,8 @@
-
 'use client';
 
 import { PawPrint, Apple, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
@@ -12,6 +11,7 @@ export default function LandingPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const auth = useAuth();
+  const { isUserLoading } = useUser();
 
   const handleGoogleLogin = async () => {
     if (!auth) {
@@ -23,12 +23,16 @@ export default function LandingPage() {
       await signInWithPopup(auth, provider);
     } catch (error: any) {
       console.error(error);
+      let description = '다시 시도해주세요.';
+      if (error.code === 'auth/operation-not-allowed') {
+        description = 'Firebase 콘솔에서 Google 로그인을 활성화해주세요.';
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        description = '로그인 창이 닫혔습니다.';
+      }
       toast({ 
         variant: 'destructive', 
         title: '로그인 실패', 
-        description: error.code === 'auth/operation-not-allowed' 
-            ? 'Firebase 콘솔에서 Google 로그인을 활성화해주세요.' 
-            : '다시 시도해주세요.' 
+        description: description 
       });
     }
   };
@@ -54,7 +58,7 @@ export default function LandingPage() {
       </div>
 
       <div className="w-full max-w-xs space-y-3">
-        <Button onClick={handleGoogleLogin} variant="outline" className="w-full h-14 text-lg rounded-2xl border-2 hover:bg-muted/50 transition-all">
+        <Button onClick={handleGoogleLogin} variant="outline" className="w-full h-14 text-lg rounded-2xl border-2 hover:bg-muted/50 transition-all" disabled={isUserLoading}>
           <Mail className="w-5 h-5 mr-2" />
           Google 계정으로 계속하기
         </Button>

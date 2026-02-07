@@ -1,4 +1,3 @@
-
 'use client';
 
 import { PawPrint, LogOut, LayoutDashboard, ChevronDown, History, Globe, MessageSquare } from 'lucide-react';
@@ -74,7 +73,6 @@ export default function Header() {
                      <AvatarImage src={user.photoURL || undefined} />
                      <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
                    </Avatar>
-                   <span className="hidden lg:inline text-sm">{user.email}</span>
                    <ChevronDown className="h-4 w-4 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>

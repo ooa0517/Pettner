@@ -1,24 +1,27 @@
 'use client';
 
 import { ReactNode, useEffect } from 'react';
-import { AuthProvider, useAuth } from '@/contexts/auth-context';
+import { useUser } from '@/firebase';
 import { LanguageProvider, useLanguage } from '@/contexts/language-context';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import Header from '@/components/header';
-import FirebaseConfigError from '@/components/firebase-config-error';
 
 function AppLayout({ children }: { children: ReactNode }) {
   const { language, t } = useLanguage();
-  const { isFirebaseReady, loading } = useAuth();
+  const { isUserLoading } = useUser();
 
   useEffect(() => {
     document.documentElement.lang = language;
     document.title = t('metadata.title');
   }, [language, t]);
 
-  if (!loading && !isFirebaseReady) {
-    return <FirebaseConfigError />;
+  if (isUserLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
   
   return (
@@ -35,10 +38,8 @@ function AppLayout({ children }: { children: ReactNode }) {
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <AuthProvider>
-      <LanguageProvider>
-        <AppLayout>{children}</AppLayout>
-      </LanguageProvider>
-    </AuthProvider>
+    <LanguageProvider>
+      <AppLayout>{children}</AppLayout>
+    </LanguageProvider>
   );
 }
