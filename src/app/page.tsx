@@ -1,11 +1,14 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { AnalyzePetFoodIngredientsInput, AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { getAnalysis } from '@/app/actions';
 import AnalysisResult from '@/components/analysis-result';
 import ScannerHome from '@/components/scanner-home';
 import AnalysisLoading from '@/components/analysis-loading';
+import OnboardingSurvey from '@/components/onboarding-survey';
+import LandingPage from '@/components/landing-page';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 import { db } from '@/lib/firebase';
@@ -25,15 +28,23 @@ type AnalysisFormData = {
 
 export default function Home() {
   const { language, t } = useLanguage();
+  const { user, loading: authLoading } = useAuth();
   
+  const [step, setStep] = useState<'landing' | 'survey' | 'input' | 'loading' | 'result'>('landing');
   const [analysisResult, setAnalysisResult] = useState<AnalyzePetFoodIngredientsOutput | null>(null);
   const [resultInput, setResultInput] = useState<AnalyzePetFoodIngredientsInput | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      setStep('survey');
+    } else if (!authLoading && !user) {
+      setStep('landing');
+    }
+  }, [user, authLoading]);
 
   const handleAnalysis = async (formData: AnalysisFormData) => {
-    setIsLoading(true);
+    setStep('loading');
     setAnalysisResult(null);
     setResultInput(null);
 
@@ -58,7 +69,7 @@ export default function Home() {
         }
         if (result.data) {
           setAnalysisResult(result.data);
-          setResultInput(input); // Store the input used for this result
+          setResultInput(input);
           if (user && db && result.data.status === 'success') {
             const userInputForHistory = {
                 petType: formData.petType,
@@ -72,6 +83,7 @@ export default function Home() {
             };
             saveAnalysisToHistory(db, user.uid, userInputForHistory, result.data);
           }
+          setStep('result');
           toast({
             title: t('homePage.analysisCompleteTitle'),
             description: t('homePage.analysisCompleteDescription'),
@@ -79,13 +91,12 @@ export default function Home() {
         }
       } catch (error) {
         console.error(error);
+        setStep('input');
         toast({
           variant: "destructive",
           title: t('homePage.analysisFailedTitle'),
           description: error instanceof Error ? error.message : t('homePage.analysisFailedDescriptionUnknown'),
         });
-      } finally {
-        setIsLoading(false);
       }
     };
     
@@ -104,7 +115,7 @@ export default function Home() {
           title: t('homePage.fileReadFailedTitle'),
           description: t('homePage.fileReadFailedDescription'),
         });
-        setIsLoading(false);
+        setStep('input');
       };
     } else {
         await processAndAnalyze(analysisInput);
@@ -114,18 +125,20 @@ export default function Home() {
   const handleReset = () => {
     setAnalysisResult(null);
     setResultInput(null);
-    setIsLoading(false);
+    setStep('input');
   };
+
+  if (authLoading) return null;
 
   return (
     <div className="flex flex-col items-center justify-center flex-grow p-4 md:p-8">
       <div className="w-full max-w-4xl">
-        {isLoading ? (
-          <AnalysisLoading />
-        ) : analysisResult && resultInput ? (
+        {step === 'landing' && <LandingPage />}
+        {step === 'survey' && <OnboardingSurvey onComplete={() => setStep('input')} />}
+        {step === 'input' && <ScannerHome onAnalyze={handleAnalysis} />}
+        {step === 'loading' && <AnalysisLoading />}
+        {step === 'result' && analysisResult && resultInput && (
           <AnalysisResult result={analysisResult} input={resultInput} onReset={handleReset} />
-        ) : (
-          <ScannerHome onAnalyze={handleAnalysis} />
         )}
       </div>
     </div>
