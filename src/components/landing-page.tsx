@@ -1,7 +1,7 @@
 
 'use client';
 
-import { PawPrint, Apple, Mail } from 'lucide-react';
+import { PawPrint, Apple, Mail, Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth, useUser } from '@/firebase';
 import { signInWithPopup, GoogleAuthProvider, OAuthProvider } from 'firebase/auth';
@@ -10,7 +10,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
-export default function LandingPage() {
+export default function LandingPage({ onStart }: { onStart?: () => void }) {
   const { t } = useLanguage();
   const { toast } = useToast();
   const auth = useAuth();
@@ -27,23 +27,16 @@ export default function LandingPage() {
     try {
       await signInWithPopup(auth, provider);
       toast({ title: '로그인 성공', description: '반갑습니다!' });
+      if (onStart) onStart();
     } catch (error: any) {
       console.error('Google Login Error:', error);
       let description = '로그인 중 오류가 발생했습니다.';
-      
       if (error.code === 'auth/popup-closed-by-user') {
         description = '로그인 창이 닫혔습니다.';
       } else if (error.code === 'auth/operation-not-allowed') {
-        description = 'Firebase 콘솔에서 Google 로그인을 활성화해야 합니다.';
-      } else if (error.code === 'auth/unauthorized-domain') {
-        description = '현재 도메인이 Firebase 승인된 도메인 목록에 없습니다. 콘솔의 Authentication > Settings에서 현재 URL을 추가해주세요.';
+        description = 'Firebase 콘솔에서 설정을 확인해주세요.';
       }
-      
-      toast({ 
-        variant: 'destructive', 
-        title: '로그인 실패', 
-        description: `${description} (코드: ${error.code})` 
-      });
+      toast({ variant: 'destructive', title: '로그인 실패', description });
     } finally {
       setIsLoggingIn(false);
     }
@@ -59,29 +52,14 @@ export default function LandingPage() {
     try {
       await signInWithPopup(auth, provider);
       toast({ title: '로그인 성공', description: '반갑습니다!' });
+      if (onStart) onStart();
     } catch (error: any) {
       console.error('Apple Login Error:', error);
-      let description = 'Apple 로그인 중 오류가 발생했습니다.';
-      if (error.code === 'auth/operation-not-allowed') {
-        description = 'Firebase 콘솔에서 Apple 로그인을 활성화해야 합니다.';
-      } else if (error.code === 'auth/unauthorized-domain') {
-        description = '현재 도메인이 Firebase 승인된 도메인 목록에 없습니다.';
-      }
-      toast({ 
-        variant: 'destructive', 
-        title: '로그인 실패', 
-        description: `${description} (코드: ${error.code})` 
-      });
+      toast({ variant: 'destructive', title: '로그인 실패', description: 'Apple 로그인 중 오류가 발생했습니다.' });
     } finally {
       setIsLoggingIn(false);
     }
   };
-
-  const KakaoIcon = () => (
-    <svg className="w-5 h-5 mr-2" fill="#3C1E1E" viewBox="0 0 24 24">
-        <path d="M12 3c-5.523 0-10 3.582-10 8 0 2.872 1.884 5.391 4.712 6.845l-1.196 4.414c-.076.28.243.514.478.361l5.204-3.41c.264.026.533.04.802.04 5.523 0 10-3.582 10-8s-4.477-8-10-8z"/>
-    </svg>
-  );
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-12 animate-in fade-in zoom-in duration-700">
@@ -97,38 +75,53 @@ export default function LandingPage() {
         </p>
       </div>
 
-      <div className="w-full max-w-xs space-y-3">
+      <div className="w-full max-w-sm space-y-4">
+        {/* 로그인 없이 시작하는 메인 버튼 */}
         <Button 
-          onClick={handleGoogleLogin} 
-          variant="outline" 
-          className="w-full h-14 text-lg rounded-2xl border-2 hover:bg-muted/50 transition-all" 
-          disabled={isUserLoading || isLoggingIn}
+          onClick={onStart} 
+          size="lg"
+          className="w-full h-16 text-xl rounded-2xl shadow-xl shadow-primary/30 hover:scale-[1.02] transition-transform"
         >
-          {isLoggingIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Mail className="w-5 h-5 mr-2" />}
-          Google 계정으로 계속하기
-        </Button>
-        
-        <Button 
-          onClick={handleAppleLogin} 
-          className="w-full h-14 text-lg rounded-2xl bg-black hover:bg-black/90 text-white transition-all"
-          disabled={isUserLoading || isLoggingIn}
-        >
-          {isLoggingIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Apple className="w-5 h-5 mr-2" />}
-          Apple 계정으로 계속하기
+          <Sparkles className="mr-2 h-6 w-6" />
+          로그인 없이 바로 시작하기
+          <ArrowRight className="ml-2 h-5 w-5" />
         </Button>
 
-        <Button 
-          onClick={() => toast({ title: '준비 중입니다', description: '카카오 로그인은 곧 추가될 예정입니다!' })} 
-          className="w-full h-14 text-lg rounded-2xl bg-[#FEE500] hover:bg-[#FEE500]/90 text-[#3C1E1E] border-none transition-all"
-          disabled={isUserLoading || isLoggingIn}
-        >
-          <KakaoIcon />
-          카카오톡으로 계속하기
-        </Button>
+        <div className="relative py-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">
+              또는 SNS 계정으로 기록 저장하기
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Button 
+            onClick={handleGoogleLogin} 
+            variant="outline" 
+            className="h-14 rounded-2xl border-2" 
+            disabled={isUserLoading || isLoggingIn}
+          >
+            {isLoggingIn ? <Loader2 className="h-5 w-5 animate-spin" /> : <Mail className="w-5 h-5 mr-2" />}
+            Google
+          </Button>
+          
+          <Button 
+            onClick={handleAppleLogin} 
+            className="h-14 rounded-2xl bg-black text-white"
+            disabled={isUserLoading || isLoggingIn}
+          >
+            {isLoggingIn ? <Loader2 className="h-5 w-5 animate-spin" /> : <Apple className="w-5 h-5 mr-2" />}
+            Apple
+          </Button>
+        </div>
       </div>
 
       <p className="text-xs text-muted-foreground opacity-60">
-        로그인 시 Pettner의 이용약관 및 개인정보 처리방침에<br/>동의하는 것으로 간주됩니다.
+        로그인하시면 분석 기록을 언제든 다시 볼 수 있습니다.
       </p>
     </div>
   );

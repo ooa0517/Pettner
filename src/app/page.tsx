@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -29,21 +30,20 @@ export default function Home() {
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
   
+  // 시작 단계를 landing으로 고정하여 로그인 없이도 진입 가능하게 함
   const [step, setStep] = useState<'landing' | 'survey' | 'input' | 'loading' | 'result'>('landing');
   const [analysisResult, setAnalysisResult] = useState<AnalyzePetFoodIngredientsOutput | null>(null);
   const [resultInput, setResultInput] = useState<AnalyzePetFoodIngredientsInput | null>(null);
   const { toast } = useToast();
 
+  // 사용자가 이미 로그인되어 있다면 landing을 건너뛰고 survey로 바로 갈 수도 있지만, 
+  // 첫 방문자의 경험을 위해 landing에서 시작하는 것을 기본으로 함.
   useEffect(() => {
-    if (!isUserLoading) {
-      if (user) {
-        // Only show survey if we haven't shown it this session, or just move to input
-        setStep('survey');
-      } else {
-        setStep('landing');
-      }
+    if (!isUserLoading && user && step === 'landing') {
+      // 선택 사항: 로그인된 유저는 바로 설문으로 이동 가능
+      // setStep('survey');
     }
-  }, [user, isUserLoading]);
+  }, [user, isUserLoading, step]);
 
   const handleAnalysis = async (formData: AnalysisFormData) => {
     setStep('loading');
@@ -73,6 +73,7 @@ export default function Home() {
           setAnalysisResult(result.data);
           setResultInput(input);
           
+          // 로그인된 사용자만 히스토리에 저장
           if (user && db && result.data.status === 'success') {
             const userInputForHistory = {
                 petType: formData.petType,
@@ -90,7 +91,7 @@ export default function Home() {
           setStep('result');
           toast({
             title: t('homePage.analysisCompleteTitle'),
-            description: t('homePage.analysisCompleteDescription'),
+            description: user ? t('homePage.analysisCompleteDescription') : "분석이 완료되었습니다!",
           });
         }
       } catch (error) {
@@ -143,7 +144,7 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center flex-grow p-4 md:p-8">
       <div className="w-full max-w-4xl">
-        {step === 'landing' && <LandingPage />}
+        {step === 'landing' && <LandingPage onStart={() => setStep('survey')} />}
         {step === 'survey' && <OnboardingSurvey onComplete={() => setStep('input')} />}
         {step === 'input' && <ScannerHome onAnalyze={handleAnalysis} />}
         {step === 'loading' && <AnalysisLoading />}
