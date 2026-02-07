@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -23,7 +24,7 @@ import {
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useState, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
@@ -35,6 +36,7 @@ export default function SignUpPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const { t } = useLanguage();
+  const auth = useAuth();
 
   const formSchema = useMemo(() => z.object({
     email: z.string().email({ message: t('signupPage.invalidEmail') }),

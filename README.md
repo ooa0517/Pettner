@@ -4,12 +4,10 @@
 Pettner 성분 분석기 베타 서비스에 오신 것을 환영합니다!
 
 ## 1. 로그인 활성화 방법 (필수)
-현재 코드는 로그인을 처리할 준비가 되었으나, **Firebase 콘솔**에서 해당 기능을 켜주어야 작동합니다.
-1. [Firebase Console](https://console.firebase.google.com/) 접속
-2. **Build > Authentication > Sign-in method** 메뉴 이동
-3. **Google**과 **Apple**을 각각 선택하여 '사용 설정'으로 변경
-   - Apple의 경우 서비스 ID 설정 등이 필요할 수 있습니다.
-   - Google은 이메일 설정만으로 즉시 가능합니다.
+로그인이 되지 않는다면 **Firebase 콘솔**에서 다음 설정을 확인해야 합니다.
+
+1.  **제공업체 활성화**: [Firebase Console](https://console.firebase.google.com/) > Authentication > Sign-in method에서 **Google**과 **Apple**을 '사용 설정'으로 변경하세요.
+2.  **승인된 도메인 등록 (중요)**: Authentication > Settings > **Authorized domains** 목록에 현재 미리보기 URL의 도메인(예: `studio-XXXX.firebase-studio.google`)을 추가해야 팝업 로그인이 작동합니다.
 
 ## 2. 베타 테스터 초대 방법
 현재 개발 환경의 **미리보기 URL**을 복사하여 전달하면 즉시 이용이 가능합니다.

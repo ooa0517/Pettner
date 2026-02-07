@@ -13,8 +13,11 @@ export default function OnboardingSurvey({ onComplete }: { onComplete: () => voi
           <Sparkles className="w-8 h-8 text-primary" />
         </div>
         <h2 className="text-3xl font-extrabold font-headline leading-tight">
-          반갑습니다!<br/>분석을 시작해볼까요?
+          반갑습니다!<br/>식단 분석을 시작해볼까요?
         </h2>
+        <p className="text-xl font-bold text-primary">
+          우리 아이를 위한 수의 영양학 기반<br/>성분 분석을 하시겠습니까?
+        </p>
         <p className="text-muted-foreground">
           Pettner는 사료, 간식, 영양제를 아우르는<br/>전 세계 수의 영양학 근거를 기반으로 분석합니다.
         </p>

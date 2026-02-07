@@ -28,14 +28,22 @@ export default function LandingPage() {
       await signInWithPopup(auth, provider);
       toast({ title: '로그인 성공', description: '반갑습니다!' });
     } catch (error: any) {
-      console.error(error);
+      console.error('Google Login Error:', error);
       let description = '로그인 중 오류가 발생했습니다.';
+      
       if (error.code === 'auth/popup-closed-by-user') {
         description = '로그인 창이 닫혔습니다.';
       } else if (error.code === 'auth/operation-not-allowed') {
         description = 'Firebase 콘솔에서 Google 로그인을 활성화해야 합니다.';
+      } else if (error.code === 'auth/unauthorized-domain') {
+        description = '현재 도메인이 Firebase 승인된 도메인 목록에 없습니다. 콘솔의 Authentication > Settings에서 현재 URL을 추가해주세요.';
       }
-      toast({ variant: 'destructive', title: '로그인 실패', description });
+      
+      toast({ 
+        variant: 'destructive', 
+        title: '로그인 실패', 
+        description: `${description} (코드: ${error.code})` 
+      });
     } finally {
       setIsLoggingIn(false);
     }
@@ -52,12 +60,18 @@ export default function LandingPage() {
       await signInWithPopup(auth, provider);
       toast({ title: '로그인 성공', description: '반갑습니다!' });
     } catch (error: any) {
-      console.error(error);
+      console.error('Apple Login Error:', error);
       let description = 'Apple 로그인 중 오류가 발생했습니다.';
       if (error.code === 'auth/operation-not-allowed') {
         description = 'Firebase 콘솔에서 Apple 로그인을 활성화해야 합니다.';
+      } else if (error.code === 'auth/unauthorized-domain') {
+        description = '현재 도메인이 Firebase 승인된 도메인 목록에 없습니다.';
       }
-      toast({ variant: 'destructive', title: '로그인 실패', description });
+      toast({ 
+        variant: 'destructive', 
+        title: '로그인 실패', 
+        description: `${description} (코드: ${error.code})` 
+      });
     } finally {
       setIsLoggingIn(false);
     }
@@ -99,7 +113,7 @@ export default function LandingPage() {
           className="w-full h-14 text-lg rounded-2xl bg-black hover:bg-black/90 text-white transition-all"
           disabled={isUserLoading || isLoggingIn}
         >
-          <Apple className="w-5 h-5 mr-2" />
+          {isLoggingIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Apple className="w-5 h-5 mr-2" />}
           Apple 계정으로 계속하기
         </Button>
 
