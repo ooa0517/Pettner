@@ -1,7 +1,7 @@
 
 {
   "metadata": {
-    "title": "Pettner Ingredient Analyzer"
+    "title": "Pettner Ingredient Analyzer - Beta"
   },
   "common": {
     "login": "Login",
@@ -135,7 +135,8 @@
     "analyzeButton": "Start Ingredient Analysis",
     "instruction": "* Please take a clear picture of the 'Ingredients' and 'Guaranteed Analysis'.",
     "orUploadPhoto": "Or Upload a Photo",
-    "imagePrompt": "Click or drag file to this area to upload.<br/>(Product name, ingredients, guaranteed analysis)"
+    "imagePrompt": "Click or drag file to this area to upload.<br/>(Product name, ingredients, guaranteed analysis)",
+    "betaNotice": "Pettner is currently in <strong>Beta</strong>. <br/> We welcome your valuable feedback."
   },
   "analysisLoading": {
     "title": "Analyzing Ingredients...",
@@ -148,8 +149,8 @@
     "originalImage": "Analysis Source",
     "disclaimer": "<strong>Disclaimer:</strong> This analysis is for informational purposes and cannot replace professional medical advice from a veterinarian. If your pet has any health issues, please consult a professional veterinarian.",
     "analyzeNewProduct": "Analyze a New Product",
-    "buyNowSectionTitle": "Buy Now",
-    "searchOnCoupang": "Buy on Coupang",
+    "buyNowSectionTitle": "Check Lowest Price",
+    "searchOnCoupang": "Search on Coupang",
     "searchOnAmazon": "Search on Amazon",
     "affiliateDisclaimer": "When you purchase a product through these links, Pettner may earn a commission as part of our affiliate activities.",
     "analysisError": {
@@ -160,7 +161,7 @@
     "bestPoint": "What's great",
     "cautionPoint": "What to watch out for",
     "vetTip": "Vet's Pro Tip",
-    "topIngredientsTitle": "Top 5 Main Ingredients",
+    "topIngredientsTitle": "Top 5 Ingredients",
     "topIngredientsDescription": "The first 5 ingredients make up the majority of the food.",
     "nutritionProfileTitle": "Nutrition Profile",
     "nutritionProfileDescription": "An easy-to-understand breakdown of the guaranteed analysis.",
@@ -177,10 +178,12 @@
     "prosTitle": "Detailed Pros",
     "consTitle": "Detailed Cons",
     "allIngredientsTitle": "Full Ingredient List",
-    "radarChartTitle": "Recommended For",
-    "radarChartDescription": "A suitability score for pets with these traits.",
+    "radarChartTitle": "Suitability Score",
+    "radarChartDescription": "How well this food fits for different health goals.",
     "feedingGuideTitle": "Daily Feeding Guide",
-    "feedingGuideDescription": "Recommended daily amount based on your pet's life stage and weight."
+    "feedingGuideDescription": "Recommended daily amount based on your pet's life stage and weight.",
+    "weightRange": "Weight",
+    "dailyAmount": "Amount"
   },
   "firebaseError": {
     "title": "Firebase Configuration Required",

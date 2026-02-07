@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import type { AnalyzePetFoodIngredientsOutput, AnalyzePetFoodIngredientsInput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import {
   ChartRadar,
   ChartRadarChart,
 } from '@/components/ui/chart';
-import type { ChartConfig } from '@/components/ui/chart';
+import { ResponsiveContainer } from 'recharts';
 
 import { Badge } from '@/components/ui/badge';
 import {
@@ -22,11 +23,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Repeat, Camera, Dog, Cat, Lightbulb, ThumbsUp, ThumbsDown, Bone, Info, HelpingHand, List, Sparkles } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Repeat, Camera, Dog, Cat, Lightbulb, ThumbsUp, ThumbsDown, Bone, List, Sparkles, Scale, Info } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
 import React from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 
 
 type AnalysisResultProps = {
@@ -41,7 +44,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="p-2 bg-background border rounded-lg shadow-lg">
         <p className="font-bold">{label}</p>
-        <p className="text-sm text-primary">{`점수: ${payload[0].value} / 5`}</p>
+        <p className="text-sm text-primary">{`Score: ${payload[0].value} / 5`}</p>
       </div>
     );
   }
@@ -76,18 +79,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   const PetIcon = petType === 'cat' ? Cat : Dog;
 
   const top5Ingredients = allIngredients.slice(0, 5);
-  
-  const chartConfig = {
-    score: {
-      label: "Score",
-      color: "hsl(var(--primary))",
-    },
-    피부모질: { color: "hsl(var(--chart-1))" },
-    소화기건강: { color: "hsl(var(--chart-2))" },
-    체중관리: { color: "hsl(var(--chart-3))" },
-    관절강화: { color: "hsl(var(--chart-4))" },
-    활동에너지: { color: "hsl(var(--chart-5))" },
-  } satisfies ChartConfig;
 
   if (result.status === 'error') {
      return (
@@ -111,9 +102,18 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
      )
   }
 
+  const handleShopRedirect = (platform: 'coupang' | 'amazon') => {
+    const query = encodeURIComponent(productInfo.name);
+    if (platform === 'coupang') {
+      window.open(`https://www.coupang.com/np/search?q=${query}`, '_blank');
+    } else {
+      window.open(`https://www.amazon.com/s?k=${query}`, '_blank');
+    }
+  };
+
   return (
     <TooltipProvider>
-      <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="space-y-8 animate-in fade-in duration-500 pb-20">
         <Card className="text-center shadow-2xl shadow-primary/10 border-primary/20 overflow-hidden">
           <CardHeader className="p-8 bg-card relative">
              <div className="flex justify-center items-center gap-2 text-muted-foreground font-semibold">
@@ -134,7 +134,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                     <DialogTitle>{t('analysisResult.originalImage')}</DialogTitle>
                   </DialogHeader>
                   <div className="relative w-full mt-4" style={{'paddingBottom': '150%'}}>
-                    <Image src={input.photoDataUri} alt="Ingredient Label" layout="fill" objectFit="contain" />
+                    <Image src={input.photoDataUri} alt="Ingredient Label" fill className="object-contain" />
                   </div>
                 </DialogContent>
               </Dialog>
@@ -143,7 +143,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           <CardContent className="p-8 bg-muted/30">
             <div className="flex flex-wrap gap-2 justify-center">
               {summary.hashtags.map((tag, index) => (
-                <Badge key={index} variant="outline" className="text-base px-3 py-1.5 border-primary/30 bg-primary/10 text-primary-foreground/80">{tag}</Badge>
+                <Badge key={index} variant="outline" className="text-base px-3 py-1.5 border-primary/30 bg-primary/10 text-primary">{tag}</Badge>
               ))}
             </div>
           </CardContent>
@@ -157,25 +157,25 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-              <div className="flex items-start gap-4 p-4 rounded-lg bg-green-500/10">
-                  <div className="p-2 bg-white rounded-full"><ThumbsUp className="text-green-600"/></div>
+              <div className="flex items-start gap-4 p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <div className="p-2 bg-white rounded-full shadow-sm"><ThumbsUp className="text-green-600 w-5 h-5"/></div>
                   <div>
-                      <h4 className="font-semibold text-green-800">{t('analysisResult.bestPoint')}</h4>
-                      <p className="mt-1 text-foreground/80">{pros[0]}</p>
+                      <h4 className="font-bold text-green-800">{t('analysisResult.bestPoint')}</h4>
+                      <p className="mt-1 text-foreground/80 leading-relaxed">{pros[0]}</p>
                   </div>
               </div>
-              <div className="flex items-start gap-4 p-4 rounded-lg bg-yellow-500/10">
-                  <div className="p-2 bg-white rounded-full"><ThumbsDown className="text-yellow-600"/></div>
+              <div className="flex items-start gap-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <div className="p-2 bg-white rounded-full shadow-sm"><ThumbsDown className="text-red-600 w-5 h-5"/></div>
                   <div>
-                      <h4 className="font-semibold text-yellow-800">{t('analysisResult.cautionPoint')}</h4>
-                      <p className="mt-1 text-foreground/80">{cons[0]}</p>
+                      <h4 className="font-bold text-red-800">{t('analysisResult.cautionPoint')}</h4>
+                      <p className="mt-1 text-foreground/80 leading-relaxed">{cons[0]}</p>
                   </div>
               </div>
-              <div className="flex items-start gap-4 p-4 rounded-lg bg-sky-500/10">
-                  <div className="p-2 bg-white rounded-full"><Lightbulb className="text-sky-600"/></div>
+              <div className="flex items-start gap-4 p-4 rounded-lg bg-sky-500/10 border border-sky-500/20">
+                  <div className="p-2 bg-white rounded-full shadow-sm"><Lightbulb className="text-sky-600 w-5 h-5"/></div>
                   <div>
-                      <h4 className="font-semibold text-sky-800">{t('analysisResult.vetTip')}</h4>
-                      <p className="mt-1 text-foreground/80">{expertInsight.proTip}</p>
+                      <h4 className="font-bold text-sky-800">{t('analysisResult.vetTip')}</h4>
+                      <p className="mt-1 text-foreground/80 leading-relaxed">{expertInsight.proTip}</p>
                   </div>
               </div>
           </CardContent>
@@ -190,9 +190,11 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                <CardDescription>{t('analysisResult.topIngredientsDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3">
                     {top5Ingredients.map((ing, index) => (
-                        <Badge key={index} variant="secondary" className="text-base px-3 py-1">{ing}</Badge>
+                        <Badge key={index} variant="secondary" className="text-base px-4 py-2 bg-muted/50 hover:bg-primary/10 transition-colors">
+                           <span className="text-primary font-bold mr-2">{index + 1}</span> {ing}
+                        </Badge>
                     ))}
                 </div>
             </CardContent>
@@ -201,19 +203,19 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
        <Card className="shadow-lg">
           <CardHeader>
               <CardTitle className="flex items-center gap-3 text-xl font-headline">
-                  <Sparkles className="text-primary"/>
+                  <Scale className="text-primary"/>
                   {t('analysisResult.radarChartTitle')}
               </CardTitle>
               <CardDescription>{t('analysisResult.radarChartDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-60 w-full">
+            <div className="h-72 w-full mt-4">
               <ResponsiveContainer width="100%" height="100%">
-                <ChartRadarChart data={radarChart} >
+                <ChartRadarChart data={radarChart} cx="50%" cy="50%" outerRadius="80%">
                     <ChartTooltip content={<CustomTooltip />} />
-                    <ChartPolarGrid />
-                    <ChartPolarAngleAxis dataKey="attribute" />
-                    <ChartRadar name="Score" dataKey="score" fill="hsl(var(--primary))" fillOpacity={0.6} />
+                    <ChartPolarGrid stroke="#e2e8f0" />
+                    <ChartPolarAngleAxis dataKey="attribute" tick={{ fill: '#64748b', fontSize: 13, fontWeight: 500 }} />
+                    <ChartRadar name="Suitability" dataKey="score" fill="hsl(var(--primary))" fillOpacity={0.4} stroke="hsl(var(--primary))" strokeWidth={2} />
                 </ChartRadarChart>
               </ResponsiveContainer>
             </div>
@@ -221,7 +223,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </Card>
 
         {pros.length > 1 && (
-          <Card className="shadow-lg">
+          <Card className="shadow-lg border-l-4 border-l-green-500">
               <CardHeader>
               <CardTitle className="flex items-center gap-3 text-xl font-headline">
                   <ThumbsUp className="text-green-500" />
@@ -229,13 +231,13 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               </CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="space-y-3">
+                <ul className="space-y-4">
                   {pros.slice(1).map((item, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <div className="flex-shrink-0 w-5 h-5 mt-1 rounded-full bg-green-100 flex items-center justify-center">
+                    <li key={index} className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/30 transition-colors">
+                      <div className="flex-shrink-0 w-6 h-6 mt-0.5 rounded-full bg-green-100 flex items-center justify-center">
                         <ThumbsUp className="w-3 h-3 text-green-600"/>
                       </div>
-                      <p className="text-foreground/80">{item}</p>
+                      <p className="text-foreground/80 leading-relaxed">{item}</p>
                     </li>
                   ))}
                 </ul>
@@ -244,7 +246,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         )}
 
          {cons.length > 1 && (
-            <Card className="shadow-lg">
+            <Card className="shadow-lg border-l-4 border-l-red-500">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl font-headline">
                   <ThumbsDown className="text-red-500" />
@@ -252,13 +254,13 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                  <ul className="space-y-3">
+                  <ul className="space-y-4">
                     {cons.slice(1).map((item, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-5 h-5 mt-1 rounded-full bg-red-100 flex items-center justify-center">
+                      <li key={index} className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/30 transition-colors">
+                        <div className="flex-shrink-0 w-6 h-6 mt-0.5 rounded-full bg-red-100 flex items-center justify-center">
                           <ThumbsDown className="w-3 h-3 text-red-600"/>
                         </div>
-                        <p className="text-foreground/80">{item}</p>
+                        <p className="text-foreground/80 leading-relaxed">{item}</p>
                       </li>
                     ))}
                   </ul>
@@ -275,8 +277,8 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ScrollArea className="h-48 w-full p-4 border rounded-lg">
-                <p className="text-muted-foreground leading-relaxed">
+              <ScrollArea className="h-48 w-full p-4 border rounded-lg bg-muted/10">
+                <p className="text-muted-foreground leading-relaxed text-sm">
                     {allIngredients.join(', ')}
                 </p>
               </ScrollArea>
@@ -287,48 +289,83 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
          <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-xl font-headline">
-                  <HelpingHand className="text-primary"/>
+                  <Scale className="text-primary"/>
                   {t('analysisResult.feedingGuideTitle')}
               </CardTitle>
                <CardDescription>{t('analysisResult.feedingGuideDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
-              {/* TODO: Add tabs for puppy, adult, senior */}
+               <Tabs defaultValue="adult" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3 mb-6">
+                    <TabsTrigger value="puppy">{t('scannerHome.lifeStages.puppy')}</TabsTrigger>
+                    <TabsTrigger value="adult">{t('scannerHome.lifeStages.adult')}</TabsTrigger>
+                    <TabsTrigger value="senior">{t('scannerHome.lifeStages.senior')}</TabsTrigger>
+                  </TabsList>
+                  
+                  {['puppy', 'adult', 'senior'].map((stage) => (
+                    <TabsContent key={stage} value={stage}>
+                      {feedingGuide[stage as keyof typeof feedingGuide] ? (
+                        <div className="border rounded-lg overflow-hidden">
+                           <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead className="text-center">{t('analysisResult.weightRange')}</TableHead>
+                                <TableHead className="text-center">{t('analysisResult.dailyAmount')}</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {feedingGuide[stage as keyof typeof feedingGuide]?.map((row, idx) => (
+                                <TableRow key={idx}>
+                                  <TableCell className="text-center font-medium">{row.weight}</TableCell>
+                                  <TableCell className="text-center">{row.amount}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          {t('historyDetailPage.notFound')}
+                        </div>
+                      )}
+                    </TabsContent>
+                  ))}
+                </Tabs>
             </CardContent>
         </Card>
         
-        <div className="space-y-4 text-center border-t pt-8 mt-8">
-            <h3 className="text-lg font-semibold font-headline">{t('analysisResult.buyNowSectionTitle')}</h3>
-            <div className="flex flex-col md:flex-row gap-3 justify-center">
+        <div className="space-y-6 text-center border-t border-dashed pt-12 mt-12 bg-primary/5 rounded-3xl p-8">
+            <div className="flex flex-col items-center gap-2">
+              <Badge variant="outline" className="text-primary border-primary bg-primary/5 px-4 py-1">BEST PRICE</Badge>
+              <h3 className="text-2xl font-extrabold font-headline">{t('analysisResult.buyNowSectionTitle')}</h3>
+            </div>
+            
+            <div className="flex flex-col md:flex-row gap-4 justify-center">
                 <Button
                     variant="outline"
-                    className="w-full md:w-auto font-bold justify-center"
-                    size="lg"
-                    onClick={() => {
-                        const query = encodeURIComponent(productInfo.name);
-                        window.open(`https://www.coupang.com/np/search?q=${query}`, '_blank');
-                    }}>
-                    <CoupangIcon className="h-5" />
+                    className="w-full md:w-56 h-14 font-bold justify-center border-2 border-primary/20 hover:border-primary/50 hover:bg-white shadow-sm transition-all"
+                    onClick={() => handleShopRedirect('coupang')}>
+                    <CoupangIcon className="h-6 mr-3" />
+                    <span>{t('analysisResult.searchOnCoupang')}</span>
                 </Button>
                  <Button
                     variant="outline"
-                    className="w-full md:w-auto font-bold justify-center"
-                    size="lg"
-                    onClick={() => {
-                        const query = encodeURIComponent(productInfo.name);
-                        window.open(`https://www.amazon.com/s?k=${query}`, '_blank');
-                    }}>
-                    <AmazonIcon className="h-5" />
+                    className="w-full md:w-56 h-14 font-bold justify-center border-2 border-primary/20 hover:border-primary/50 hover:bg-white shadow-sm transition-all"
+                    onClick={() => handleShopRedirect('amazon')}>
+                    <AmazonIcon className="h-6 mr-3" />
+                    <span>{t('analysisResult.searchOnAmazon')}</span>
                 </Button>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground text-center max-w-md mx-auto">
+            <p className="mt-2 text-xs text-muted-foreground text-center max-w-md mx-auto leading-relaxed italic">
               {t('analysisResult.affiliateDisclaimer')}
             </p>
         </div>
         
-        <div className="text-center pt-4">
-            <p className="text-xs text-muted-foreground text-center max-w-2xl mx-auto mb-4" dangerouslySetInnerHTML={{ __html: t('analysisResult.disclaimer') }} />
-            <Button onClick={onReset} variant="outline" size="lg">
+        <div className="text-center pt-8 space-y-6">
+            <div className="p-4 bg-muted/50 rounded-xl">
+              <p className="text-xs text-muted-foreground text-center max-w-2xl mx-auto leading-relaxed" dangerouslySetInnerHTML={{ __html: t('analysisResult.disclaimer') }} />
+            </div>
+            <Button onClick={onReset} variant="outline" size="lg" className="rounded-full px-10">
               <Repeat className="mr-2 h-4 w-4" />
               {resetButtonText || t('analysisResult.analyzeNewProduct')}
             </Button>
