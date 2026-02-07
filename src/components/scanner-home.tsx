@@ -2,7 +2,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Camera, Sparkles, HeartPulse, FileText, Package, Building, Pilcrow, Dog, Cat, Upload, ChevronDown, Baby, Bone, Elderly, Info } from 'lucide-react';
+import { Camera, Sparkles, HeartPulse, FileText, Package, Building, Pilcrow, Dog, Cat, Upload, ChevronDown, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
 
 type AnalysisFormValues = {
   petType: 'dog' | 'cat';
@@ -68,6 +69,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
     },
   });
 
+  const selectedPet = form.watch('petType');
   const imageFile = form.watch('image');
 
   const onSubmit = (data: AnalysisFormValues) => {
@@ -75,68 +77,122 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+    <div className="space-y-6 max-w-2xl mx-auto pb-10">
       <Alert className="bg-primary/5 border-primary/20">
         <Info className="h-4 w-4 text-primary" />
         <AlertTitle className="text-primary font-bold">Beta Service</AlertTitle>
         <AlertDescription className="text-muted-foreground text-sm" dangerouslySetInnerHTML={{ __html: t('scannerHome.betaNotice')}} />
       </Alert>
 
-      <Card className="text-center shadow-2xl shadow-primary/10 animate-in fade-in-50 duration-700 border-primary/20">
-        <CardHeader className="p-8 md:p-12">
-          <h1 className="text-3xl md:text-4xl font-extrabold font-headline tracking-tight">{t('scannerHome.title')}</h1>
-          <CardDescription className="text-muted-foreground pt-3 text-base" dangerouslySetInnerHTML={{ __html: t('scannerHome.descriptionV2')}} />
+      <Card className="shadow-2xl shadow-primary/10 animate-in fade-in-50 duration-700 border-primary/20 overflow-hidden">
+        <CardHeader className="p-8 md:p-10 text-center bg-muted/30 border-b">
+          <h1 className="text-3xl font-extrabold font-headline tracking-tight">{t('scannerHome.title')}</h1>
+          <CardDescription className="text-muted-foreground pt-2 text-base" dangerouslySetInnerHTML={{ __html: t('scannerHome.descriptionV2')}} />
         </CardHeader>
-        <CardContent className="p-8 pt-0">
+        <CardContent className="p-6 md:p-8">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 text-left">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
               <FormField
                 control={form.control}
                 name="petType"
                 render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel className="font-semibold">{t('scannerHome.petTypeLabel')}</FormLabel>
+                  <FormItem className="space-y-4">
+                    <FormLabel className="text-lg font-bold flex items-center gap-2">
+                       <span className="w-1.5 h-6 bg-primary rounded-full" />
+                       {t('scannerHome.petTypeLabel')}
+                    </FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                         className="grid grid-cols-2 gap-4"
                       >
-                        <FormItem>
-                          <FormControl>
-                            <RadioGroupItem value="dog" id="dog" className="sr-only" />
-                          </FormControl>
-                          <Label htmlFor="dog" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary transition-all">
-                            <Dog className="mb-3 h-6 w-6" />
-                            {t('scannerHome.petTypes.dog')}
+                        <div>
+                          <RadioGroupItem value="dog" id="dog" className="sr-only" />
+                          <Label
+                            htmlFor="dog"
+                            className={cn(
+                              "flex flex-col items-center justify-center rounded-2xl border-2 p-6 cursor-pointer transition-all hover:bg-primary/5",
+                              selectedPet === 'dog' ? "border-primary bg-primary/10 shadow-lg" : "border-muted bg-popover"
+                            )}
+                          >
+                            <Dog className={cn("mb-3 h-10 w-10 transition-colors", selectedPet === 'dog' ? "text-primary" : "text-muted-foreground")} />
+                            <span className={cn("font-bold text-lg", selectedPet === 'dog' ? "text-primary" : "text-muted-foreground")}>
+                                {t('scannerHome.petTypes.dog')}
+                            </span>
                           </Label>
-                        </FormItem>
-                        <FormItem>
-                           <FormControl>
-                            <RadioGroupItem value="cat" id="cat" className="sr-only" />
-                          </FormControl>
-                          <Label htmlFor="cat" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary transition-all">
-                             <Cat className="mb-3 h-6 w-6" />
-                            {t('scannerHome.petTypes.cat')}
+                        </div>
+                        <div>
+                          <RadioGroupItem value="cat" id="cat" className="sr-only" />
+                          <Label
+                            htmlFor="cat"
+                            className={cn(
+                              "flex flex-col items-center justify-center rounded-2xl border-2 p-6 cursor-pointer transition-all hover:bg-primary/5",
+                              selectedPet === 'cat' ? "border-primary bg-primary/10 shadow-lg" : "border-muted bg-popover"
+                            )}
+                          >
+                            <Cat className={cn("mb-3 h-10 w-10 transition-colors", selectedPet === 'cat' ? "text-primary" : "text-muted-foreground")} />
+                            <span className={cn("font-bold text-lg", selectedPet === 'cat' ? "text-primary" : "text-muted-foreground")}>
+                                {t('scannerHome.petTypes.cat')}
+                            </span>
                           </Label>
-                        </FormItem>
+                        </div>
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              <div className="space-y-4">
+                <FormLabel className="text-lg font-bold flex items-center gap-2">
+                   <span className="w-1.5 h-6 bg-primary rounded-full" />
+                   {t('scannerHome.imageLabel')}
+                </FormLabel>
+                <FormField
+                    control={form.control}
+                    name="image"
+                    render={({ field: { onChange, value, ...rest } }) => (
+                        <FormItem>
+                            <FormControl>
+                              <div className="relative w-full h-48 border-2 border-dashed rounded-2xl flex flex-col justify-center items-center text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all bg-muted/20 group">
+                                  <div className="p-4 bg-white rounded-full shadow-md group-hover:scale-110 transition-transform">
+                                    <Camera className="h-8 w-8 text-primary" />
+                                  </div>
+                                  <div className="mt-4 px-4">
+                                      {imageFile && imageFile.length > 0 ? (
+                                          <p className="font-bold text-primary truncate max-w-xs">{imageFile[0].name}</p>
+                                      ) : (
+                                          <div className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: t('scannerHome.imagePrompt') }} />
+                                      )}
+                                  </div>
+                                  <Input 
+                                      type="file" 
+                                      accept="image/*" 
+                                      capture="environment"
+                                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                      onChange={(e) => onChange(e.target.files)}
+                                      {...rest}
+                                  />
+                              </div>
+                            </FormControl>
+                            <FormDescription className="text-center mt-2">{t('scannerHome.imageDescription')}</FormDescription>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+              </div>
               
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="productName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2"><Package className="w-4 h-4"/>{t('scannerHome.productNameLabel')}</FormLabel>
+                      <FormLabel className="font-bold flex items-center gap-2"><Package className="w-4 h-4 text-primary"/>{t('scannerHome.productNameLabel')}</FormLabel>
                       <FormControl>
-                        <Input placeholder={t('scannerHome.productNamePlaceholder')} {...field} />
+                        <Input className="rounded-xl" placeholder={t('scannerHome.productNamePlaceholder')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -147,9 +203,9 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                   name="brandName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2"><Building className="w-4 h-4"/>{t('scannerHome.brandNameLabel')}</FormLabel>
+                      <FormLabel className="font-bold flex items-center gap-2"><Building className="w-4 h-4 text-primary"/>{t('scannerHome.brandNameLabel')}</FormLabel>
                       <FormControl>
-                        <Input placeholder={t('scannerHome.brandNamePlaceholder')} {...field} />
+                        <Input className="rounded-xl" placeholder={t('scannerHome.brandNamePlaceholder')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -157,16 +213,16 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-6">
                  <FormField
                   control={form.control}
                   name="foodType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2"><Pilcrow className="w-4 h-4"/>{t('scannerHome.foodTypeLabel')}</FormLabel>
+                      <FormLabel className="font-bold flex items-center gap-2"><Pilcrow className="w-4 h-4 text-primary"/>{t('scannerHome.foodTypeLabel')}</FormLabel>
                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="rounded-xl">
                               <SelectValue placeholder={t('scannerHome.foodTypePlaceholder')} />
                             </SelectTrigger>
                           </FormControl>
@@ -187,10 +243,10 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                   name="lifeStage"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2"><HeartPulse className="w-4 h-4"/>{t('scannerHome.lifeStageLabel')}</FormLabel>
+                      <FormLabel className="font-bold flex items-center gap-2"><HeartPulse className="w-4 h-4 text-primary"/>{t('scannerHome.lifeStageLabel')}</FormLabel>
                        <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="rounded-xl">
                               <SelectValue placeholder={t('scannerHome.lifeStagePlaceholder')} />
                             </SelectTrigger>
                           </FormControl>
@@ -206,81 +262,50 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                   )}
                 />
               </div>
-              <FormField
-                  control={form.control}
-                  name="ingredientsText"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2"><FileText className="w-4 h-4"/>{t('scannerHome.ingredientsLabel')}</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder={t('scannerHome.ingredientsPlaceholder')} {...field} rows={4}/>
-                      </FormControl>
-                       <FormDescription>{t('scannerHome.ingredientsDescription')}</FormDescription>
-                    </FormItem>
-                  )}
-                />
-
-               <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground">
-                      {t('scannerHome.orUploadPhoto')}
-                      </span>
-                  </div>
-              </div>
-
-              <FormField
-                control={form.control}
-                name="image"
-                render={({ field: { onChange, value, ...rest } }) => (
-                    <FormItem>
-                        <FormLabel className="sr-only">{t('scannerHome.imageLabel')}</FormLabel>
-                        <FormControl>
-                          <div className="relative w-full h-36 border-2 border-dashed rounded-lg flex flex-col justify-center items-center text-center cursor-pointer hover:border-primary transition-colors bg-muted/20">
-                              <Upload className="h-8 w-8 text-muted-foreground" />
-                              <div className="mt-2 text-sm text-muted-foreground">
-                                  {imageFile && imageFile.length > 0 ? (
-                                      <span className="font-semibold text-foreground">{imageFile[0].name}</span>
-                                  ) : (
-                                      <div dangerouslySetInnerHTML={{ __html: t('scannerHome.imagePrompt') }} />
-                                  )}
-                              </div>
-                              <Input 
-                                  type="file" 
-                                  accept="image/*" 
-                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                  onChange={(e) => onChange(e.target.files)}
-                                  {...rest}
-                              />
-                          </div>
-                        </FormControl>
-                        <FormDescription>{t('scannerHome.imageDescription')}</FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                )}
-                />
 
               <FormField
                   control={form.control}
                   name="healthConditions"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2"><HeartPulse className="w-4 h-4"/>{t('scannerHome.healthConditionsLabel')}</FormLabel>
+                      <FormLabel className="font-bold flex items-center gap-2"><HeartPulse className="w-4 h-4 text-primary"/>{t('scannerHome.healthConditionsLabel')}</FormLabel>
                       <FormControl>
-                         <Textarea placeholder={t('scannerHome.healthConditionsPlaceholder')} {...field} />
+                         <Textarea className="rounded-xl" placeholder={t('scannerHome.healthConditionsPlaceholder')} {...field} />
                       </FormControl>
                     </FormItem>
                   )}
                 />
-              
-              <div className="text-center pt-4">
-                <Button type="submit" size="lg" className="w-full md:w-auto text-lg py-7 px-12 rounded-full shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 transform hover:scale-105">
-                  <Sparkles className="mr-3" />
+
+              <div className="pt-6">
+                <Button type="submit" size="lg" className="w-full text-xl py-8 rounded-2xl shadow-xl shadow-primary/30 hover:shadow-primary/40 transition-all duration-300 transform hover:scale-[1.02]">
+                  <Sparkles className="mr-3 h-6 w-6" />
                   {t('scannerHome.analyzeButton')}
                 </Button>
               </div>
+
+              <div className="relative py-4">
+                  <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-card px-2 text-muted-foreground">
+                      {t('scannerHome.ingredientsLabel')} (텍스트 입력)
+                      </span>
+                  </div>
+              </div>
+
+              <FormField
+                  control={form.control}
+                  name="ingredientsText"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Textarea className="rounded-xl" placeholder={t('scannerHome.ingredientsPlaceholder')} {...field} rows={3}/>
+                      </FormControl>
+                       <FormDescription className="text-xs">{t('scannerHome.ingredientsDescription')}</FormDescription>
+                    </FormItem>
+                  )}
+                />
             </form>
           </Form>
         </CardContent>

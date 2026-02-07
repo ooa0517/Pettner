@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -102,13 +103,15 @@ Your entire response, including all values in the final JSON output, MUST be in 
 
 # Context
 - Target Species: This analysis is specifically for a {{{petType}}}.
+- IMPORTANT: If the target is a DOG, check for ingredients like chocolate, xylitol, grapes, onions. If the target is a CAT, check for lilies, onions, garlic, excess phosphorus.
 - Pet's Life Stage: {{#if lifeStage}}The pet is in the '{{{lifeStage}}}' stage. Your analysis should be tailored to this.{{/if}}
 - Pet's Health: {{#if healthConditions}}The pet has pre-existing conditions: {{{healthConditions}}}. Your analysis MUST be extra gentle and considerate of these conditions.{{/if}}
 
 # Analysis Rules
 1.  **Safety First**: If the image is blurry or the text is insufficient, you must return a JSON with "status": "error".
-2.  **Toxic Check**: Check for species-specific toxic ingredients (e.g., Xylitol for dogs, Lilies for cats) and list them in the 'cons' section.
-3.  **All Life Stages Food**: If a product is for "all life stages", it's usually formulated for puppies/kittens. You MUST explain the pros and cons for different life stages in your analysis.
+2.  **All Ingredients**: You MUST extract and list ALL ingredients found on the label in 'allIngredients' field. Do not skip anything.
+3.  **Toxic Check**: Check for species-specific toxic ingredients and list them in the 'cons' section.
+4.  **All Life Stages Food**: If a product is for "all life stages", it's usually formulated for puppies/kittens. You MUST explain the pros and cons for different life stages in your analysis.
 
 # Input Data
 - Product Name: {{{productName}}}
