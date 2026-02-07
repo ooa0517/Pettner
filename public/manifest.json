@@ -1,16 +1,24 @@
+
 {
-  "name": "Pettner Ingredient Analyzer",
+  "name": "Pettner - 수의 영양학 성분 분석기",
   "short_name": "Pettner",
-  "description": "Veterinary nutrition based pet food ingredient analysis",
+  "description": "AI 수의사가 들려주는 우리 아이 사료 성분 이야기",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f9fafb",
+  "background_color": "#ffffff",
   "theme_color": "#4B45ED",
   "icons": [
     {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "https://picsum.photos/seed/pettner-pwa-192/192/192",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://picsum.photos/seed/pettner-pwa-512/512/512",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
