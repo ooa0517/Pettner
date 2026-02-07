@@ -16,7 +16,7 @@ export default function OnboardingSurvey({ onComplete }: { onComplete: () => voi
           반갑습니다!<br/>분석을 시작해볼까요?
         </h2>
         <p className="text-muted-foreground">
-          Pettner는 전 세계 수의 영양학 논문을 기반으로<br/>아이들의 사료를 정밀하게 분석합니다.
+          Pettner는 사료, 간식, 영양제를 아우르는<br/>전 세계 수의 영양학 근거를 기반으로 분석합니다.
         </p>
       </div>
 
@@ -25,15 +25,15 @@ export default function OnboardingSurvey({ onComplete }: { onComplete: () => voi
           <div className="space-y-4 text-left">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-primary" />
-              <span className="font-medium">국제 표준(AAFCO/NRC) 영양 가이드 적용</span>
+              <span className="font-medium">사료·간식·영양제 통합 영양 분석</span>
             </div>
             <div className="flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-primary" />
-              <span className="font-medium">생애주기 및 체중에 따른 급여량 추천</span>
+              <span className="font-medium">국제 표준(AAFCO/NRC) 가이드라인 준수</span>
             </div>
             <div className="flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 text-primary" />
-              <span className="font-medium">기저질환을 고려한 성분 적합도 분석</span>
+              <span className="font-medium">기저질환 및 생애주기별 맞춤 분석</span>
             </div>
           </div>
 

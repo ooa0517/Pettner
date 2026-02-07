@@ -2,89 +2,74 @@
 'use server';
 
 /**
- * @fileOverview Analyzes pet food ingredients from an image, providing a comprehensive, user-friendly report.
+ * @fileOverview 사료, 간식, 영양제의 성분을 분석하여 수의 영양학 기반의 리포트를 생성합니다.
  *
- * - analyzePetFoodIngredients - A function that handles the pet food ingredient analysis process.
- * - AnalyzePetFoodIngredientsInput - The input type for the analyzePetFoodIngredients function.
- * - AnalyzePetFoodIngredientsOutput - The return type for the analyzePetFoodIngredients function.
+ * - analyzePetFoodIngredients - 메인 분석 함수
+ * - AnalyzePetFoodIngredientsInput - 입력 스키마
+ * - AnalyzePetFoodIngredientsOutput - 출력 스키마
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const AnalyzePetFoodIngredientsInputSchema = z.object({
-  petType: z.enum(['dog', 'cat']).describe('The type of pet the food is for.'),
-  productName: z.string().optional().describe('The name of the product, if provided by the user.'),
-  brandName: z.string().optional().describe('The brand of the product, if provided by the user.'),
-  foodType: z.string().optional().describe('The type of food (e.g., Dry Food, Wet Food, Cooked Food, Supplement, Treat), if provided by the user.'),
-  ingredientsText: z.string().optional().describe('The list of ingredients, if provided as text by the user.'),
+  petType: z.enum(['dog', 'cat']).describe('반려동물 종류 (강아지/고양이)'),
+  productName: z.string().optional().describe('제품명'),
+  brandName: z.string().optional().describe('브랜드명'),
+  foodType: z.string().optional().describe('제품 유형 (건식 사료, 습식 사료, 간식, 영양제 등)'),
+  ingredientsText: z.string().optional().describe('성분 텍스트'),
   photoDataUri: z
     .string()
     .optional()
     .describe(
-      "A photo of the pet food ingredient list, as a data URI. Used for primary analysis or for verification if text is also provided. Format: 'data:<mimetype>;base64,<encoded_data>'."
+      "라벨 사진 데이터 URI. Format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
-  healthConditions: z.string().optional().describe('Any known pre-existing health conditions of the pet (e.g., "kidney disease, skin allergies").'),
-  language: z.string().optional().default('ko').describe("The language for the analysis output, e.g., 'en' for English, 'ko' for Korean."),
-  lifeStage: z.enum(['PUPPY', 'ADULT', 'SENIOR', 'ALL_STAGES']).optional().describe('The life stage of the pet. (e.g. PUPPY/KITTEN, ADULT, SENIOR, ALL_STAGES)'),
-}).refine(data => data.ingredientsText || data.photoDataUri, {
-  message: 'Either ingredientsText or photoDataUri must be provided.',
+  healthConditions: z.string().optional().describe('기저질환'),
+  language: z.string().optional().default('ko').describe("출력 언어"),
+  lifeStage: z.enum(['PUPPY', 'ADULT', 'SENIOR', 'ALL_STAGES']).optional().describe('성장 단계'),
 });
+
 export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngredientsInputSchema>;
 
 const AnalyzePetFoodIngredientsOutputSchema = z.object({
-  status: z.enum(['success', 'error']).describe("success or error if unreadable"),
+  status: z.enum(['success', 'error']).describe("분석 성공 여부"),
   productInfo: z.object({
-    name: z.string().describe("Detected Product Name (or '제품명 미확인')"),
-    brand: z.string().optional().describe("Detected Brand Name (optional)")
+    name: z.string().describe("감지된 제품명"),
+    brand: z.string().optional().describe("감지된 브랜드명"),
+    type: z.string().optional().describe("감지된 제품 유형")
   }),
   summary: z.object({
-    hashtags: z.array(z.string()).describe("Three hashtags that summarize the product's identity. e.g., ['#고기함량_깡패', '#관절튼튼', '#체중조절용']")
+    hashtags: z.array(z.string()).describe("제품 성격을 나타내는 3개의 해시태그")
   }),
-  allIngredients: z.array(z.string()).describe("A complete list of all ingredients found on the label."),
-  pros: z.array(z.string()).describe("A list of key benefits of this product, explained in an easy-to-understand way."),
-  cons: z.array(z.string()).describe("A list of potential drawbacks or points of caution for this product, explained in an easy-to-understand way."),
+  allIngredients: z.array(z.string()).describe("라벨에서 추출된 전체 원재료 목록"),
+  pros: z.array(z.string()).describe("제품의 주요 장점 및 기대 효과"),
+  cons: z.array(z.string()).describe("주의해야 할 점 및 아쉬운 점"),
   radarChart: z.array(z.object({
-      attribute: z.string().describe("The attribute being scored."),
-      score: z.number().min(1).max(5).describe("A score from 1 (Not suitable) to 5 (Highly suitable).")
-  })).describe("Data for a radar chart. You MUST provide scores for these 5 exact attributes in Korean: '피부/모질', '소화기 건강', '체중 관리', '관절 강화', '활동 에너지'."),
+      attribute: z.string().describe("속성명"),
+      score: z.number().min(1).max(5).describe("적합도 점수 (1-5)")
+  })).describe("방사형 차트 데이터 (한국어 속성: '피부/모질', '소화기 건강', '체중 관리', '관절 강화', '활동 에너지')"),
   feedingGuide: z.object({
       puppy: z.array(z.object({
-          weight: z.string().describe("Weight range in kg, e.g., '1-5kg'"),
-          amount: z.string().describe("Recommended daily amount in grams, e.g., '80-120g'"),
+          weight: z.string().describe("몸무게 범위, 예: '1-5kg'"),
+          amount: z.string().describe("권장 급여량, 예: '80-120g'"),
       })).optional(),
       adult: z.array(z.object({
-          weight: z.string().describe("Weight range in kg, e.g., '5-10kg'"),
-          amount: z.string().describe("Recommended daily amount in grams, e.g., '100-150g'"),
+          weight: z.string().describe("몸무게 범위"),
+          amount: z.string().describe("권장 급여량"),
       })).optional(),
       senior: z.array(z.object({
-          weight: z.string().describe("Weight range in kg, e.g., '5-10kg'"),
-          amount: z.string().describe("Recommended daily amount in grams, e.g., '90-130g'"),
+          weight: z.string().describe("몸무게 범위"),
+          amount: z.string().describe("권장 급여량"),
       })).optional()
-  }).describe("A guide for daily feeding amounts based on life stage and weight. Calculate based on estimated calories and general pet needs if not explicitly on the label. Provide at least 3 weight ranges per life stage."),
+  }).describe("체중 및 생애주기별 권장 급여 가이드"),
    expertInsight: z.object({
-    proTip: z.string().describe("A practical tip for feeding, in a friendly tone.")
+    proTip: z.string().describe("수의사의 한 줄 꿀팁")
   })
 });
 
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
 
 export async function analyzePetFoodIngredients(input: AnalyzePetFoodIngredientsInput): Promise<AnalyzePetFoodIngredientsOutput> {
-  if (!input.ingredientsText && !input.photoDataUri) {
-      return {
-          status: 'error',
-          productInfo: { name: input.productName || '제품명 미확인', brand: input.brandName },
-          summary: { hashtags: ['#분석불가'] },
-          allIngredients: [],
-          pros: [],
-          cons: ["입력된 정보가 부족하여 분석할 수 없습니다."],
-          radarChart: [],
-          feedingGuide: {},
-          expertInsight: {
-            proTip: '원료 텍스트를 입력하시거나, 성분표가 선명하게 나온 사진을 다시 올려주세요!'
-          }
-      };
-  }
   return analyzePetFoodIngredientsFlow(input);
 }
 
@@ -92,49 +77,31 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `You are "Pettner AI," a friendly and caring neighborhood veterinarian with 20 years of experience.
-Your task is to analyze a pet food label and explain it to a pet parent in a very easy, conversational, and friendly way.
-Your entire response, including all values in the final JSON output, MUST be in the language specified by this language code: '{{{language}}}'. (e.g., 'en' for English, 'ko' for Korean). The JSON keys must always be in camelCase as defined in the output schema.
+  prompt: `당신은 20년 경력의 다정한 'Pettner AI 수의사'입니다.
+사용자가 올린 반려동물 먹거리(사료, 간식, 영양제 중 하나)의 라벨을 분석하여, 보호자에게 아주 쉽고 친절하게 설명해 주세요.
 
-# Persona
-- **Role**: A friendly, veteran veterinarian explaining things in a consultation room.
-- **Tone & Manner**: Use a soft, conversational tone, like a friendly vet explaining things during a check-up. Use "~해요", "~네요", "~좋아요" styles. AVOID formal, written styles like "~합니다".
-- **Language**: AVOID professional jargon (e.g., 가수분해, 킬레이트, GI지수). Instead, use benefit-oriented, easy-to-understand words that parents can relate to (e.g., '소화가 잘되는', '흡수가 빠른', '살이 덜 찌는').
+# 분석 지침
+1. **제품 유형 구분**: 입력된 정보나 사진을 바탕으로 이 제품이 '사료'인지, '간식'인지, '영양제'인지 먼저 판단하세요.
+2. **맞춤형 분석**: 
+   - 사료: 주식으로서 영양 균형이 맞는지 분석합니다.
+   - 간식: 기호성과 첨가물 위주로 분석합니다.
+   - 영양제: 유효 성분의 함량과 안전성을 위주로 분석합니다.
+3. **전체 원재료**: 사진이나 텍스트에서 보이는 '모든' 원재료를 누락 없이 추출하여 allIngredients에 넣으세요.
+4. **위험 성분 체크**: {{{petType}}}에게 해로운 성분이 있는지 반드시 체크하고 cons 섹션에 명시하세요.
+5. **어투**: "~해요", "~네요"와 같은 다정한 수의사 선생님의 말투를 사용하세요.
 
-# Context
-- Target Species: This analysis is specifically for a {{{petType}}}.
-- IMPORTANT: If the target is a DOG, check for ingredients like chocolate, xylitol, grapes, onions. If the target is a CAT, check for lilies, onions, garlic, excess phosphorus.
-- Pet's Life Stage: {{#if lifeStage}}The pet is in the '{{{lifeStage}}}' stage. Your analysis should be tailored to this.{{/if}}
-- Pet's Health: {{#if healthConditions}}The pet has pre-existing conditions: {{{healthConditions}}}. Your analysis MUST be extra gentle and considerate of these conditions.{{/if}}
+# 입력 데이터
+- 제품명: {{{productName}}}
+- 브랜드: {{{brandName}}}
+- 유형: {{{foodType}}}
+- 반려동물: {{{petType}}} (생애주기: {{{lifeStage}}})
+- 기저질환: {{{healthConditions}}}
+{{#if ingredientsText}} - 원료 텍스트: {{{ingredientsText}}} {{/if}}
+{{#if photoDataUri}} - 제품 이미지: {{media url=photoDataUri}} {{/if}}
 
-# Analysis Rules
-1.  **Safety First**: If the image is blurry or the text is insufficient, you must return a JSON with "status": "error".
-2.  **All Ingredients**: You MUST extract and list ALL ingredients found on the label in 'allIngredients' field. Do not skip anything.
-3.  **Toxic Check**: Check for species-specific toxic ingredients and list them in the 'cons' section.
-4.  **All Life Stages Food**: If a product is for "all life stages", it's usually formulated for puppies/kittens. You MUST explain the pros and cons for different life stages in your analysis.
-
-# Input Data
-- Product Name: {{{productName}}}
-- Brand: {{{brandName}}}
-- Food Type: {{{foodType}}}
-{{#if ingredientsText}}
-- Ingredients Text: {{{ingredientsText}}}
-{{/if}}
-{{#if photoDataUri}}
-- Product Image: {{media url=photoDataUri}} (Use OCR to extract info. This is the primary source.)
-{{/if}}
-
-# Task: Generate a valid JSON object based on the new, friendly output schema.
-
-- **status**: "success" if analysis is possible, "error" if not.
-- **productInfo**: Detect name and brand. Fallback to user input or '미확인'.
-- **summary.hashtags**: Create three short, witty hashtags that capture the product's identity. (e.g., #활동량_많은_아이용, #고기함량_깡패, #관절튼튼_필수템)
-- **allIngredients**: List ALL ingredients extracted from the label, in the order they appear.
-- **pros**: List 2-4 key benefits. Explain them simply. (e.g., "신선한 생선이 듬뿍 들어있어, 피부와 털을 반짝이게 하는 오메가3가 풍부해요.")
-- **cons**: List 2-4 potential drawbacks. Explain them simply. (e.g., "단백질 함량이 높아 신장이 약한 아이에게는 부담이 될 수 있어요.")
-- **radarChart**: Provide a score from 1 (not suitable) to 5 (highly suitable) for the following 5 attributes IN KOREAN: '피부/모질', '소화기 건강', '체중 관리', '관절 강화', '활동 에너지'. Your scoring should be based on the ingredients and nutritional profile.
-- **feedingGuide**: Provide a daily feeding guide. If not on the label, estimate it. Provide at least 3 weight ranges for each life stage (puppy, adult, senior) if applicable.
-- **expertInsight.proTip**: A single, practical "honey tip" from a vet.
+# 결과 생성
+JSON 형식으로 생성하며, 모든 설명 문구는 한국어로 작성하세요.
+radarChart 속성은 반드시 ['피부/모질', '소화기 건강', '체중 관리', '관절 강화', '활동 에너지'] 5개를 모두 포함해야 합니다.
 `,
 });
 
@@ -147,21 +114,8 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
   async input => {
     const {output} = await analyzePetFoodIngredientsPrompt(input);
     
-    // Fallback mechanism in case the model fails to produce a valid output
     if (!output) {
-      return {
-          status: 'error',
-          productInfo: { name: input.productName || '제품명 미확인', brand: input.brandName },
-          summary: { hashtags: ['#분석오류'] },
-          allIngredients: [],
-          pros: [],
-          cons: ["AI 모델이 분석 결과를 생성하지 못했습니다."],
-          radarChart: [],
-          feedingGuide: {},
-          expertInsight: {
-            proTip: '입력 내용을 확인하고 다시 시도해주시거나, 잠시 후 이용해주세요!'
-          }
-      };
+      throw new Error("분석 결과를 생성할 수 없습니다.");
     }
     
     return output;
