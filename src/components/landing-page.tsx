@@ -1,39 +1,65 @@
+
 'use client';
 
 import { PawPrint, Apple, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth, useUser } from '@/firebase';
-import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithPopup, GoogleAuthProvider, OAuthProvider } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
+import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 export default function LandingPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const auth = useAuth();
   const { isUserLoading } = useUser();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleGoogleLogin = async () => {
     if (!auth) {
-        toast({ variant: 'destructive', title: '로그인 실패', description: 'Firebase가 초기화되지 않았습니다.' });
+        toast({ variant: 'destructive', title: '오류', description: '인증 서비스를 사용할 수 없습니다.' });
         return;
     }
+    setIsLoggingIn(true);
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
+      toast({ title: '로그인 성공', description: '반갑습니다!' });
     } catch (error: any) {
       console.error(error);
-      let description = '다시 시도해주세요.';
-      if (error.code === 'auth/operation-not-allowed') {
-        description = 'Firebase 콘솔에서 Google 로그인을 활성화해주세요.';
-      } else if (error.code === 'auth/popup-closed-by-user') {
+      let description = '로그인 중 오류가 발생했습니다.';
+      if (error.code === 'auth/popup-closed-by-user') {
         description = '로그인 창이 닫혔습니다.';
+      } else if (error.code === 'auth/operation-not-allowed') {
+        description = 'Firebase 콘솔에서 Google 로그인을 활성화해야 합니다.';
       }
-      toast({ 
-        variant: 'destructive', 
-        title: '로그인 실패', 
-        description: description 
-      });
+      toast({ variant: 'destructive', title: '로그인 실패', description });
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    if (!auth) {
+        toast({ variant: 'destructive', title: '오류', description: '인증 서비스를 사용할 수 없습니다.' });
+        return;
+    }
+    setIsLoggingIn(true);
+    const provider = new OAuthProvider('apple.com');
+    try {
+      await signInWithPopup(auth, provider);
+      toast({ title: '로그인 성공', description: '반갑습니다!' });
+    } catch (error: any) {
+      console.error(error);
+      let description = 'Apple 로그인 중 오류가 발생했습니다.';
+      if (error.code === 'auth/operation-not-allowed') {
+        description = 'Firebase 콘솔에서 Apple 로그인을 활성화해야 합니다.';
+      }
+      toast({ variant: 'destructive', title: '로그인 실패', description });
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -47,26 +73,41 @@ export default function LandingPage() {
     <div className="flex flex-col items-center justify-center min-h-[80vh] text-center space-y-12 animate-in fade-in zoom-in duration-700">
       <div className="space-y-4">
         <div className="inline-flex p-4 bg-primary rounded-3xl shadow-2xl shadow-primary/40 animate-bounce">
-          <PawPrint className="w-16 h-16 text-white" />
+          <span className="text-white text-4xl">🐾</span>
         </div>
         <h1 className="text-5xl font-extrabold font-headline tracking-tighter text-primary">
           Pettner
         </h1>
         <p className="text-xl text-muted-foreground font-medium">
-          수의 영양학으로 더 건강해지는<br/>반려동물 사료 분석 서비스
+          수의 영양학으로 더 건강해지는<br/>반려동물 먹거리 분석 서비스
         </p>
       </div>
 
       <div className="w-full max-w-xs space-y-3">
-        <Button onClick={handleGoogleLogin} variant="outline" className="w-full h-14 text-lg rounded-2xl border-2 hover:bg-muted/50 transition-all" disabled={isUserLoading}>
-          <Mail className="w-5 h-5 mr-2" />
+        <Button 
+          onClick={handleGoogleLogin} 
+          variant="outline" 
+          className="w-full h-14 text-lg rounded-2xl border-2 hover:bg-muted/50 transition-all" 
+          disabled={isUserLoading || isLoggingIn}
+        >
+          {isLoggingIn ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Mail className="w-5 h-5 mr-2" />}
           Google 계정으로 계속하기
         </Button>
-        <Button onClick={() => toast({ title: '준비 중입니다' })} className="w-full h-14 text-lg rounded-2xl bg-black hover:bg-black/90 text-white transition-all">
+        
+        <Button 
+          onClick={handleAppleLogin} 
+          className="w-full h-14 text-lg rounded-2xl bg-black hover:bg-black/90 text-white transition-all"
+          disabled={isUserLoading || isLoggingIn}
+        >
           <Apple className="w-5 h-5 mr-2" />
           Apple 계정으로 계속하기
         </Button>
-        <Button onClick={() => toast({ title: '준비 중입니다' })} className="w-full h-14 text-lg rounded-2xl bg-[#FEE500] hover:bg-[#FEE500]/90 text-[#3C1E1E] border-none transition-all">
+
+        <Button 
+          onClick={() => toast({ title: '준비 중입니다', description: '카카오 로그인은 곧 추가될 예정입니다!' })} 
+          className="w-full h-14 text-lg rounded-2xl bg-[#FEE500] hover:bg-[#FEE500]/90 text-[#3C1E1E] border-none transition-all"
+          disabled={isUserLoading || isLoggingIn}
+        >
           <KakaoIcon />
           카카오톡으로 계속하기
         </Button>
