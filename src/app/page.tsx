@@ -14,38 +14,22 @@ import { useUser, useFirestore } from '@/firebase';
 import { saveAnalysisToHistory } from '@/lib/history';
 import { useLanguage } from '@/contexts/language-context';
 
-type AnalysisFormData = {
-  petType: 'dog' | 'cat';
-  productName: string;
-  brandName: string;
-  foodType: string;
-  lifeStage: 'PUPPY' | 'ADULT' | 'SENIOR' | 'ALL_STAGES';
-  ingredientsText: string;
-  healthConditions: string;
-  image?: FileList;
-};
-
+/**
+ * Pettner 메인 페이지 컴포넌트
+ * 로그인 여부와 관계없이 서비스를 이용할 수 있도록 흐름을 관리합니다.
+ */
 export default function Home() {
   const { language, t } = useLanguage();
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
   
-  // 시작 단계를 landing으로 고정하여 로그인 없이도 진입 가능하게 함
+  // 초기 단계를 'landing'으로 설정하여 모든 사용자가 진입 가능하게 함
   const [step, setStep] = useState<'landing' | 'survey' | 'input' | 'loading' | 'result'>('landing');
   const [analysisResult, setAnalysisResult] = useState<AnalyzePetFoodIngredientsOutput | null>(null);
   const [resultInput, setResultInput] = useState<AnalyzePetFoodIngredientsInput | null>(null);
   const { toast } = useToast();
 
-  // 사용자가 이미 로그인되어 있다면 landing을 건너뛰고 survey로 바로 갈 수도 있지만, 
-  // 첫 방문자의 경험을 위해 landing에서 시작하는 것을 기본으로 함.
-  useEffect(() => {
-    if (!isUserLoading && user && step === 'landing') {
-      // 선택 사항: 로그인된 유저는 바로 설문으로 이동 가능
-      // setStep('survey');
-    }
-  }, [user, isUserLoading, step]);
-
-  const handleAnalysis = async (formData: AnalysisFormData) => {
+  const handleAnalysis = async (formData: any) => {
     setStep('loading');
     setAnalysisResult(null);
     setResultInput(null);
@@ -73,14 +57,14 @@ export default function Home() {
           setAnalysisResult(result.data);
           setResultInput(input);
           
-          // 로그인된 사용자만 히스토리에 저장
+          // 로그인된 사용자이고 DB가 준비된 경우에만 히스토리에 저장
           if (user && db && result.data.status === 'success') {
             const userInputForHistory = {
                 petType: formData.petType,
-                productName: formData.productName,
-                brandName: formData.brandName || '',
-                foodType: formData.foodType || '',
-                lifeStage: formData.lifeStage || 'ALL_STAGES',
+                productName: formData.productName || result.data.productInfo.name,
+                brandName: formData.brandName || result.data.productInfo.brand || '',
+                foodType: formData.foodType || result.data.productInfo.type || 'dry',
+                lifeStage: formData.lifeStage || 'ADULT',
                 ingredientsText: formData.ingredientsText || '',
                 healthConditions: formData.healthConditions || '',
                 photoProvided: !!file,
@@ -95,7 +79,7 @@ export default function Home() {
           });
         }
       } catch (error) {
-        console.error(error);
+        console.error("Analysis Error:", error);
         setStep('input');
         toast({
           variant: "destructive",
@@ -133,10 +117,11 @@ export default function Home() {
     setStep('input');
   };
 
-  if (isUserLoading) {
+  // 로딩 중일 때는 로더를 보여줌
+  if (isUserLoading && step === 'landing') {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <AnalysisLoading />
+      <div className="flex items-center justify-center min-h-[80vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
