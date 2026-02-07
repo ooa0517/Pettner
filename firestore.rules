@@ -7,46 +7,19 @@ service cloud.firestore {
      * 
      * Core Philosophy:
      * This ruleset implements a strict User-Ownership model for personal profiles and a 
-     * Community-Shared access model for product analysis results. It prioritizes 
-     * secure authentication for all write operations while allowing for the rapid 
-     * iteration of data schemas.
-     * 
-     * Data Structure:
-     * - /users/{userId}: Private user profiles, strictly accessible only by the account owner.
-     * - /products/{productId}: A shared repository of AI-analyzed pet food products, 
-     *   viewable by any signed-in user and created by authenticated users.
-     * 
-     * Key Security Decisions:
-     * 1. Path-Based Ownership: User data access is granted solely based on the 
-     *    match between the Firestore path ID and the Firebase Auth UID.
-     * 2. Authenticated Contribution: Product analysis (creation) requires 
-     *    authentication to prevent anonymous spam, though the results are shared.
-     * 3. Relational Integrity: On user creation, rules enforce that the internal 
-     *    document 'id' matches the document path ID.
-     * 4. Denormalization for Authorization: This version relies on path-based 
-     *    authorization. Future iterations involving collaborative features should 
-     *    denormalize member lists directly into documents to avoid expensive cross-document lookups.
+     * Community-Shared access model for product analysis results.
      */
 
     // --- Helper Functions ---
 
-    /**
-     * @description Checks if the request is made by a signed-in user.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * @description Checks if the authenticated user's UID matches the provided userId.
-     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Verifies ownership and ensures the document exists for destructive operations.
-     */
     function isExistingOwner(userId) {
       return resource != null && isOwner(userId);
     }
@@ -54,33 +27,32 @@ service cloud.firestore {
     // --- Collection Rules ---
 
     /**
-     * @description Rules for the User collection. Enforces that users can only read or write their own profile data.
-     * @path /users/{userId}
-     * @allow (get) If auth.uid matches {userId}.
-     * @deny (list) If a user tries to query profiles that do not belong to them.
-     * @principle Restricts access to a user's own data tree and validates path-to-data consistency.
+     * @description Rules for the User collection and its subcollections.
      */
     match /users/{userId} {
       allow get, list: if isOwner(userId);
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description 분석 히스토리 서브컬렉션 규칙. 
+       * 사용자는 본인의 기록만 읽고 생성하고 삭제할 수 있습니다.
+       * 기록의 무결성을 위해 업데이트는 금지합니다.
+       */
+      match /analysisHistory/{analysisId} {
+        allow read, create, delete: if isOwner(userId);
+        allow update: if false;
+      }
     }
 
     /**
-     * @description Rules for the Product collection. Allows authenticated users to view analysis results and create new ones.
-     * @path /products/{productId}
-     * @allow (create) Any authenticated user can trigger a product analysis record creation.
-     * @deny (update) Modifications are currently restricted to prevent tampering with AI results.
-     * @principle Permits broad read access for platform data while restricting creation to verified identities.
+     * @description Rules for the Product collection.
      */
     match /products/{productId} {
       allow get, list: if isSignedIn();
       allow create: if isSignedIn();
-      
-      // CRITICAL: Cannot implement owner-only updates/deletes as the 'Product' entity 
-      // is currently described as non-owned platform data or is missing an 'ownerId' field.
-      allow update, delete: if false; // TODO: Add owner validation or admin role check once the schema/requirements are updated.
+      allow update, delete: if false; 
     }
   }
 }
