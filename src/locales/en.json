@@ -115,13 +115,13 @@
       "treat": "Treat",
       "supplement": "Supplement"
     },
-    "lifeStageLabel": "Life Stage",
+    "lifeStageLabel": "Life Stage (Specific Age)",
     "lifeStagePlaceholder": "Select a life stage",
     "lifeStageRequired": "Please select a life stage.",
     "lifeStages": {
-      "puppy": "Puppy/Kitten (Under 1)",
-      "adult": "Adult (1-7 years)",
-      "senior": "Senior (Over 7)",
+      "puppy": "Growth (Under 1 year)",
+      "adult": "Adult (1 year - Under 7 years)",
+      "senior": "Senior (7 years and older)",
       "all": "All Life Stages"
     },
     "ingredientsLabel": "Ingredients",
@@ -192,3 +192,4 @@
     "restart": "After editing the file, you need to restart the development server for the changes to take effect."
   }
 }
+    

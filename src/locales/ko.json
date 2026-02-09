@@ -117,13 +117,13 @@
       "treat": "간식",
       "supplement": "영양제"
     },
-    "lifeStageLabel": "성장 단계",
+    "lifeStageLabel": "성장 단계 (세부 연령)",
     "lifeStagePlaceholder": "성장 단계를 선택하세요",
     "lifeStageRequired": "성장 단계를 선택해주세요.",
     "lifeStages": {
-      "puppy": "퍼피/키튼 (1살 미만)",
-      "adult": "어덜트 (1살-7살)",
-      "senior": "시니어 (7살 이상)",
+      "puppy": "성장기 (1살 미만 / 자묘·자견)",
+      "adult": "성숙기 (1살 이상 - 7살 미만 성묘·성견)",
+      "senior": "노령기 (7살 이상 노묘·노견)",
       "all": "전연령용"
     },
     "ingredientsLabel": "원료명 정보",
