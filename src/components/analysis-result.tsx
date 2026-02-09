@@ -24,14 +24,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Repeat, Camera, Dog, Cat, Lightbulb, ThumbsUp, ThumbsDown, Bone, List, Sparkles, Scale, ShoppingBag, Share2, Star } from 'lucide-react';
+import { Repeat, Camera, Dog, Cat, Lightbulb, ThumbsUp, ThumbsDown, Bone, Scale, ShoppingBag, Share2, Star, ChevronRight, Crown } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
-import { cn } from '@/lib/utils';
 import React from 'react';
 import { TooltipProvider } from './ui/tooltip';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { useToast } from '@/hooks/use-toast';
 
 
@@ -57,7 +53,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const { productInfo, summary, allIngredients, pros, cons, radarChart, feedingGuide, expertInsight } = result;
+  const { productInfo, summary, allIngredients, pros, cons, radarChart, expertInsight } = result;
 
   const petType = input.petType.toLowerCase();
   const PetIcon = petType === 'cat' ? Cat : Dog;
@@ -115,7 +111,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           <CardHeader className="p-8 bg-card relative">
              <div className="flex justify-center items-center gap-2 text-muted-foreground font-semibold">
                 <PetIcon className="w-5 h-5"/>
-                <span>{productInfo.brand || t('analysisResult.productAnalyzed')}</span>
+                <span>{productInfo.brand || '제품 분석 리포트'}</span>
              </div>
             <h1 className="text-3xl md:text-4xl font-extrabold font-headline tracking-tight mt-2">{productInfo.name}</h1>
             
@@ -125,11 +121,11 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className="h-auto p-2">
                       <Camera className="w-4 h-4 mr-2"/>
-                      {t('analysisResult.originalImage')}
+                      원본 라벨
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-3xl">
-                    <DialogHeader><DialogTitle>{t('analysisResult.originalImage')}</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>촬영한 라벨 원본</DialogTitle></DialogHeader>
                     <div className="relative w-full mt-4" style={{'paddingBottom': '150%'}}>
                       <Image src={input.photoDataUri} alt="Ingredient Label" fill className="object-contain" />
                     </div>
@@ -138,7 +134,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               )}
               <Button variant="outline" size="sm" onClick={handleShare} className="h-auto p-2">
                 <Share2 className="w-4 h-4 mr-2" />
-                {t('analysisResult.shareReport')}
+                리포트 공유
               </Button>
             </div>
           </CardHeader>
@@ -151,33 +147,47 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </CardContent>
         </Card>
 
+        {/* 구독 유도 배너 */}
+        <Card className="bg-gradient-to-r from-amber-500 to-orange-600 text-white border-none shadow-lg overflow-hidden cursor-pointer hover:scale-[1.01] transition-transform">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-lg"><Crown className="w-5 h-5"/></div>
+              <div>
+                <p className="font-bold text-sm">우리 아이에게 100% 안전할까요?</p>
+                <p className="text-xs text-white/80">기저질환/생애주기 맞춤형 리포트 확인하기</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 opacity-50"/>
+          </CardContent>
+        </Card>
+
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-xl font-headline">
               <Sparkles className="text-primary"/>
-              {t('analysisResult.expertReviewTitle')}
+              AI 수의사 영양 분석
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
               <div className="flex items-start gap-4 p-4 rounded-lg bg-green-500/10 border border-green-500/20">
                   <div className="p-2 bg-white rounded-full shadow-sm"><ThumbsUp className="text-green-600 w-5 h-5"/></div>
                   <div className="flex-1">
-                      <h4 className="font-bold text-green-800">{t('analysisResult.bestPoint')}</h4>
-                      <p className="mt-1 text-foreground/80 leading-relaxed">{pros[0]}</p>
+                      <h4 className="font-bold text-green-800">주요 장점</h4>
+                      <p className="mt-1 text-foreground/80 leading-relaxed text-sm">{pros[0]}</p>
                   </div>
               </div>
               <div className="flex items-start gap-4 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
                   <div className="p-2 bg-white rounded-full shadow-sm"><ThumbsDown className="text-red-600 w-5 h-5"/></div>
                   <div className="flex-1">
-                      <h4 className="font-bold text-red-800">{t('analysisResult.cautionPoint')}</h4>
-                      <p className="mt-1 text-foreground/80 leading-relaxed">{cons[0]}</p>
+                      <h4 className="font-bold text-red-800">주의 사항</h4>
+                      <p className="mt-1 text-foreground/80 leading-relaxed text-sm">{cons[0]}</p>
                   </div>
               </div>
               <div className="flex items-start gap-4 p-4 rounded-lg bg-sky-500/10 border border-sky-500/20">
                   <div className="p-2 bg-white rounded-full shadow-sm"><Lightbulb className="text-sky-600 w-5 h-5"/></div>
                   <div className="flex-1">
-                      <h4 className="font-bold text-sky-800">{t('analysisResult.vetTip')}</h4>
-                      <p className="mt-1 text-foreground/80 leading-relaxed">{expertInsight.proTip}</p>
+                      <h4 className="font-bold text-sky-800">수의사 꿀팁</h4>
+                      <p className="mt-1 text-foreground/80 leading-relaxed text-sm">{expertInsight.proTip}</p>
                   </div>
               </div>
           </CardContent>
@@ -188,7 +198,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-lg font-headline">
                 <Bone className="text-primary"/>
-                {t('analysisResult.topIngredientsTitle')}
+                주요 원재료 (상위 5개)
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -206,7 +216,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-lg font-headline">
                     <Scale className="text-primary"/>
-                    {t('analysisResult.radarChartTitle')}
+                    영양 지수
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -224,75 +234,33 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </Card>
         </div>
 
-        <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-xl font-headline">
-                  <Scale className="text-primary"/>
-                  {t('analysisResult.feedingGuideTitle')}
-              </CardTitle>
-               <CardDescription>{t('analysisResult.feedingGuideDescription')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-               <Tabs defaultValue="adult" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4 mb-6">
-                    <TabsTrigger value="puppy">{t('scannerHome.lifeStages.puppy')}</TabsTrigger>
-                    <TabsTrigger value="adult">{t('scannerHome.lifeStages.adult')}</TabsTrigger>
-                    <TabsTrigger value="senior">{t('scannerHome.lifeStages.senior')}</TabsTrigger>
-                    <TabsTrigger value="geriatric">{t('scannerHome.lifeStages.geriatric')}</TabsTrigger>
-                  </TabsList>
-                  {['puppy', 'adult', 'senior', 'geriatric'].map((stage) => (
-                    <TabsContent key={stage} value={stage}>
-                      <div className="border rounded-lg overflow-hidden">
-                         <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="text-center">{t('analysisResult.weightRange')}</TableHead>
-                              <TableHead className="text-center">{t('analysisResult.dailyAmount')}</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {(feedingGuide[stage as keyof typeof feedingGuide] || []).map((row: any, idx: number) => (
-                              <TableRow key={idx}>
-                                <TableCell className="text-center font-medium">{row.weight}</TableCell>
-                                <TableCell className="text-center">{row.amount}</TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </TabsContent>
-                  ))}
-                </Tabs>
-            </CardContent>
-        </Card>
-
         <div className="space-y-6">
           <h3 className="text-2xl font-extrabold font-headline flex items-center gap-2">
             <ShoppingBag className="text-primary"/>
-            {t('analysisResult.buyNowSectionTitle')}
+            최저가 구매하기
           </h3>
           <Button onClick={handleShopSearch} size="lg" className="w-full h-16 text-xl rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform">
             <Star className="mr-2 fill-white"/>
-            이 상품 최저가 확인하기
+            네이버 쇼핑에서 최저가 검색
           </Button>
 
           <Card className="bg-primary/5 border-primary/20 border-dashed">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Sparkles className="text-primary w-5 h-5"/>
-                함께 곁들이면 좋은 추천 상품
+                함께 먹으면 좋은 추천 영양제
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 bg-white rounded-xl border border-primary/10 flex flex-col items-center gap-2 cursor-pointer hover:shadow-md transition-shadow">
-                   <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">🦴</div>
-                   <p className="text-xs font-bold text-center">관절 강화 영양제</p>
+                   <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center text-2xl">🦴</div>
+                   <p className="text-xs font-bold text-center">관절 강화 보조제</p>
                    <Button size="sm" variant="outline" className="w-full text-[10px] h-7">최저가 보기</Button>
                 </div>
                 <div className="p-4 bg-white rounded-xl border border-primary/10 flex flex-col items-center gap-2 cursor-pointer hover:shadow-md transition-shadow">
-                   <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">💧</div>
-                   <p className="text-xs font-bold text-center">피부 모질 오일</p>
+                   <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center text-2xl">💧</div>
+                   <p className="text-xs font-bold text-center">오메가3 오일</p>
                    <Button size="sm" variant="outline" className="w-full text-[10px] h-7">최저가 보기</Button>
                 </div>
               </div>
@@ -302,11 +270,13 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
 
         <div className="text-center pt-8 space-y-6">
             <div className="p-4 bg-muted/50 rounded-xl">
-              <p className="text-xs text-muted-foreground leading-relaxed" dangerouslySetInnerHTML={{ __html: t('analysisResult.disclaimer') }} />
+              <p className="text-[10px] text-muted-foreground leading-relaxed">
+                <strong>면책 조항:</strong> 본 분석 결과는 최신 영양 가이드라인과 논문을 바탕으로 AI가 생성한 정보이며, 수의사의 의학적 진단을 대신할 수 없습니다. 질환이 있는 아이는 반드시 전문의와 상담하세요.
+              </p>
             </div>
             <Button onClick={onReset} variant="outline" size="lg" className="rounded-full px-10">
               <Repeat className="mr-2 h-4 w-4" />
-              {t('analysisResult.analyzeNewProduct')}
+              다른 제품 분석하기
             </Button>
         </div>
       </div>
