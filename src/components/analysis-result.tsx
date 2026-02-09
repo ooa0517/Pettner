@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from 'next/image';
@@ -19,12 +18,14 @@ import {
   Repeat, ShoppingBag, Share2, Star, ChevronRight, 
   Dog, Cat, ThumbsUp, ThumbsDown, 
   Scale, Sparkles, CheckCircle2, ShieldCheck, Microscope,
-  AlertCircle, Info, Gavel
+  AlertCircle, Info, Gavel, History, LogIn
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import React from 'react';
 import { TooltipProvider } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
 
 type AnalysisResultProps = {
   result: AnalyzePetFoodIngredientsOutput;
@@ -36,6 +37,8 @@ type AnalysisResultProps = {
 export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const { user } = useUser();
+  const router = useRouter();
   const { productInfo, summary, ingredientsAnalysis, radarChart, expertInsight, matchingScore } = result;
 
   const petType = input.petType.toLowerCase();
@@ -71,7 +74,24 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
 
   return (
     <TooltipProvider>
-      <div className="space-y-8 animate-in fade-in duration-500 pb-24 max-w-4xl mx-auto">
+      <div className="space-y-8 animate-in fade-in duration-500 pb-32 max-w-4xl mx-auto">
+        {/* Guest Save Prompt */}
+        {!user && (
+          <Card className="bg-primary/10 border-primary/20 border-2 border-dashed">
+            <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary rounded-full text-white">
+                  <History className="w-4 h-4" />
+                </div>
+                <p className="text-sm font-medium text-primary">로그인하시면 이 분석 결과를 나중에도 확인할 수 있습니다!</p>
+              </div>
+              <Button size="sm" onClick={() => router.push('/login')} className="rounded-full">
+                <LogIn className="w-4 h-4 mr-2" /> 로그인하고 저장하기
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Header Section */}
         <Card className="overflow-hidden border-none shadow-2xl bg-gradient-to-br from-white to-primary/5">
           <CardHeader className="p-8 pb-4">
@@ -79,7 +99,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 <Badge variant="outline" className="px-3 py-1 border-primary/20 text-primary bg-primary/5 flex gap-1.5 items-center">
                    <Microscope className="w-3.5 h-3.5"/> Scientific Report
                 </Badge>
-                <Button variant="ghost" size="icon" onClick={handleShare}><Share2 className="w-5 h-5 opacity-50"/></Button>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="icon" onClick={handleShare}><Share2 className="w-5 h-5 opacity-50"/></Button>
+                  {user && (
+                    <Button variant="ghost" size="icon" onClick={() => router.push('/history')} title="분석 기록 보기">
+                      <History className="w-5 h-5 opacity-50" />
+                    </Button>
+                  )}
+                </div>
              </div>
             <div className="flex items-center gap-3 mb-2">
                <div className="p-2 bg-primary/10 rounded-xl"><PetIcon className="w-6 h-6 text-primary"/></div>
@@ -251,9 +278,16 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
 
         <div className="text-center pt-8 space-y-4">
-            <Button onClick={onReset} variant="ghost" className="text-muted-foreground hover:text-primary">
-              <Repeat className="mr-2 h-4 w-4" /> 다른 제품 분석하러 가기
-            </Button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button onClick={onReset} variant="ghost" className="text-muted-foreground hover:text-primary">
+                <Repeat className="mr-2 h-4 w-4" /> 다른 제품 분석하러 가기
+              </Button>
+              {user && (
+                <Button onClick={() => router.push('/history')} variant="outline" className="rounded-full">
+                  <History className="mr-2 h-4 w-4" /> 내 분석 기록 전체보기
+                </Button>
+              )}
+            </div>
             <p className="text-[10px] text-muted-foreground/60 max-w-lg mx-auto leading-relaxed">
               본 서비스는 정보 제공을 목적으로 하며, 실제 성분은 제조사의 상황에 따라 다를 수 있습니다. 반려동물의 건강 상태에 따른 급여 결정은 반드시 전문 수의사의 지도를 따르십시오.
             </p>
