@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Apple, Mail, Sparkles, ArrowRight, Info, Gavel } from 'lucide-react';
+import { Apple, Mail, Sparkles, ArrowRight, Info, Gavel, ClipboardCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth, useUser } from '@/firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/language-context';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
 import {
   Dialog,
   DialogContent,
@@ -71,6 +72,13 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
           <Sparkles className="mr-2 h-6 w-6" />
           로그인 없이 바로 시작
           <ArrowRight className="ml-2 h-5 w-5" />
+        </Button>
+
+        <Button asChild variant="outline" className="w-full h-14 rounded-2xl border-2 border-primary/20 bg-primary/5">
+          <Link href="/sample-report">
+            <ClipboardCheck className="mr-2 h-5 w-5 text-primary" />
+            분석 퀄리티 샘플 보기 (나무)
+          </Link>
         </Button>
 
         <Dialog>
