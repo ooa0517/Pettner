@@ -2,8 +2,10 @@
 'use server';
 
 /**
- * @fileOverview 사료, 간식, 영양제의 성분을 분석하여 수의 영양학 기반의 리포트를 생성합니다.
- * AAFCO 및 NRC 가이드라인을 준수하며, 반려동물의 정밀 프로필과 매칭 분석을 수행합니다.
+ * @fileOverview [초고도화 버전] 반려동물 정밀 영양 분석 AI 에이전트
+ * - 글로벌 표준(AAFCO, FEDIAF, NRC) 기반 성분 분석
+ * - 품종별 유전적 취약점 및 복합 기저질환(비만+알러지 등) 입체 매칭
+ * - 정밀 수의학 리포트 생성
  */
 
 import {ai} from '@/ai/genkit';
@@ -13,20 +15,20 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
   petType: z.enum(['dog', 'cat']).describe('반려동물 종류'),
   productName: z.string().optional().describe('제품명'),
   brandName: z.string().optional().describe('브랜드명'),
-  foodType: z.string().optional().describe('제품 유형'),
-  ingredientsText: z.string().optional().describe('성분 텍스트'),
+  foodType: z.string().optional().describe('제품 유형 (건식/습식/화식/간식/영양제)'),
+  ingredientsText: z.string().optional().describe('라벨의 원재료 텍스트'),
   photoDataUri: z.string().optional().describe("라벨 사진 데이터 URI"),
   language: z.string().optional().default('ko').describe("출력 언어"),
-  // 프리미엄/구독자 전용 정밀 데이터
   petProfile: z.object({
-    breed: z.string().optional().describe('품종 (유전적 특성 반영용)'),
-    lifeStage: z.enum(['PUPPY', 'ADULT', 'SENIOR', 'GERIATRIC', 'ALL_STAGES']).optional(),
-    weight: z.number().optional().describe('몸무게 (kg)'),
-    bcs: z.number().min(1).max(9).optional().describe('Body Condition Score'),
-    healthConditions: z.array(z.string()).optional().describe('보유 질환 및 알러지'),
-    stoolCondition: z.string().optional().describe('최근 변 상태'),
-    activityLevel: z.enum(['LOW', 'NORMAL', 'HIGH']).optional().describe('활동량/산책량'),
-    eatingHabit: z.string().optional().describe('식습관 (급하게 먹음, 까다로움 등)'),
+    name: z.string().optional(),
+    breed: z.string().optional().describe('품종 (유전적 소인 분석용)'),
+    age: z.number().optional(),
+    weight: z.number().optional(),
+    bcs: z.number().min(1).max(9).optional().describe('신체 조건 점수'),
+    healthConditions: z.array(z.string()).optional().describe('기저질환 및 알러지'),
+    activityLevel: z.enum(['LOW', 'NORMAL', 'HIGH']).optional(),
+    eatingHabit: z.string().optional(),
+    stoolCondition: z.string().optional(),
   }).optional(),
 });
 
@@ -39,26 +41,33 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     brand: z.string().optional(),
     type: z.string().optional()
   }),
-  // 종별/개체별 맞춤 매칭 분석
+  // 초개인화 적합도 분석
   matchingScore: z.object({
-    score: z.number().min(0).max(100).describe('우리 아이 맞춤 적합도 점수'),
-    reason: z.string().describe('적합도 점수의 영양학적 근거 (논문 및 가이드라인 기반)')
+    score: z.number().min(0).max(100),
+    clinicalReason: z.string().describe('수의학적 근거 (글로벌 가이드라인 및 논문 참조)'),
+    geneticInsight: z.string().describe('품종 특성 및 유전적 취약점 매칭 분석'),
+    complexConditionAdvice: z.string().describe('비만+알러지 등 복합 상황에 대한 정밀 조언')
   }),
   summary: z.object({
+    headlines: z.array(z.string()).describe('전문가 시각의 핵심 요약'),
     hashtags: z.array(z.string())
   }),
-  allIngredients: z.array(z.string()),
-  pros: z.array(z.string()),
-  cons: z.array(z.string()),
+  ingredientsAnalysis: z.object({
+    positive: z.array(z.object({ name: z.string(), effect: z.string() })),
+    cautionary: z.array(z.object({ name: z.string(), risk: z.string() })),
+    hiddenInsights: z.string().describe('라벨에 숨겨진 제조사의 의도나 주의할 점')
+  }),
   radarChart: z.array(z.object({
-      attribute: z.string().describe("속성명"),
-      score: z.number().min(1).max(5).describe("적합도 점수")
+      attribute: z.string().describe("영양 지표"),
+      score: z.number().min(1).max(5)
   })),
   feedingGuide: z.object({
-      recommendation: z.string().describe("개체별 맞춤 일일 권장 급여량 및 방법")
+      dailyCalories: z.string().describe("RER/DER 기반 일일 권장 칼로리"),
+      recommendation: z.string().describe("급여 방법 및 시간대 추천")
   }),
-   expertInsight: z.object({
-    proTip: z.string().describe("수의사의 한 줄 꿀팁")
+  expertInsight: z.object({
+    proTip: z.string().describe("임상 수의사의 한 줄 통찰"),
+    scientificReferences: z.array(z.string()).describe("참고한 영양 표준 및 논문 출처")
   })
 });
 
@@ -72,27 +81,32 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 세계적인 수의 영양학 전문가 'Pettner AI'입니다.
-최신 수의학 논문과 AAFCO(미국사료관리협회), NRC(미국국립연구회의) 가이드라인을 기반으로 분석을 수행하세요.
+  prompt: `당신은 세계 최고 수준의 수의 영양학 전문의이자 임상 수의사 'Pettner AI'입니다.
+사용자가 제공한 반려동물의 초개인화 데이터와 제품 성분을 대조하여, 동물병원보다 더 정밀하고 객관적인 리포트를 작성하세요.
 
-# 분석 지침
-1. **종별 생리학적 차이 엄격 적용**: 
-   - 강아지: 잡식성 성향을 고려한 탄수화물 소화율 및 비타민 D 합성 능력 등 분석.
-   - 고양이: 육식동물로서의 높은 단백질 요구량, 필수 타우린 함량, 낮은 탄수화물 내성 등을 분석.
-2. **개체 맞춤형 매칭 (구독 서비스 핵심)**:
-   - 입력된 품종(유전적 취약점), 질환, BCS, 산책량 등을 제품 성분과 대조하세요.
-   - 예: 신장 질환이 있는 아이에게 인(P) 함량이 높은 제품은 낮은 적합도 점수를 부여.
-   - 예: 활동량이 적은 아이에게 고열량 사료는 비만 위험 경고.
-3. **과학적 근거**: 분석 결과의 'matchingScore.reason'에는 "AAFCO 기준 대비 ~" 혹은 "최신 영양학 논문에 따르면 ~" 과 같은 전문적인 근거를 포함하세요.
-4. **데이터 부족 시**: 사진이나 텍스트가 부족할 경우, 일반적인 분석을 제공하되 '정밀 분석을 위해 선명한 사진이 필요하다'는 점을 명시하세요.
+# 분석 프레임워크 (Global Standards)
+1. **AAFCO (미국)**: 최소/최대 영양 수치 준수 여부 분석
+2. **FEDIAF (유럽)**: 에너지 요구량 및 미량 영양소 밸런스 분석
+3. **NRC (국제)**: 생애주기별 필수 영양소 대사 분석
+4. **최신 수의학 논문**: 원재료의 생체 이용률 및 임상적 효능 검증
 
-# 입력 정보
-- 제품/브랜드: {{{productName}}} / {{{brandName}}}
-- 반려동물 종류: {{{petType}}}
-- 정밀 프로필 정보: {{#if petProfile}} {{{petProfile}}} {{else}} 정보 없음 (일반 분석 수행) {{/if}}
-- 원료 정보: {{{ingredientsText}}}
+# 초고도화 분석 지침
+1. **복합 상황 분석 (Core)**: 
+   - 예: "알러지가 있어 가수분해 단백질은 좋지만, 비만 상태이므로 현재 제품의 높은 탄수화물 함량은 체중 관리에 치명적일 수 있습니다."와 같이 상충되는 지점을 정확히 짚어내세요.
+2. **품종 유전학 (Genetic Insight)**:
+   - 품종이 입력된 경우, 해당 종의 유전적 취약점(예: 슬개골, 심장, 신장 등)을 성분과 연결하세요. 
+3. **전문적 용어 사용**: 
+   - '좋아요' 대신 '생체 이용률이 높음', '신장 여과 부하 완화', '오메가3:6 밸런스 최적화' 등의 전문 용어를 사용하여 신뢰도를 높이되, 설명은 다정하게 하세요.
+4. **객관적 데이터**: 분석 근거에는 반드시 "AAFCO 2024 가이드라인 기준" 또는 "최신 영양 논문에 근거하여"라는 표현을 포함하세요.
 
-모든 결과는 한국어로, 다정하면서도 전문적인 어조로 작성하세요.`,
+# 입력 데이터
+- 제품: {{{productName}}} ({{{brandName}}})
+- 유형: {{{foodType}}}
+- 반려동물: {{{petType}}} ({{{petProfile.breed}}})
+- 프로필: {{{petProfile}}}
+- 원재료: {{{ingredientsText}}}
+
+모든 결과는 한국어로 작성하며, 보호자가 "아, 우리 아이 상태가 이래서 이 제품이 맞구나!"라고 무릎을 탁 칠 정도의 깊이 있는 통찰을 제공하세요.`,
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(
