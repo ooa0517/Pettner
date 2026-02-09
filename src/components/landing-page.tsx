@@ -1,7 +1,7 @@
 
 'use client';
 
-import { PawPrint, Apple, Mail, Sparkles, ArrowRight, Copy, Info } from 'lucide-react';
+import { Apple, Mail, Sparkles, ArrowRight, Info, Gavel } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth, useUser } from '@/firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
@@ -24,14 +24,6 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
   const auth = useAuth();
   const { isUserLoading } = useUser();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast({
-      title: "링크 복사 완료!",
-      description: "핸드폰으로 보내서 테스트해보세요. (401 오류 시 매뉴얼 확인)",
-    });
-  };
 
   const handleGoogleLogin = async () => {
     if (!auth) {
@@ -90,10 +82,10 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
           <DialogContent className="max-w-xs rounded-2xl">
             <DialogHeader>
               <DialogTitle>📱 모바일 테스트 안내</DialogTitle>
-              <DialogDescription className="text-left space-y-4 pt-4">
-                <p>1. 현재 미리보기 URL은 개발자 본인만 접근 가능하여 핸드폰에서는 401 오류가 발생합니다.</p>
-                <p>2. 해결을 위해 <strong>Firebase App Hosting</strong>으로 배포를 진행해야 합니다.</p>
-                <p>3. 자세한 방법은 프로젝트 루트의 <strong>README.md</strong> 파일을 확인해 주세요!</p>
+              <DialogDescription className="text-left space-y-4 pt-4 text-sm">
+                <p>1. 현재 미리보기 URL은 보안상 개발자 본인만 접근 가능하여 401 오류가 발생할 수 있습니다.</p>
+                <p>2. 해결을 위해 <strong>Firebase App Hosting</strong>으로 정식 배포가 필요합니다.</p>
+                <p>3. 자세한 방법은 프로젝트 루트의 <strong>README.md</strong>를 확인해 주세요!</p>
               </DialogDescription>
             </DialogHeader>
           </DialogContent>
@@ -131,9 +123,17 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground opacity-60">
-        Pettner는 AAFCO/NRC 가이드라인을 준수합니다.
-      </p>
+      <div className="space-y-4 max-w-lg">
+        <div className="flex items-center justify-center gap-1.5 opacity-60">
+           <Gavel className="w-3 h-3 text-muted-foreground" />
+           <p className="text-[10px] text-muted-foreground">Legal Notice & Disclaimer</p>
+        </div>
+        <p className="text-[9px] text-muted-foreground/60 leading-relaxed text-center px-4">
+          Pettner는 AI 기술을 활용한 영양 정보 분석 도구이며, 어떠한 경우에도 전문 수의사의 의학적 진단이나 처방을 대신할 수 없습니다. 
+          제공되는 정보는 공신력 있는 기관(AAFCO, NRC 등)의 기준을 따르나, 실제 제품 성분 및 제조 환경에 따라 차이가 있을 수 있습니다. 
+          반려동물의 급여 및 건강 관리에 대한 모든 최종 결정은 반드시 전문 수의사의 상담을 거쳐야 합니다.
+        </p>
+      </div>
     </div>
   );
 }

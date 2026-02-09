@@ -2,16 +2,15 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Camera, Sparkles, Package, Building, Dog, Cat, Info, Star, ShieldCheck } from 'lucide-react';
+import { Camera, Sparkles, Dog, Cat, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/contexts/language-context';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
@@ -73,7 +72,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
         <AlertTitle className="text-primary font-bold">글로벌 영양 표준 준수 (AAFCO/FEDIAF)</AlertTitle>
         <AlertDescription className="text-muted-foreground text-xs leading-relaxed">
           Pettner는 미국, 유럽의 글로벌 영양 가이드라인에 맞춰 성분을 분석합니다. <br/>
-          무료 사용자는 제품의 <strong>객관적 성분 분석</strong>을 즉시 받아보실 수 있습니다.
+          본 분석 결과는 참고용이며, 수의사의 진단을 대체할 수 없습니다.
         </AlertDescription>
       </Alert>
 
@@ -169,6 +168,13 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                   <p className="text-xs text-muted-foreground leading-relaxed">
                     품종별 유전 질환, 비만, 알러지 등 <strong>초개인화 맞춤 분석</strong>은 마이페이지에서 정밀 프로필 등록(구독형) 후 이용하실 수 있습니다. 현재는 일반 성분 분석을 제공합니다.
                   </p>
+              </div>
+
+              <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
+                <AlertTriangle className="w-4 h-4 text-muted-foreground shrink-0" />
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  {t('scannerHome.legalDisclaimer')}
+                </p>
               </div>
 
               <Button type="submit" size="lg" className="w-full h-16 text-xl rounded-2xl shadow-xl shadow-primary/30 hover:scale-[1.02] transition-transform">

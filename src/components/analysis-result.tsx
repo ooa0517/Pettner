@@ -15,18 +15,11 @@ import {
 } from '@/components/ui/chart';
 import { ResponsiveContainer } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import { 
-  Repeat, Camera, Dog, Cat, Lightbulb, ThumbsUp, ThumbsDown, 
-  Bone, Scale, ShoppingBag, Share2, Star, ChevronRight, 
-  Crown, Sparkles, CheckCircle2, ShieldCheck, Microscope,
-  AlertCircle, Info
+  Repeat, ShoppingBag, Share2, Star, ChevronRight, 
+  Dog, Cat, ThumbsUp, ThumbsDown, 
+  Scale, Sparkles, CheckCircle2, ShieldCheck, Microscope,
+  AlertCircle, Info, Gavel
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import React from 'react';
@@ -102,6 +95,12 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
              </div>
           </CardContent>
         </Card>
+
+        {/* Legal Disclaimer Top */}
+        <div className="p-4 bg-muted/40 border-l-4 border-muted rounded-r-lg flex gap-3 items-start">
+           <Gavel className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+           <p className="text-[11px] text-muted-foreground leading-relaxed italic" dangerouslySetInnerHTML={{ __html: t('analysisResult.disclaimer') }} />
+        </div>
 
         {/* Hyper-Personalized Matching Score */}
         <Card className="relative overflow-hidden border-2 border-primary/30 shadow-xl bg-card">
@@ -251,10 +250,13 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </Card>
         </div>
 
-        <div className="text-center pt-8">
+        <div className="text-center pt-8 space-y-4">
             <Button onClick={onReset} variant="ghost" className="text-muted-foreground hover:text-primary">
               <Repeat className="mr-2 h-4 w-4" /> 다른 제품 분석하러 가기
             </Button>
+            <p className="text-[10px] text-muted-foreground/60 max-w-lg mx-auto leading-relaxed">
+              본 서비스는 정보 제공을 목적으로 하며, 실제 성분은 제조사의 상황에 따라 다를 수 있습니다. 반려동물의 건강 상태에 따른 급여 결정은 반드시 전문 수의사의 지도를 따르십시오.
+            </p>
         </div>
       </div>
     </TooltipProvider>

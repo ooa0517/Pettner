@@ -139,7 +139,8 @@
     "instruction": "* '원료명' 및 '등록성분량'이 선명하게 보이도록 촬영해주세요.",
     "orUploadPhoto": "또는 사진 업로드",
     "imagePrompt": "클릭 또는 파일을 드래그하여 업로드하세요.<br/>(사료, 간식, 영양제 라벨 사진)",
-    "betaNotice": "현재 Pettner는 <strong>베타 서비스</strong> 중입니다. <br/> 모든 먹거리에 대한 정밀한 분석을 약속드립니다."
+    "betaNotice": "Pettner는 <strong>베타 서비스</strong> 중이며, 본 분석 결과는 참고용입니다.",
+    "legalDisclaimer": "본 서비스는 수의사의 진단을 대신할 수 없습니다. 질환이 있는 경우 반드시 수의사와 상담하십시오."
   },
   "analysisLoading": {
     "title": "영양 성분을 분석하고 있습니다...",
@@ -150,7 +151,7 @@
   "analysisResult": {
     "productAnalyzed": "분석된 제품",
     "originalImage": "분석 원본",
-    "disclaimer": "<strong>면책 조항:</strong> 이 분석은 정보 제공 목적으로, 수의사의 전문적인 의학적 조언을 대체할 수 없습니다. 질환이 있는 경우 반드시 전문 수의사와 상담하십시오.",
+    "disclaimer": "<strong>법적 면책 조항:</strong> Pettner의 분석 결과는 AI 기술을 기반으로 하며, 수의사의 직접적인 진단이나 처방을 대신할 수 없습니다. 질환이 있는 반려동물의 경우 반드시 전문 수의사와 상담하십시오. 또한, 본 서비스에서 제공하는 영양 정보는 공신력 있는 기관의 가이드라인을 참조하나, 개별 제조사의 제조 환경이나 최신 업데이트에 따라 실제 성분과 차이가 있을 수 있습니다.",
     "analyzeNewProduct": "새로운 제품 분석하기",
     "buyNowSectionTitle": "최저가 구매하기",
     "searchOnCoupang": "쿠팡에서 검색",
