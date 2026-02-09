@@ -24,7 +24,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Repeat, Camera, Dog, Cat, Lightbulb, ThumbsUp, ThumbsDown, Bone, Scale, ShoppingBag, Share2, Star, ChevronRight, Crown } from 'lucide-react';
+import { Repeat, Camera, Dog, Cat, Lightbulb, ThumbsUp, ThumbsDown, Bone, Scale, ShoppingBag, Share2, Star, ChevronRight, Crown, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import React from 'react';
 import { TooltipProvider } from './ui/tooltip';
@@ -53,7 +53,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const { productInfo, summary, allIngredients, pros, cons, radarChart, expertInsight } = result;
+  const { productInfo, summary, allIngredients, pros, cons, radarChart, expertInsight, matchingScore } = result;
 
   const petType = input.petType.toLowerCase();
   const PetIcon = petType === 'cat' ? Cat : Dog;
@@ -147,25 +147,46 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </CardContent>
         </Card>
 
-        {/* 구독 유도 배너 */}
-        <Card className="bg-gradient-to-r from-amber-500 to-orange-600 text-white border-none shadow-lg overflow-hidden cursor-pointer hover:scale-[1.01] transition-transform">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-white/20 rounded-lg"><Crown className="w-5 h-5"/></div>
-              <div>
-                <p className="font-bold text-sm">우리 아이에게 100% 안전할까요?</p>
-                <p className="text-xs text-white/80">기저질환/생애주기 맞춤형 리포트 확인하기</p>
+        {/* 적합도 점수 섹션 (구독 유도 겸용) */}
+        <Card className="shadow-lg border-2 border-primary/20 bg-primary/5 overflow-hidden">
+           <CardHeader className="bg-primary text-white p-6">
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2 text-xl font-headline">
+                  <CheckCircle2 className="w-6 h-6"/>
+                  아이별 맞춤 적합도
+                </CardTitle>
+                <Badge variant="secondary" className="bg-white text-primary">PREMIUM</Badge>
               </div>
-            </div>
-            <ChevronRight className="w-5 h-5 opacity-50"/>
-          </CardContent>
+           </CardHeader>
+           <CardContent className="p-8 flex flex-col md:flex-row items-center gap-8">
+              <div className="relative h-32 w-32 flex items-center justify-center">
+                  <svg className="w-full h-full -rotate-90">
+                    <circle className="text-muted-foreground/20" strokeWidth="8" stroke="currentColor" fill="transparent" r="58" cx="64" cy="64" />
+                    <circle className="text-primary" strokeWidth="8" strokeDasharray={364} strokeDashoffset={364 - (364 * (matchingScore?.score || 0)) / 100} strokeLinecap="round" stroke="currentColor" fill="transparent" r="58" cx="64" cy="64" />
+                  </svg>
+                  <div className="absolute flex flex-col items-center">
+                    <span className="text-3xl font-bold">{matchingScore?.score || '??'}</span>
+                    <span className="text-[10px] text-muted-foreground">점</span>
+                  </div>
+              </div>
+              <div className="flex-1 space-y-3">
+                 <p className="text-sm font-medium leading-relaxed">
+                   {matchingScore?.reason || "정밀 프로필 정보가 없어 일반적인 적합도를 분석했습니다. 아이의 품종, 질환, 산책량을 등록하면 100% 정밀한 매칭이 가능합니다."}
+                 </p>
+                 {!input.petProfile && (
+                   <Button variant="link" className="p-0 text-primary h-auto font-bold flex items-center gap-1">
+                     우리 아이 프로필 등록하고 정밀 분석 받기 <ChevronRight className="w-4 h-4"/>
+                   </Button>
+                 )}
+              </div>
+           </CardContent>
         </Card>
 
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-xl font-headline">
               <Sparkles className="text-primary"/>
-              AI 수의사 영양 분석
+              AAFCO/NRC 기반 수의 영양학 분석
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -271,7 +292,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         <div className="text-center pt-8 space-y-6">
             <div className="p-4 bg-muted/50 rounded-xl">
               <p className="text-[10px] text-muted-foreground leading-relaxed">
-                <strong>면책 조항:</strong> 본 분석 결과는 최신 영양 가이드라인과 논문을 바탕으로 AI가 생성한 정보이며, 수의사의 의학적 진단을 대신할 수 없습니다. 질환이 있는 아이는 반드시 전문의와 상담하세요.
+                <strong>면책 조항:</strong> 본 분석 결과는 국제 영양 가이드라인(AAFCO/NRC)과 최신 논문을 바탕으로 AI가 생성한 정보이며, 수의사의 의학적 진단을 대신할 수 없습니다.
               </p>
             </div>
             <Button onClick={onReset} variant="outline" size="lg" className="rounded-full px-10">
