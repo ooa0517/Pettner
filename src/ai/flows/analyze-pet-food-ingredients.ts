@@ -26,7 +26,7 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
     ),
   healthConditions: z.string().optional().describe('기저질환'),
   language: z.string().optional().default('ko').describe("출력 언어"),
-  lifeStage: z.enum(['PUPPY', 'ADULT', 'SENIOR', 'ALL_STAGES']).optional().describe('성장 단계'),
+  lifeStage: z.enum(['PUPPY', 'ADULT', 'SENIOR', 'GERIATRIC', 'ALL_STAGES']).optional().describe('성장 단계'),
 });
 
 export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngredientsInputSchema>;
@@ -60,6 +60,10 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       senior: z.array(z.object({
           weight: z.string().describe("몸무게 범위"),
           amount: z.string().describe("권장 급여량"),
+      })).optional(),
+      geriatric: z.array(z.object({
+          weight: z.string().describe("몸무게 범위"),
+          amount: z.string().describe("권장 급여량"),
       })).optional()
   }).describe("체중 및 생애주기별 권장 급여 가이드"),
    expertInsight: z.object({
@@ -80,15 +84,17 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   prompt: `당신은 20년 경력의 다정한 'Pettner AI 수의사'입니다.
 사용자가 올린 반려동물 먹거리(사료, 간식, 영양제 중 하나)의 라벨을 분석하여, 보호자에게 아주 쉽고 친절하게 설명해 주세요.
 
+# 생애주기별 분석 지침 (매우 중요)
+1. **PUPPY (성장기, 1살 미만)**: 골격 형성과 뇌 발달을 위한 고단백, 고칼로리 성분에 집중하세요.
+2. **ADULT (성숙기, 1-7살 미만)**: 에너지 균형과 기초 건강 유지, 근육량 보존에 집중하세요.
+3. **SENIOR (노령기, 7-12살 미만)**: 노화 방지 항산화제, 관절 건강, 장기 기능 보호에 집중하세요.
+4. **GERIATRIC (초고령기, 12살 이상)**: 장수 반려동물을 위해 낮은 인(phosphorus) 함량, 높은 소화 흡수율, 신장 건강 및 치매 예방 영양소에 특별히 더 집중하세요.
+
 # 분석 지침
 1. **제품 유형 구분**: 입력된 정보나 사진을 바탕으로 이 제품이 '사료'인지, '간식'인지, '영양제'인지 먼저 판단하세요.
-2. **맞춤형 분석**: 
-   - 사료: 주식으로서 영양 균형이 맞는지 분석합니다.
-   - 간식: 기호성과 첨가물 위주로 분석합니다.
-   - 영양제: 유효 성분의 함량과 안전성을 위주로 분석합니다.
-3. **전체 원재료**: 사진이나 텍스트에서 보이는 '모든' 원재료를 누락 없이 추출하여 allIngredients에 넣으세요.
-4. **위험 성분 체크**: {{{petType}}}에게 해로운 성분이 있는지 반드시 체크하고 cons 섹션에 명시하세요.
-5. **어투**: "~해요", "~네요"와 같은 다정한 수의사 선생님의 말투를 사용하세요.
+2. **맞춤형 분석**: 사료/간식/영양제 각각의 목적에 맞게 영양 밸런스를 분석하세요.
+3. **위험 성분 체크**: {{{petType}}}에게 해로운 성분(예: 포도, 양파, 백합 등)이 있는지 반드시 체크하세요.
+4. **어투**: "~해요", "~네요"와 같은 다정한 수의사 선생님의 말투를 사용하세요.
 
 # 입력 데이터
 - 제품명: {{{productName}}}
@@ -101,7 +107,7 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
 
 # 결과 생성
 JSON 형식으로 생성하며, 모든 설명 문구는 한국어로 작성하세요.
-radarChart 속성은 반드시 ['피부/모질', '소화기 건강', '체중 관리', '관절 강화', '활동 에너지'] 5개를 모두 포함해야 합니다.
+feedingGuide에 GERIATRIC(초고령기)용 데이터도 반드시 포함해 주세요.
 `,
 });
 

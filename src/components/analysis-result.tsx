@@ -234,12 +234,13 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </CardHeader>
             <CardContent>
                <Tabs defaultValue="adult" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3 mb-6">
+                  <TabsList className="grid w-full grid-cols-4 mb-6">
                     <TabsTrigger value="puppy">{t('scannerHome.lifeStages.puppy')}</TabsTrigger>
                     <TabsTrigger value="adult">{t('scannerHome.lifeStages.adult')}</TabsTrigger>
                     <TabsTrigger value="senior">{t('scannerHome.lifeStages.senior')}</TabsTrigger>
+                    <TabsTrigger value="geriatric">{t('scannerHome.lifeStages.geriatric')}</TabsTrigger>
                   </TabsList>
-                  {['puppy', 'adult', 'senior'].map((stage) => (
+                  {['puppy', 'adult', 'senior', 'geriatric'].map((stage) => (
                     <TabsContent key={stage} value={stage}>
                       <div className="border rounded-lg overflow-hidden">
                          <Table>

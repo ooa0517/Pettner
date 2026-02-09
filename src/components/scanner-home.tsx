@@ -23,7 +23,7 @@ type AnalysisFormValues = {
   productName: string;
   brandName: string;
   foodType: string;
-  lifeStage: 'PUPPY' | 'ADULT' | 'SENIOR' | 'ALL_STAGES';
+  lifeStage: 'PUPPY' | 'ADULT' | 'SENIOR' | 'GERIATRIC' | 'ALL_STAGES';
   ingredientsText: string;
   healthConditions: string;
   image?: FileList;
@@ -46,7 +46,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
       productName: z.string().min(1, { message: t('scannerHome.productNameRequired') }),
       brandName: z.string().optional(),
       foodType: z.string().optional(),
-      lifeStage: z.enum(['PUPPY', 'ADULT', 'SENIOR', 'ALL_STAGES'], { required_error: t('scannerHome.lifeStageRequired') }),
+      lifeStage: z.enum(['PUPPY' , 'ADULT' , 'SENIOR' , 'GERIATRIC' , 'ALL_STAGES'], { required_error: t('scannerHome.lifeStageRequired') }),
       ingredientsText: z.string().optional(),
       healthConditions: z.string().optional(),
       image: imageSchema,
@@ -254,6 +254,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                             <SelectItem value="PUPPY">{t('scannerHome.lifeStages.puppy')}</SelectItem>
                             <SelectItem value="ADULT">{t('scannerHome.lifeStages.adult')}</SelectItem>
                             <SelectItem value="SENIOR">{t('scannerHome.lifeStages.senior')}</SelectItem>
+                            <SelectItem value="GERIATRIC">{t('scannerHome.lifeStages.geriatric')}</SelectItem>
                              <SelectItem value="ALL_STAGES">{t('scannerHome.lifeStages.all')}</SelectItem>
                           </SelectContent>
                         </Select>
