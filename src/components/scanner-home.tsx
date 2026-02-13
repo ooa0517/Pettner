@@ -141,7 +141,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                   <FormField
                       control={form.control}
                       name="image"
-                      render={({ field: { onChange, value, name, onBlur, ref } }) => (
+                      render={({ field: { onChange, name, onBlur, ref } }) => (
                           <FormItem>
                               <FormControl>
                                 <div 
@@ -161,7 +161,6 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                                         {imageFile && imageFile.length > 0 ? imageFile[0].name : "사료/간식 라벨의 '원재료명'을 촬영하세요."}
                                       </p>
                                     </div>
-                                    {/* 파일 인풋은 절대로 value를 직접 받으면 안 됩니다. z-index 10으로 클릭을 최우선으로 받게 합니다. */}
                                     <input 
                                       type="file" 
                                       accept="image/*" 

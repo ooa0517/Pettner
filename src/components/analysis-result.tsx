@@ -5,13 +5,13 @@ import Image from 'next/image';
 import type { AnalyzePetFoodIngredientsOutput, AnalyzePetFoodIngredientsInput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  ChartRadar,
-  ChartRadarChart,
-  ChartPolarGrid,
-  ChartPolarAngleAxis,
-  ResponsiveContainer,
-} from 'recharts';
+import { ResponsiveContainer } from 'recharts';
+import { 
+  ChartRadar, 
+  ChartRadarChart, 
+  ChartPolarGrid, 
+  ChartPolarAngleAxis 
+} from '@/components/ui/chart';
 import { Badge } from '@/components/ui/badge';
 import { 
   Repeat, ShoppingBag, Share2, Star, ChevronRight, 
@@ -183,7 +183,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
 
                 <div className="space-y-8 flex-1">
                    <div className="p-8 bg-primary/5 rounded-[2.5rem] border-2 border-primary/10 relative">
-                      <div className="absolute -top-4 left-8 bg-white border-2 border-primary/20 px-4 py-1.5 rounded-full text-[11px] font-black text-primary uppercase tracking-widest shadow-sm">
+                      <div className="absolute -top-4 left-8 bg-white border-2 border-primary/20 px-4 py-1.5 rounded-full text-[11px] font-black text-primary uppercase trackingest shadow-sm">
                          Clinical Insight
                       </div>
                       <p className="text-lg md:text-xl leading-relaxed text-foreground font-medium pt-2">
