@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { AnalyzePetFoodIngredientsInput, AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { getAnalysis } from '@/app/actions';
 import AnalysisResult from '@/components/analysis-result';
@@ -13,17 +13,18 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { saveAnalysisToHistory } from '@/lib/history';
 import { useLanguage } from '@/contexts/language-context';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { Sparkles } from 'lucide-react';
 
 /**
  * Pettner 메인 페이지 컴포넌트
- * 로그인 여부와 관계없이 서비스를 이용할 수 있도록 흐름을 관리합니다.
  */
 export default function Home() {
   const { language, t } = useLanguage();
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
   
-  // 초기 단계를 'landing'으로 설정하여 모든 사용자가 진입 가능하게 함
   const [step, setStep] = useState<'landing' | 'survey' | 'input' | 'loading' | 'result'>('landing');
   const [analysisResult, setAnalysisResult] = useState<AnalyzePetFoodIngredientsOutput | null>(null);
   const [resultInput, setResultInput] = useState<AnalyzePetFoodIngredientsInput | null>(null);
@@ -41,9 +42,7 @@ export default function Home() {
         productName: formData.productName,
         brandName: formData.brandName,
         foodType: formData.foodType,
-        lifeStage: formData.lifeStage,
         ingredientsText: formData.ingredientsText,
-        healthConditions: formData.healthConditions,
         language: language,
     };
 
@@ -57,16 +56,15 @@ export default function Home() {
           setAnalysisResult(result.data);
           setResultInput(input);
           
-          // 로그인된 사용자이고 DB가 준비된 경우에만 히스토리에 저장
           if (user && db && result.data.status === 'success') {
             const userInputForHistory = {
                 petType: formData.petType,
                 productName: formData.productName || result.data.productInfo.name,
                 brandName: formData.brandName || result.data.productInfo.brand || '',
                 foodType: formData.foodType || result.data.productInfo.type || 'dry',
-                lifeStage: formData.lifeStage || 'ADULT',
+                lifeStage: 'ADULT' as any,
                 ingredientsText: formData.ingredientsText || '',
-                healthConditions: formData.healthConditions || '',
+                healthConditions: '',
                 photoProvided: !!file,
             };
             saveAnalysisToHistory(db, user.uid, userInputForHistory, result.data);
@@ -117,7 +115,6 @@ export default function Home() {
     setStep('input');
   };
 
-  // 로딩 중일 때는 로더를 보여줌
   if (isUserLoading && step === 'landing') {
     return (
       <div className="flex items-center justify-center min-h-[80vh]">
@@ -135,6 +132,18 @@ export default function Home() {
         {step === 'loading' && <AnalysisLoading />}
         {step === 'result' && analysisResult && resultInput && (
           <AnalysisResult result={analysisResult} input={resultInput} onReset={handleReset} />
+        )}
+        
+        {/* 개발 및 테스트용 샘플 리포트 링크 (사용자 확인용) */}
+        {step === 'landing' && (
+          <div className="mt-8 text-center animate-in fade-in slide-in-from-top-4 duration-1000 delay-500">
+            <Button asChild variant="ghost" className="text-primary/60 hover:text-primary hover:bg-primary/5 rounded-full">
+              <Link href="/sample-report">
+                <Sparkles className="w-4 h-4 mr-2" />
+                분석 결과 리포트 샘플 보기 (나무)
+              </Link>
+            </Button>
+          </div>
         )}
       </div>
     </div>
