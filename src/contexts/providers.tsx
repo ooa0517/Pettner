@@ -6,6 +6,7 @@ import { LanguageProvider, useLanguage } from '@/contexts/language-context';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import Header from '@/components/header';
+import { UserProfileSyncer } from '@/components/user-profile-syncer';
 
 function AppLayout({ children }: { children: ReactNode }) {
   const { language, t } = useLanguage();
@@ -27,6 +28,7 @@ function AppLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <FirebaseErrorListener />
+      <UserProfileSyncer />
       <div className="flex flex-col min-h-screen bg-background">
         <Header />
         <main className="flex-grow flex flex-col">{children}</main>

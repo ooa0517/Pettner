@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
+import { useUser, useFirestore } from '@/firebase';
 import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, Timestamp } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { AnalyzePetFoodIngredientsOutput, AnalyzePetFoodIngredientsInput } from '@/ai/flows/analyze-pet-food-ingredients';
@@ -12,7 +11,6 @@ import AnalysisResult from '@/components/analysis-result';
 import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-
 
 type StoredUserInput = Omit<AnalyzePetFoodIngredientsInput, 'language' | 'photoDataUri' | 'ingredientsText' | 'brandName' | 'foodType' | 'healthConditions' | 'lifeStage'> & { 
     ingredientsText?: string; 
@@ -31,7 +29,8 @@ type AnalysisRecord = {
 };
 
 export default function HistoryDetailPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isUserLoading } = useUser();
+  const db = useFirestore();
   const router = useRouter();
   const params = useParams();
   const { analysisId } = params;
@@ -42,10 +41,10 @@ export default function HistoryDetailPage() {
   const { t, language } = useLanguage();
 
   useEffect(() => {
-    if (!authLoading && !user) {
+    if (!isUserLoading && !user) {
       router.push('/login');
     }
-  }, [user, authLoading, router]);
+  }, [user, isUserLoading, router]);
 
   useEffect(() => {
     if (user && db && analysisId) {
@@ -68,12 +67,12 @@ export default function HistoryDetailPage() {
         }
       };
       fetchRecord();
-    } else if (!authLoading) {
+    } else if (!isUserLoading) {
       setIsLoading(false);
     }
-  }, [user, analysisId, t]);
+  }, [user, db, analysisId, t, isUserLoading]);
 
-  if (authLoading || isLoading) {
+  if (isUserLoading || isLoading) {
     return (
       <div className="flex items-center justify-center flex-grow p-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

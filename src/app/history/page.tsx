@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { collection, query, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 import { useUser, useFirestore } from '@/firebase';
-import { Loader2, FileText, Clock, Cat, Dog, ChevronRight, Search, LayoutGrid } from 'lucide-react';
+import { Loader2, FileText, Clock, Cat, Dog, ChevronRight, Search } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -18,6 +18,8 @@ import { useLanguage } from '@/contexts/language-context';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type StoredUserInput = Omit<AnalyzePetFoodIngredientsInput, 'language' | 'photoDataUri' | 'ingredientsText' | 'brandName' | 'foodType' | 'healthConditions' | 'lifeStage'> & { 
     ingredientsText?: string; 
