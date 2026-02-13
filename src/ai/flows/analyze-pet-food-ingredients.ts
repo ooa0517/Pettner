@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core v3.1] 수의 영양 분석 엔진
- * - NFE(탄수화물) 계산 및 DM(건물 기준) 환산 로직 탑재
- * - 시장 평균 대비 상대적 비교 데이터(Benchmark) 생성 로직 추가
+ * @fileOverview [Pettner Core v3.2] 결정론적 수의 영양 분석 엔진
+ * - 동일 입력에 대해 일관된 결과를 도출하도록 프롬프트 최적화
+ * - 시장 평균 벤치마크 수치 고정
  */
 
 import {ai} from '@/ai/genkit';
@@ -19,14 +19,10 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
   language: z.string().optional().default('ko').describe("출력 언어"),
   petProfile: z.object({
     name: z.string().optional(),
-    breed: z.string().optional().describe('품종 (유전적 소인 분석용)'),
+    breed: z.string().optional(),
     age: z.number().optional(),
     weight: z.number().optional(),
-    bcs: z.number().min(1).max(9).optional().describe('신체 조건 점수'),
-    healthConditions: z.array(z.string()).optional().describe('기저질환 및 알러지'),
-    activityLevel: z.enum(['LOW', 'NORMAL', 'HIGH']).optional(),
-    eatingHabit: z.string().optional(),
-    stoolCondition: z.string().optional(),
+    healthConditions: z.array(z.string()).optional(),
   }).optional(),
 });
 
@@ -41,36 +37,32 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
   }),
   scoreCard: z.object({
     grade: z.enum(['S', 'A', 'B', 'C', 'D']),
-    headline: z.string().describe('핵심 이점/리스크를 강조하는 한 줄 요약'),
+    headline: z.string(),
     tags: z.array(z.string()),
-    matchingScore: z.number().min(0).max(100).describe('반려동물 프로필 대비 적합도')
+    matchingScore: z.number().min(0).max(100)
   }),
   advancedNutrition: z.object({
-    moisture: z.string().describe('라벨 표기 수분 %'),
-    dm_protein: z.string().describe('DM 기준 단백질 %'),
-    dm_fat: z.string().describe('DM 기준 지방 %'),
-    dm_carbs: z.string().describe('DM 기준 탄수화물 % (NFE)'),
-    dm_ash: z.string().describe('실제 또는 추정된 조회분 %'),
-    calories_per_kg: z.string().describe('kcal/kg 추정치'),
-    calcium_phosphorus_ratio: z.string().describe('칼슘:인 비율'),
+    moisture: z.string(),
+    dm_protein: z.string(),
+    dm_fat: z.string(),
+    dm_carbs: z.string(),
+    dm_ash: z.string(),
+    calories_per_kg: z.string(),
+    calcium_phosphorus_ratio: z.string(),
     benchmarks: z.object({
       protein: z.object({ position: z.number().min(0).max(100), label: z.string() }),
       fat: z.object({ position: z.number().min(0).max(100), label: z.string() }),
       carbs: z.object({ position: z.number().min(0).max(100), label: z.string() }),
-    }).describe('시장 평균 대비 위치 (0-100, 50이 평균)')
+    })
   }),
-  ingredientCheck: z.object({
-    first_ingredient_type: z.string().describe('Meat / Meal / Grain / Veggie'),
-    meat_source_quality: z.string().describe('High (Fresh/Whole) or Low (By-product/Meal)'),
-    allergy_triggers: z.array(z.string()).describe('검출된 알러지 유발 물질 목록'),
+  ingredientCheck: {
     positive: z.array(z.object({ name: z.string(), effect: z.string() })),
-    cautionary: z.array(z.object({ name: z.string(), risk: z.string() }))
-  }),
+    cautionary: z.array(z.object({ name: z.string(), risk: z.string() })),
+    allergy_triggers: z.array(z.string())
+  },
   expertVerdict: z.object({
-    pros: z.array(z.string()),
-    cons: z.array(z.string()),
-    recommendation: z.string().describe('계산된 수치를 바탕으로 한 구체적 급여 조언'),
-    proTip: z.string().describe('임상 수의사의 한 줄 통찰')
+    recommendation: z.string(),
+    proTip: z.string()
   }),
   radarChart: z.array(z.object({
       attribute: z.string(),
@@ -89,31 +81,32 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 세계 최고 수준의 수의 영양 분석 엔진 'Pettner Core'입니다.
+  prompt: `당신은 세계 최고 수준의 결정론적 수의 영양 분석 엔진 'Pettner Core'입니다.
+당신의 모든 수치 계산은 수학적으로 엄격해야 하며, 동일한 입력 성분값에 대해 항상 동일한 결과를 출력해야 합니다.
 
-# 1. 입력 처리 (Input Processing)
-- 이미지/텍스트에서 '등록성분량'과 '원료명'을 추출하세요.
-- 조회분이 없으면 건식 7%, 습식 2.5%로 추정하세요.
+# 1. 계산 공식 (Strict Formulas)
+1. **NFE (탄수화물)**: 100 - (조단백 + 조지방 + 조섬유 + 조회분 + 수분)
+   - 조회분 미표기 시: 건식 7%, 습식 2.5%, 간식/화식 3% 고정 적용
+2. **DM (Dry Matter) 환산**: (성분 % / (100 - 수분 %)) * 100
+3. **칼로리 추정 (Modified Atwater)**: (Protein*3.5 + Fat*8.5 + NFE*3.5) * 10
 
-# 2. 핵심 계산 및 비교 로직
-1. **NFE (탄수화물)**: 100 - (단백질 + 지방 + 섬유 + 회분 + 수분)
-2. **DM (건물 기준) 환산**: (성분 / (100 - 수분)) * 100
-3. **시장 평균 비교 (Benchmarks)**: 
-   - 제품군(건식/습식/간식 등)의 일반적인 평균치와 비교하세요.
-   - 예: 건사료 평균 단백질 25% 대비 이 제품이 35%라면 position을 70~80으로 설정.
-   - 평균인 경우 50으로 설정하세요.
+# 2. 벤치마크 기준 (Benchmark Logic)
+제품 카테고리에 따라 다음 평균값을 기준으로 'position(0-100)'을 결정하십시오. (50이 평균)
+- **건사료(Dry)**: 단백질(DM) 28%, 지방(DM) 14%, 탄수화물(DM) 45%
+- **습식(Wet)**: 단백질(DM) 40%, 지방(DM) 20%, 탄수화물(DM) 15%
+- **간식(Treat)**: 단백질(DM) 20%, 지방(DM) 10%, 탄수화물(DM) 50%
 
 # 3. 분석 지침
-- 객관적 수치로 증명하세요.
-- DM 탄수화물 50% 초과 시 '비만 리스크'로 표시하세요.
-- 유해 성분 검출 시 즉시 'D' 등급을 부여하세요.
+- 객관적 수치로만 증명하십시오. '프리미엄' 같은 마케팅 용어는 배제하십시오.
+- DM 탄수화물이 50%를 초과하면 무조건 '비만 리스크' 태그를 추가하십시오.
+- 위험 성분(자일리톨, 양파 등) 검출 시 즉시 D 등급을 부여하십시오.
 
 # 입력 데이터
 - 제품: {{{productName}}} ({{{brandName}}}) / {{{foodType}}}
-- 반려동물 프로필: {{{petProfile}}}
+- 반려동물: {{{petType}}} ({{{petProfile}}})
 - 원재료/성분: {{{ingredientsText}}}
 
-결과는 한국어로 작성하며, JSON 스키마를 엄격히 준수하세요.`,
+결과는 한국어로 작성하며, JSON 스키마를 엄격히 준수하십시오.`,
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(

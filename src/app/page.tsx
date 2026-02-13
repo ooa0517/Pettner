@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -13,16 +12,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { saveAnalysisToHistory } from '@/lib/history';
 import { useLanguage } from '@/contexts/language-context';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { Sparkles } from 'lucide-react';
 
-/**
- * Pettner 메인 페이지 컴포넌트
- */
 export default function Home() {
   const { language, t } = useLanguage();
-  const { user, isUserLoading } = useUser();
+  const { user } = useUser();
   const db = useFirestore();
   
   const [step, setStep] = useState<'landing' | 'survey' | 'input' | 'loading' | 'result'>('landing');
@@ -59,9 +52,9 @@ export default function Home() {
           if (user && db && result.data.status === 'success') {
             const userInputForHistory = {
                 petType: formData.petType,
-                productName: formData.productName || result.data.productInfo.name,
-                brandName: formData.brandName || result.data.productInfo.brand || '',
-                foodType: formData.foodType || result.data.productInfo.type || 'dry',
+                productName: formData.productName || result.data.productIdentity.name,
+                brandName: formData.brandName || result.data.productIdentity.brand || '',
+                foodType: formData.foodType || result.data.productIdentity.category || 'dry',
                 lifeStage: 'ADULT' as any,
                 ingredientsText: formData.ingredientsText || '',
                 healthConditions: '',
@@ -72,8 +65,8 @@ export default function Home() {
           
           setStep('result');
           toast({
-            title: t('homePage.analysisCompleteTitle'),
-            description: user ? t('homePage.analysisCompleteDescription') : "분석이 완료되었습니다!",
+            title: result.isCached ? "기존 분석 리포트 확인" : t('homePage.analysisCompleteTitle'),
+            description: result.isCached ? "이미 검증된 제품 데이터로 리포트를 불러왔습니다." : t('homePage.analysisCompleteDescription'),
           });
         }
       } catch (error) {
@@ -115,14 +108,6 @@ export default function Home() {
     setStep('input');
   };
 
-  if (isUserLoading && step === 'landing') {
-    return (
-      <div className="flex items-center justify-center min-h-[80vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col items-center justify-center flex-grow p-4 md:p-8">
       <div className="w-full max-w-4xl">
@@ -132,18 +117,6 @@ export default function Home() {
         {step === 'loading' && <AnalysisLoading />}
         {step === 'result' && analysisResult && resultInput && (
           <AnalysisResult result={analysisResult} input={resultInput} onReset={handleReset} />
-        )}
-        
-        {/* 개발 및 테스트용 샘플 리포트 링크 (사용자 확인용) */}
-        {step === 'landing' && (
-          <div className="mt-8 text-center animate-in fade-in slide-in-from-top-4 duration-1000 delay-500">
-            <Button asChild variant="ghost" className="text-primary/60 hover:text-primary hover:bg-primary/5 rounded-full">
-              <Link href="/sample-report">
-                <Sparkles className="w-4 h-4 mr-2" />
-                분석 결과 리포트 샘플 보기 (나무)
-              </Link>
-            </Button>
-          </div>
         )}
       </div>
     </div>

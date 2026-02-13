@@ -17,7 +17,6 @@ import {
 import { useLanguage } from '@/contexts/language-context';
 import React, { useState } from 'react';
 import { TooltipProvider } from './ui/tooltip';
-import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
@@ -30,7 +29,6 @@ type AnalysisResultProps = {
 
 export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
   const { t } = useLanguage();
-  const { toast } = useToast();
   
   const [productName, setProductName] = useState(result.productIdentity.name);
   const [isEditingName, setIsEditingName] = useState(false);
@@ -79,10 +77,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         <div className="absolute left-1/2 top-0 bottom-0 w-px bg-muted-foreground/30 z-10">
           <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-bold text-muted-foreground whitespace-nowrap">시장 평균(Avg)</span>
         </div>
-        <div className="flex justify-between absolute inset-x-0 px-2 text-[8px] font-bold text-muted-foreground/40 pointer-events-none">
-          <span>낮음</span>
-          <span>높음</span>
-        </div>
         <div 
           className="absolute h-3 w-3 bg-primary rounded-full shadow-lg border-2 border-white transition-all duration-1000 z-20"
           style={{ left: `calc(${position}% - 6px)` }}
@@ -97,13 +91,10 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         
         {/* Header & Verification Section */}
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <Badge variant="outline" className="px-4 py-1.5 border-primary/30 text-primary bg-primary/5 rounded-full flex gap-2 items-center font-bold text-xs uppercase tracking-widest">
-              <Microscope className="w-4 h-4"/> Pettner Core Analysis v3.1
-            </Badge>
-          </div>
+          <Badge variant="outline" className="px-4 py-1.5 border-primary/30 text-primary bg-primary/5 rounded-full flex gap-2 items-center font-bold text-xs uppercase tracking-widest">
+            <Microscope className="w-4 h-4"/> Pettner Core Analysis v3.2
+          </Badge>
 
-          {/* Product Verification UI */}
           <Card className="border-none shadow-md overflow-hidden bg-white/80 backdrop-blur-sm ring-1 ring-black/5 rounded-3xl">
             <div className="p-4 flex items-center gap-4">
               <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-muted flex-shrink-0 border">
@@ -168,7 +159,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </div>
         </div>
 
-        {/* Advanced Nutrition - Benchmark Gauges */}
+        {/* Advanced Nutrition */}
         <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white ring-1 ring-black/5">
            <CardHeader className="bg-muted/30 p-10 border-b">
               <CardTitle className="flex items-center gap-3 text-xl font-black">
@@ -197,7 +188,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
            </CardContent>
         </Card>
 
-        {/* Personalized Matching Score */}
+        {/* Verdict */}
         <Card className="relative overflow-hidden border-none shadow-2xl bg-white rounded-[3rem] ring-1 ring-black/5">
            <CardHeader className="bg-primary text-white p-10">
               <div className="flex justify-between items-center">
@@ -205,48 +196,25 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   <Award className="w-10 h-10"/>
                   초개인화 적합도 분석
                 </CardTitle>
-                <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-md">
-                   {input.petProfile?.name || '우리 아이'} 맞춤형
-                </Badge>
+                <div className="flex flex-col items-center">
+                   <span className="text-4xl font-black">{scoreCard.matchingScore}</span>
+                   <span className="text-[10px] uppercase font-bold opacity-70">Score</span>
+                </div>
               </div>
            </CardHeader>
            <CardContent className="p-10">
-              <div className="flex flex-col lg:flex-row items-center gap-12">
-                <div className="relative h-48 w-48 flex items-center justify-center shrink-0">
-                    <svg className="w-full h-full -rotate-90">
-                      <circle className="text-muted-foreground/10" strokeWidth="12" stroke="currentColor" fill="transparent" r="85" cx="96" cy="96" />
-                      <circle 
-                        className="text-primary transition-all duration-1000 ease-out" 
-                        strokeWidth="12" 
-                        strokeDasharray={534} 
-                        strokeDashoffset={534 - (534 * (scoreCard.matchingScore || 0)) / 100} 
-                        strokeLinecap="round" 
-                        stroke="currentColor" 
-                        fill="transparent" 
-                        r="85" 
-                        cx="96" 
-                        cy="96" 
-                      />
-                    </svg>
-                    <div className="absolute flex flex-col items-center">
-                      <span className="text-5xl font-black text-primary tracking-tighter">{scoreCard.matchingScore}</span>
-                      <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Match</span>
-                    </div>
-                </div>
-
-                <div className="space-y-6 flex-1">
-                   <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/10">
-                      <h4 className="text-sm font-black text-primary mb-2 uppercase tracking-widest flex items-center gap-2">
-                         <Sparkles className="w-4 h-4"/> Pettner Core Verdict
-                      </h4>
-                      <p className="text-lg leading-relaxed text-foreground font-bold">
-                        {scoreCard.headline}
-                      </p>
-                   </div>
-                   <p className="text-base leading-relaxed text-muted-foreground">
-                      {expertVerdict.recommendation}
-                   </p>
-                </div>
+              <div className="space-y-6">
+                 <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/10">
+                    <h4 className="text-sm font-black text-primary mb-2 uppercase tracking-widest flex items-center gap-2">
+                       <Sparkles className="w-4 h-4"/> Pettner Core Verdict
+                    </h4>
+                    <p className="text-lg leading-relaxed text-foreground font-bold">
+                      {scoreCard.headline}
+                    </p>
+                 </div>
+                 <p className="text-base leading-relaxed text-muted-foreground">
+                    {expertVerdict.recommendation}
+                 </p>
               </div>
            </CardContent>
         </Card>
@@ -292,7 +260,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
            </Card>
         </div>
 
-        {/* Radar Chart & Pro Tip */}
+        {/* Radar Chart */}
         <div className="grid lg:grid-cols-3 gap-8">
            <Card className="lg:col-span-1 shadow-xl border-none rounded-[3rem] bg-white">
               <CardHeader className="p-8 border-b">
@@ -301,7 +269,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               <CardContent className="p-4 flex items-center justify-center min-h-[300px]">
                  <div className="h-[280px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                       <RadarChart data={radarChart} cx="50%" cy="50%" outerRadius="65%" margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
+                       <RadarChart data={radarChart} cx="50%" cy="50%" outerRadius="60%" margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
                           <PolarGrid strokeDasharray="3 3" />
                           <PolarAngleAxis 
                             dataKey="attribute" 
@@ -325,7 +293,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                  <CardTitle className="text-sm font-black text-primary uppercase tracking-widest">AI 수의사 전문 소견</CardTitle>
               </CardHeader>
               <CardContent className="p-10 flex-1 space-y-8">
-                 <div className="p-8 bg-gradient-to-br from-primary/10 to-indigo-50 rounded-3xl border border-primary/10 shadow-lg shadow-primary/5">
+                 <div className="p-8 bg-gradient-to-br from-primary/10 to-indigo-50 rounded-3xl border border-primary/10">
                     <h5 className="text-xs font-black text-primary mb-3 uppercase tracking-widest">VET'S PRO TIP</h5>
                     <p className="text-xl font-black text-foreground leading-relaxed">{expertVerdict.proTip}</p>
                  </div>
@@ -344,7 +312,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
            </Card>
         </div>
 
-        {/* Palatability Record Section */}
+        {/* Palatability Record */}
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden ring-1 ring-black/5">
           <CardHeader className="p-8 pb-4 text-center">
             <CardTitle className="text-lg font-black">우리 아이 기호성 기록하기</CardTitle>
@@ -353,7 +321,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
              <div className="grid grid-cols-3 gap-4">
                 <Button 
                   variant={palatability === 'good' ? 'default' : 'outline'}
-                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'good' && "bg-success hover:bg-success border-success text-white")}
+                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'good' && "bg-success border-success text-white")}
                   onClick={() => setPalatability('good')}
                 >
                   <Smile size={24} />
@@ -361,7 +329,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 </Button>
                 <Button 
                   variant={palatability === 'normal' ? 'default' : 'outline'}
-                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'normal' && "bg-primary hover:bg-primary border-primary text-white")}
+                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'normal' && "bg-primary border-primary text-white")}
                   onClick={() => setPalatability('normal')}
                 >
                   <Meho size={24} />
@@ -369,7 +337,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 </Button>
                 <Button 
                   variant={palatability === 'bad' ? 'default' : 'outline'}
-                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'bad' && "bg-destructive hover:bg-destructive border-destructive text-white")}
+                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'bad' && "bg-destructive border-destructive text-white")}
                   onClick={() => setPalatability('bad')}
                 >
                   <Frown size={24} />
@@ -384,7 +352,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           <Button 
             onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(productName)}`, '_blank')} 
             size="lg" 
-            className="h-20 text-xl font-black rounded-[2rem] shadow-2xl bg-primary hover:bg-primary/90 flex items-center justify-center gap-4 text-white"
+            className="h-20 text-xl font-black rounded-[2rem] shadow-2xl bg-primary flex items-center justify-center gap-4 text-white"
           >
             <ShoppingBag className="h-6 w-6"/> 최저가 검색하기
           </Button>
