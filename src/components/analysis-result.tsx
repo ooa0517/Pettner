@@ -18,7 +18,7 @@ import {
   Repeat, ShoppingBag, Share2, Star, ChevronRight, 
   Dog, Cat, ThumbsUp, ThumbsDown, 
   Scale, Sparkles, CheckCircle2, ShieldCheck, Microscope,
-  AlertCircle, Info, Gavel, History, LogIn
+  AlertCircle, Info, Gavel, History, LogIn, HeartPulse, GraduationCap
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import React from 'react';
@@ -39,7 +39,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   const { toast } = useToast();
   const { user } = useUser();
   const router = useRouter();
-  const { productInfo, summary, ingredientsAnalysis, radarChart, expertInsight, matchingScore } = result;
+  const { productInfo, summary, ingredientsAnalysis, radarChart, expertInsight, matchingScore, feedingGuide } = result;
 
   const petType = input.petType.toLowerCase();
   const PetIcon = petType === 'cat' ? Cat : Dog;
@@ -47,7 +47,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   const handleShare = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'Pettner Report', url: window.location.href });
+        await navigator.share({ title: 'Pettner 정밀 분석 리포트', url: window.location.href });
       } else {
         await navigator.clipboard.writeText(window.location.href);
         toast({ title: t('analysisResult.shareSuccess') });
@@ -77,183 +77,225 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
       <div className="space-y-8 animate-in fade-in duration-500 pb-32 max-w-4xl mx-auto">
         {/* Guest Save Prompt */}
         {!user && (
-          <Card className="bg-primary/10 border-primary/20 border-2 border-dashed">
-            <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary rounded-full text-white">
-                  <History className="w-4 h-4" />
+          <Card className="bg-primary/10 border-primary/20 border-2 border-dashed rounded-[1.5rem] overflow-hidden">
+            <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary rounded-full text-white shadow-lg shadow-primary/20">
+                  <History className="w-5 h-5" />
                 </div>
-                <p className="text-sm font-medium text-primary">로그인하시면 이 분석 결과를 나중에도 확인할 수 있습니다!</p>
+                <div>
+                  <p className="text-sm font-bold text-primary">분석 결과를 평생 소장하세요!</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">로그인하시면 언제 어디서든 다시 꺼내볼 수 있습니다.</p>
+                </div>
               </div>
-              <Button size="sm" onClick={() => router.push('/login')} className="rounded-full">
-                <LogIn className="w-4 h-4 mr-2" /> 로그인하고 저장하기
+              <Button onClick={() => router.push('/login')} className="rounded-full px-6 bg-primary hover:bg-primary/90">
+                <LogIn className="w-4 h-4 mr-2" /> 3초 로그인하고 저장
               </Button>
             </CardContent>
           </Card>
         )}
 
-        {/* Header Section */}
-        <Card className="overflow-hidden border-none shadow-2xl bg-gradient-to-br from-white to-primary/5">
-          <CardHeader className="p-8 pb-4">
-             <div className="flex justify-between items-start mb-4">
-                <Badge variant="outline" className="px-3 py-1 border-primary/20 text-primary bg-primary/5 flex gap-1.5 items-center">
-                   <Microscope className="w-3.5 h-3.5"/> Scientific Report
-                </Badge>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="icon" onClick={handleShare}><Share2 className="w-5 h-5 opacity-50"/></Button>
-                  {user && (
-                    <Button variant="ghost" size="icon" onClick={() => router.push('/history')} title="분석 기록 보기">
-                      <History className="w-5 h-5 opacity-50" />
-                    </Button>
-                  )}
-                </div>
-             </div>
-            <div className="flex items-center gap-3 mb-2">
-               <div className="p-2 bg-primary/10 rounded-xl"><PetIcon className="w-6 h-6 text-primary"/></div>
-               <span className="text-lg font-bold text-primary/80">{productInfo.brand || 'Premium Brand'}</span>
+        {/* Header Section: Product Brand & Name */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="px-3 py-1 border-primary/20 text-primary bg-primary/5 rounded-full flex gap-1.5 items-center font-bold">
+              <Microscope className="w-3.5 h-3.5"/> SCIENTIFIC ANALYSIS
+            </Badge>
+            <div className="flex-grow" />
+            <Button variant="ghost" size="icon" onClick={handleShare} className="rounded-full bg-white shadow-sm border"><Share2 className="w-4 h-4 text-muted-foreground"/></Button>
+          </div>
+          
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-primary/70 font-bold uppercase tracking-widest text-sm">
+              <PetIcon className="w-4 h-4" />
+              {productInfo.brand || 'Premium Brand'}
             </div>
-            <h1 className="text-4xl font-black font-headline tracking-tight text-foreground">{productInfo.name}</h1>
-          </CardHeader>
-          <CardContent className="px-8 pb-8 pt-4">
-             <div className="flex flex-wrap gap-2">
-                {summary.hashtags.map((tag, i) => (
-                  <Badge key={i} className="bg-white border text-muted-foreground font-normal hover:bg-muted">{tag}</Badge>
-                ))}
-             </div>
-          </CardContent>
-        </Card>
-
-        {/* Legal Disclaimer Top */}
-        <div className="p-4 bg-muted/40 border-l-4 border-muted rounded-r-lg flex gap-3 items-start">
-           <Gavel className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
-           <p className="text-[11px] text-muted-foreground leading-relaxed italic" dangerouslySetInnerHTML={{ __html: t('analysisResult.disclaimer') }} />
+            <h1 className="text-4xl md:text-5xl font-black font-headline tracking-tighter text-foreground leading-tight">
+              {productInfo.name}
+            </h1>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            {summary.hashtags.map((tag, i) => (
+              <Badge key={i} className="bg-white border text-muted-foreground font-medium rounded-lg hover:bg-muted py-1.5 px-3">
+                {tag}
+              </Badge>
+            ))}
+          </div>
         </div>
 
-        {/* Hyper-Personalized Matching Score */}
-        <Card className="relative overflow-hidden border-2 border-primary/30 shadow-xl bg-card">
-           <div className="absolute top-0 right-0 p-10 opacity-[0.03] pointer-events-none">
-              <ShieldCheck size={200} />
+        {/* Hyper-Personalized Matching Score - The WOW Factor */}
+        <Card className="relative overflow-hidden border-none shadow-[0_20px_50px_rgba(75,69,237,0.15)] bg-white rounded-[2.5rem]">
+           <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none rotate-12">
+              <ShieldCheck size={280} />
            </div>
-           <CardHeader className="bg-primary text-white p-6">
+           
+           <CardHeader className="bg-primary text-white p-8 md:p-10">
               <div className="flex justify-between items-center">
-                <CardTitle className="flex items-center gap-3 text-xl font-headline">
-                  <CheckCircle2 className="w-6 h-6"/>
-                  초개인화 영양 매칭
+                <CardTitle className="flex items-center gap-3 text-2xl font-black font-headline">
+                  <CheckCircle2 className="w-8 h-8"/>
+                  초개인화 적합도 분석
                 </CardTitle>
-                <Badge className="bg-yellow-400 text-black font-bold">PREMIUM ANALYSIS</Badge>
+                <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30">
+                  <GraduationCap className="w-4 h-4" />
+                  <span className="text-xs font-bold">VET-ALGORITHM 2.4</span>
+                </div>
               </div>
            </CardHeader>
-           <CardContent className="p-8">
-              <div className="flex flex-col md:flex-row items-center gap-10">
-                <div className="relative h-40 w-40 flex items-center justify-center shrink-0">
+
+           <CardContent className="p-8 md:p-12">
+              <div className="flex flex-col lg:flex-row items-center gap-12">
+                <div className="relative h-48 w-48 flex items-center justify-center shrink-0">
                     <svg className="w-full h-full -rotate-90">
-                      <circle className="text-muted-foreground/10" strokeWidth="12" stroke="currentColor" fill="transparent" r="70" cx="80" cy="80" />
-                      <circle className="text-primary" strokeWidth="12" strokeDasharray={440} strokeDashoffset={440 - (440 * (matchingScore?.score || 0)) / 100} strokeLinecap="round" stroke="currentColor" fill="transparent" r="70" cx="80" cy="80" />
+                      <circle className="text-muted-foreground/10" strokeWidth="14" stroke="currentColor" fill="transparent" r="85" cx="96" cy="96" />
+                      <circle 
+                        className="text-primary transition-all duration-1000 ease-out" 
+                        strokeWidth="14" 
+                        strokeDasharray={534} 
+                        strokeDashoffset={534 - (534 * (matchingScore?.score || 0)) / 100} 
+                        strokeLinecap="round" 
+                        stroke="currentColor" 
+                        fill="transparent" 
+                        r="85" 
+                        cx="96" 
+                        cy="96" 
+                      />
                     </svg>
                     <div className="absolute flex flex-col items-center">
-                      <span className="text-5xl font-black text-primary">{matchingScore?.score || '??'}</span>
-                      <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Match Score</span>
+                      <span className="text-6xl font-black text-primary tracking-tighter">{matchingScore?.score || '??'}</span>
+                      <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">MATCH SCORE</span>
                     </div>
                 </div>
-                <div className="space-y-5">
-                   <div className="p-5 bg-primary/5 rounded-2xl border border-primary/10">
-                      <h4 className="font-bold text-primary flex items-center gap-2 mb-2">
-                        <Microscope className="w-4 h-4"/> 수의 영양학적 근거
-                      </h4>
-                      <p className="text-sm leading-relaxed text-foreground/80">{matchingScore.clinicalReason}</p>
+
+                <div className="space-y-6 flex-1">
+                   <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/10 relative">
+                      <div className="absolute -top-3 left-6 bg-white border border-primary/20 px-3 py-1 rounded-full text-[10px] font-black text-primary uppercase tracking-wider">
+                         Clinical Insight
+                      </div>
+                      <p className="text-sm md:text-base leading-relaxed text-foreground font-medium pt-1">
+                        {matchingScore.clinicalReason}
+                      </p>
                    </div>
+                   
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-4 bg-muted/50 rounded-xl">
-                        <h5 className="text-xs font-bold text-muted-foreground mb-1 uppercase">유전적 소인 분석</h5>
-                        <p className="text-xs leading-relaxed">{matchingScore.geneticInsight}</p>
-                      </div>
-                      <div className="p-4 bg-accent/5 rounded-xl border border-accent/10">
-                        <h5 className="text-xs font-bold text-accent mb-1 uppercase">복합 건강 상태 조언</h5>
-                        <p className="text-xs leading-relaxed">{matchingScore.complexConditionAdvice}</p>
-                      </div>
+                      <Card className="border-none shadow-sm bg-muted/30 rounded-[1.5rem]">
+                        <CardContent className="p-5">
+                          <h5 className="text-[10px] font-black text-muted-foreground mb-2 uppercase tracking-widest flex items-center gap-1.5">
+                            <Sparkles className="w-3 h-3 text-primary"/> 유전적 소인 분석
+                          </h5>
+                          <p className="text-xs leading-relaxed font-medium text-foreground/70">{matchingScore.geneticInsight}</p>
+                        </CardContent>
+                      </Card>
+                      <Card className="border-none shadow-sm bg-accent/5 rounded-[1.5rem] border border-accent/10">
+                        <CardContent className="p-5">
+                          <h5 className="text-[10px] font-black text-accent mb-2 uppercase tracking-widest flex items-center gap-1.5">
+                            <HeartPulse className="w-3 h-3"/> 복합 건강 조언
+                          </h5>
+                          <p className="text-xs leading-relaxed font-medium text-foreground/70">{matchingScore.complexConditionAdvice}</p>
+                        </CardContent>
+                      </Card>
                    </div>
                 </div>
               </div>
            </CardContent>
         </Card>
 
-        {/* Core Ingredient Analysis */}
+        {/* Ingredients Analysis Section */}
         <div className="grid md:grid-cols-2 gap-6">
-           <Card className="shadow-lg">
-              <CardHeader className="bg-muted/30 border-b">
-                 <CardTitle className="text-lg flex items-center gap-2">
-                    <ThumbsUp className="w-5 h-5 text-success"/> 장점 및 유효 성분
+           <Card className="shadow-xl border-none rounded-[2rem] overflow-hidden">
+              <CardHeader className="bg-success/5 border-b border-success/10 py-6">
+                 <CardTitle className="text-lg font-black flex items-center gap-2 text-success">
+                    <ThumbsUp className="w-5 h-5"/> 추천 성분 및 효능
                  </CardTitle>
               </CardHeader>
-              <CardContent className="p-6 space-y-4">
+              <CardContent className="p-6 space-y-5">
                  {ingredientsAnalysis.positive.map((item, i) => (
-                    <div key={i} className="flex gap-3">
-                       <Badge variant="outline" className="h-fit bg-success/10 text-success border-success/20 shrink-0">{item.name}</Badge>
-                       <p className="text-xs text-muted-foreground leading-relaxed">{item.effect}</p>
+                    <div key={i} className="flex gap-4 group">
+                       <div className="h-2 w-2 rounded-full bg-success mt-1.5 shrink-0 group-hover:scale-150 transition-transform" />
+                       <div className="space-y-1">
+                          <p className="font-bold text-sm text-foreground">{item.name}</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">{item.effect}</p>
+                       </div>
                     </div>
                  ))}
               </CardContent>
            </Card>
-           <Card className="shadow-lg">
-              <CardHeader className="bg-muted/30 border-b">
-                 <CardTitle className="text-lg flex items-center gap-2">
-                    <ThumbsDown className="w-5 h-5 text-destructive"/> 주의 및 위험 요소
+
+           <Card className="shadow-xl border-none rounded-[2rem] overflow-hidden">
+              <CardHeader className="bg-destructive/5 border-b border-destructive/10 py-6">
+                 <CardTitle className="text-lg font-black flex items-center gap-2 text-destructive">
+                    <ThumbsDown className="w-5 h-5"/> 주의 성분 및 리스크
                  </CardTitle>
               </CardHeader>
-              <CardContent className="p-6 space-y-4">
+              <CardContent className="p-6 space-y-5">
                  {ingredientsAnalysis.cautionary.map((item, i) => (
-                    <div key={i} className="flex gap-3">
-                       <Badge variant="outline" className="h-fit bg-destructive/10 text-destructive border-destructive/20 shrink-0">{item.name}</Badge>
-                       <p className="text-xs text-muted-foreground leading-relaxed">{item.risk}</p>
+                    <div key={i} className="flex gap-4 group">
+                       <div className="h-2 w-2 rounded-full bg-destructive mt-1.5 shrink-0 group-hover:scale-150 transition-transform" />
+                       <div className="space-y-1">
+                          <p className="font-bold text-sm text-foreground">{item.name}</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">{item.risk}</p>
+                       </div>
                     </div>
                  ))}
               </CardContent>
            </Card>
         </div>
 
-        {/* Nutritional Chart & Expert Insight */}
-        <div className="grid md:grid-cols-3 gap-6">
-           <Card className="md:col-span-1 shadow-lg overflow-hidden">
-              <CardHeader className="p-5 border-b">
-                 <CardTitle className="text-sm font-bold flex items-center gap-2">
-                    <Scale className="w-4 h-4 text-primary"/> 영양 밸런스 지수
+        {/* Radar Chart & Expert Section */}
+        <div className="grid lg:grid-cols-3 gap-6">
+           <Card className="lg:col-span-1 shadow-xl border-none rounded-[2rem] bg-white">
+              <CardHeader className="p-8 border-b border-muted/50">
+                 <CardTitle className="text-sm font-black flex items-center gap-2 uppercase tracking-widest text-muted-foreground">
+                    <Scale className="w-4 h-4 text-primary"/> 영양 밸런스 프로필
                  </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 flex items-center justify-center">
-                 <div className="h-[220px] w-full">
+              <CardContent className="p-6 flex items-center justify-center min-h-[300px]">
+                 <div className="h-[260px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                       <ChartRadarChart data={radarChart} cx="50%" cy="50%" outerRadius="60%">
-                          <ChartPolarGrid />
-                          <ChartPolarAngleAxis dataKey="attribute" tick={{fontSize: 10}} />
-                          <ChartRadar dataKey="score" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.4} />
+                       <ChartRadarChart data={radarChart} cx="50%" cy="50%" outerRadius="70%">
+                          <ChartPolarGrid strokeDasharray="3 3" />
+                          <ChartPolarAngleAxis dataKey="attribute" tick={{fontSize: 11, fontWeight: 'bold', fill: 'hsl(var(--muted-foreground))'}} />
+                          <ChartRadar 
+                            name="Score" 
+                            dataKey="score" 
+                            stroke="hsl(var(--primary))" 
+                            fill="hsl(var(--primary))" 
+                            fillOpacity={0.5} 
+                          />
                        </ChartRadarChart>
                     </ResponsiveContainer>
                  </div>
               </CardContent>
            </Card>
 
-           <Card className="md:col-span-2 shadow-lg flex flex-col">
-              <CardHeader className="p-5 border-b bg-primary/5">
-                 <CardTitle className="text-sm font-bold flex items-center gap-2 text-primary">
-                    <Sparkles className="w-4 h-4"/> AI 수의사 전문 소견
+           <Card className="lg:col-span-2 shadow-xl border-none rounded-[2rem] bg-white flex flex-col">
+              <CardHeader className="p-8 border-b border-muted/50 bg-primary/5">
+                 <CardTitle className="text-sm font-black flex items-center gap-2 text-primary uppercase tracking-widest">
+                    <Sparkles className="w-4 h-4"/> AI 수의사 전문 소견 (Pro Insights)
                  </CardTitle>
               </CardHeader>
-              <CardContent className="p-6 flex-1 space-y-5">
-                 <div>
-                    <h5 className="text-xs font-bold text-muted-foreground mb-2 uppercase flex items-center gap-1">
-                       <Info className="w-3 h-3"/> 숨겨진 제조사 인사이트
+              <CardContent className="p-8 flex-1 space-y-8">
+                 <div className="space-y-3">
+                    <h5 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] flex items-center gap-2">
+                       <Info className="w-3.5 h-3.5"/> HIDDEN INSIGHTS
                     </h5>
-                    <p className="text-sm italic leading-relaxed text-foreground/70">"{ingredientsAnalysis.hiddenInsights}"</p>
+                    <p className="text-base font-medium leading-relaxed text-foreground/80 italic">
+                      "{ingredientsAnalysis.hiddenInsights}"
+                    </p>
                  </div>
-                 <div className="p-4 bg-muted rounded-xl">
-                    <h5 className="text-xs font-bold text-primary mb-1">PRO TIP</h5>
-                    <p className="text-sm font-medium">{expertInsight.proTip}</p>
+
+                 <div className="p-6 bg-gradient-to-br from-primary/10 to-indigo-50 rounded-[1.5rem] border border-primary/10 shadow-inner">
+                    <h5 className="text-xs font-black text-primary mb-2 uppercase tracking-widest">VET'S PRO TIP</h5>
+                    <p className="text-sm md:text-base font-bold text-foreground leading-relaxed">{expertInsight.proTip}</p>
                  </div>
-                 <div>
-                    <h5 className="text-[10px] font-bold text-muted-foreground mb-1 uppercase">Scientific References</h5>
-                    <ul className="text-[9px] text-muted-foreground space-y-1">
+
+                 <div className="space-y-3">
+                    <h5 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">SCIENTIFIC REFERENCES</h5>
+                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                        {expertInsight.scientificReferences.map((ref, i) => (
-                          <li key={i}>• {ref}</li>
+                          <li key={i} className="text-[10px] text-muted-foreground/80 flex items-start gap-2">
+                             <span className="text-primary font-bold">[{i+1}]</span> {ref}
+                          </li>
                        ))}
                     </ul>
                  </div>
@@ -261,35 +303,62 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
            </Card>
         </div>
 
-        {/* Call to Action: Shopping & Future Plan */}
-        <div className="space-y-6">
-          <Button onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(productInfo.name)}`, '_blank')} size="lg" className="w-full h-16 text-xl rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.01] transition-transform">
-            <ShoppingBag className="mr-2"/> 이 제품 최저가 검색하기
-          </Button>
+        {/* Feeding Guide & Calories */}
+        <Card className="shadow-xl border-none rounded-[2rem] bg-white overflow-hidden">
+           <CardHeader className="p-8 border-b border-muted/50 flex flex-row items-center justify-between bg-muted/20">
+              <CardTitle className="text-lg font-black flex items-center gap-2">
+                 <Scale className="w-5 h-5 text-primary"/> 권장 급여 가이드
+              </CardTitle>
+              <Badge className="bg-white text-primary font-bold border-primary/20">{feedingGuide.dailyCalories}</Badge>
+           </CardHeader>
+           <CardContent className="p-8">
+              <div className="flex items-center gap-6">
+                 <div className="p-5 bg-primary/10 rounded-2xl">
+                    <Scale className="w-10 h-10 text-primary" />
+                 </div>
+                 <div className="space-y-1">
+                    <p className="font-black text-xl text-foreground">일일 권장 급여량</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {feedingGuide.recommendation}
+                    </p>
+                 </div>
+              </div>
+           </CardContent>
+        </Card>
 
-          <Card className="bg-muted/20 border-dashed border-2">
-             <CardContent className="p-8 text-center">
-                <p className="text-sm text-muted-foreground mb-4">
-                   <strong>나중에 업데이트될 기능:</strong> 분석된 데이터를 기반으로 아이의 알러지/질환에 완벽히 대응하는 대체 상품을 AI가 직접 찾아드립니다.
-                </p>
-                <Badge variant="outline">Coming Soon: AI Personalized Recommendation Engine</Badge>
-             </CardContent>
-          </Card>
+        {/* Legal Disclaimer & Gavel */}
+        <div className="p-6 bg-muted/40 border-l-8 border-muted rounded-r-[1.5rem] flex gap-4 items-start shadow-sm">
+           <Gavel className="w-6 h-6 text-muted-foreground shrink-0 mt-1" />
+           <div className="space-y-1">
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Legal Notice & Disclaimer</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed italic" dangerouslySetInnerHTML={{ __html: t('analysisResult.disclaimer') }} />
+           </div>
         </div>
 
-        <div className="text-center pt-8 space-y-4">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button onClick={onReset} variant="ghost" className="text-muted-foreground hover:text-primary">
-                <Repeat className="mr-2 h-4 w-4" /> 다른 제품 분석하러 가기
-              </Button>
-              {user && (
-                <Button onClick={() => router.push('/history')} variant="outline" className="rounded-full">
-                  <History className="mr-2 h-4 w-4" /> 내 분석 기록 전체보기
-                </Button>
-              )}
-            </div>
-            <p className="text-[10px] text-muted-foreground/60 max-w-lg mx-auto leading-relaxed">
-              본 서비스는 정보 제공을 목적으로 하며, 실제 성분은 제조사의 상황에 따라 다를 수 있습니다. 반려동물의 건강 상태에 따른 급여 결정은 반드시 전문 수의사의 지도를 따르십시오.
+        {/* Call to Action: Shopping & Future Plan */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Button 
+            onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(productInfo.name)}`, '_blank')} 
+            size="lg" 
+            className="h-20 text-xl font-black rounded-[2rem] shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all bg-primary hover:bg-primary/90"
+          >
+            <ShoppingBag className="mr-3 h-6 w-6"/> 이 제품 최저가 검색하기
+          </Button>
+
+          <Button 
+            onClick={onReset} 
+            variant="outline" 
+            size="lg" 
+            className="h-20 text-xl font-black rounded-[2rem] border-2 shadow-lg hover:bg-muted/50"
+          >
+            <Repeat className="mr-3 h-6 w-6" /> 다른 제품 분석하러 가기
+          </Button>
+        </div>
+
+        <div className="text-center pt-12">
+            <p className="text-[10px] text-muted-foreground/60 max-w-lg mx-auto leading-relaxed uppercase tracking-[0.1em] font-bold">
+              AI Personalized Nutrition Engine v2.4.0 <br/>
+              Pettner Research Center. All rights reserved.
             </p>
         </div>
       </div>
