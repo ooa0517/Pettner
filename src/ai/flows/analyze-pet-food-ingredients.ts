@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core v3.2] 결정론적 수의 영양 분석 엔진
- * - 동일 입력에 대해 일관된 결과를 도출하도록 프롬프트 최적화
- * - 시장 평균 벤치마크 수치 고정
+ * @fileOverview [Pettner Core v3.3] 결정론적 수의 영양 분석 엔진
+ * - 성분명 앞에 이모지 자동 매핑 기능 추가
+ * - 수치 계산 일관성 강화
  */
 
 import {ai} from '@/ai/genkit';
@@ -55,11 +55,11 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       carbs: z.object({ position: z.number().min(0).max(100), label: z.string() }),
     })
   }),
-  ingredientCheck: {
-    positive: z.array(z.object({ name: z.string(), effect: z.string() })),
-    cautionary: z.array(z.object({ name: z.string(), risk: z.string() })),
+  ingredientCheck: z.object({
+    positive: z.array(z.object({ name: z.string().describe('이모지가 포함된 성분명 (예: 🐔 닭고기)'), effect: z.string() })),
+    cautionary: z.array(z.object({ name: z.string().describe('이모지가 포함된 성분명 (예: ⚠️ 보존제)'), risk: z.string() })),
     allergy_triggers: z.array(z.string())
-  },
+  }),
   expertVerdict: z.object({
     recommendation: z.string(),
     proTip: z.string()
@@ -82,24 +82,21 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
   prompt: `당신은 세계 최고 수준의 결정론적 수의 영양 분석 엔진 'Pettner Core'입니다.
-당신의 모든 수치 계산은 수학적으로 엄격해야 하며, 동일한 입력 성분값에 대해 항상 동일한 결과를 출력해야 합니다.
 
-# 1. 계산 공식 (Strict Formulas)
+# 1. 성분 시각화 규칙
+- 모든 원재료(positive, cautionary 리스트)의 이름 앞에 가장 적절한 이모지를 붙이십시오.
+  - 닭고기 -> 🐔, 연어 -> 🐟, 야채 -> 🥬, 유산균 -> 🦠, 위험/화학성분 -> ⚠️, 오일 -> 💧 등
+
+# 2. 계산 공식 (Strict Formulas)
 1. **NFE (탄수화물)**: 100 - (조단백 + 조지방 + 조섬유 + 조회분 + 수분)
    - 조회분 미표기 시: 건식 7%, 습식 2.5%, 간식/화식 3% 고정 적용
 2. **DM (Dry Matter) 환산**: (성분 % / (100 - 수분 %)) * 100
 3. **칼로리 추정 (Modified Atwater)**: (Protein*3.5 + Fat*8.5 + NFE*3.5) * 10
 
-# 2. 벤치마크 기준 (Benchmark Logic)
-제품 카테고리에 따라 다음 평균값을 기준으로 'position(0-100)'을 결정하십시오. (50이 평균)
+# 3. 벤치마크 기준
+제품 카테고리에 따라 다음 평균값을 기준으로 'position(0-100)'을 결정하십시오.
 - **건사료(Dry)**: 단백질(DM) 28%, 지방(DM) 14%, 탄수화물(DM) 45%
 - **습식(Wet)**: 단백질(DM) 40%, 지방(DM) 20%, 탄수화물(DM) 15%
-- **간식(Treat)**: 단백질(DM) 20%, 지방(DM) 10%, 탄수화물(DM) 50%
-
-# 3. 분석 지침
-- 객관적 수치로만 증명하십시오. '프리미엄' 같은 마케팅 용어는 배제하십시오.
-- DM 탄수화물이 50%를 초과하면 무조건 '비만 리스크' 태그를 추가하십시오.
-- 위험 성분(자일리톨, 양파 등) 검출 시 즉시 D 등급을 부여하십시오.
 
 # 입력 데이터
 - 제품: {{{productName}}} ({{{brandName}}}) / {{{foodType}}}

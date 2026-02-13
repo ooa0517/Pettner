@@ -12,11 +12,11 @@ import {
   Scale, Sparkles, Microscope,
   AlertCircle, HeartPulse, GraduationCap,
   Award, Zap, Activity, Edit2, Check,
-  Smile, Frown
+  Smile, Frown, Info
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import React, { useState } from 'react';
-import { TooltipProvider } from './ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 
@@ -66,10 +66,24 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     }
   };
 
-  const BenchmarkBar = ({ label, position, value }: { label: string, position: number, value: string }) => (
+  const InfoIcon = ({ content }: { content: string }) => (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Info className="w-3.5 h-3.5 text-muted-foreground/40 cursor-help inline-block ml-1" />
+      </TooltipTrigger>
+      <TooltipContent className="max-w-[200px] p-2 text-xs leading-relaxed">
+        {content}
+      </TooltipContent>
+    </Tooltip>
+  );
+
+  const BenchmarkBar = ({ label, position, value, tooltip }: { label: string, position: number, value: string, tooltip: string }) => (
     <div className="space-y-2">
       <div className="flex justify-between items-end">
-        <span className="text-xs font-bold text-muted-foreground">{label}</span>
+        <span className="text-xs font-bold text-muted-foreground flex items-center">
+          {label}
+          <InfoIcon content={tooltip} />
+        </span>
         <span className="text-sm font-black text-primary">{value}</span>
       </div>
       <div className="relative h-6 flex items-center">
@@ -87,12 +101,12 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
 
   return (
     <TooltipProvider>
-      <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-4xl mx-auto px-4">
+      <div className="space-y-10 animate-in fade-in duration-700 pb-40 max-w-4xl mx-auto px-4">
         
         {/* Header & Verification Section */}
         <div className="space-y-6">
           <Badge variant="outline" className="px-4 py-1.5 border-primary/30 text-primary bg-primary/5 rounded-full flex gap-2 items-center font-bold text-xs uppercase tracking-widest">
-            <Microscope className="w-4 h-4"/> Pettner Core Analysis v3.2
+            <Microscope className="w-4 h-4"/> Pettner Core Analysis v3.3
           </Badge>
 
           <Card className="border-none shadow-md overflow-hidden bg-white/80 backdrop-blur-sm ring-1 ring-black/5 rounded-3xl">
@@ -164,23 +178,42 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
            <CardHeader className="bg-muted/30 p-10 border-b">
               <CardTitle className="flex items-center gap-3 text-xl font-black">
                  <Zap className="text-primary w-6 h-6"/> 건물 기준(DM) 정밀 영양 분석
+                 <InfoIcon content="건물 기준(DM)이란? 수분을 제외한 실제 영양소의 농도를 뜻하며, 사료 간의 영양 밸런스를 공정하게 비교하는 국제 표준 기준입니다." />
               </CardTitle>
            </CardHeader>
            <CardContent className="p-10 space-y-12">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                 <BenchmarkBar label="DM 단백질" position={advancedNutrition.benchmarks.protein.position} value={advancedNutrition.dm_protein} />
-                 <BenchmarkBar label="DM 지방" position={advancedNutrition.benchmarks.fat.position} value={advancedNutrition.dm_fat} />
-                 <BenchmarkBar label="DM 탄수화물" position={advancedNutrition.benchmarks.carbs.position} value={advancedNutrition.dm_carbs} />
+                 <BenchmarkBar 
+                   label="DM 단백질" 
+                   position={advancedNutrition.benchmarks.protein.position} 
+                   value={advancedNutrition.dm_protein} 
+                   tooltip="근육과 장기 건강을 담당하는 단백질의 함량입니다."
+                 />
+                 <BenchmarkBar 
+                   label="DM 지방" 
+                   position={advancedNutrition.benchmarks.fat.position} 
+                   value={advancedNutrition.dm_fat} 
+                   tooltip="주요 에너지원이며 비타민 흡수를 돕는 지방 함량입니다."
+                 />
+                 <BenchmarkBar 
+                   label="DM 탄수화물" 
+                   position={advancedNutrition.benchmarks.carbs.position} 
+                   value={advancedNutrition.dm_carbs} 
+                   tooltip="NFE 공식을 통해 산출된 탄수화물 함량입니다. 50%를 넘으면 비만 리스크가 큽니다."
+                 />
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-3 gap-8 pt-6 border-t">
                  {[
-                   { label: '에너지(kg)', value: advancedNutrition.calories_per_kg, icon: Activity },
-                   { label: '수분(Original)', value: advancedNutrition.moisture, icon: HeartPulse },
-                   { label: '칼슘:인 비율', value: advancedNutrition.calcium_phosphorus_ratio, icon: Scale }
+                   { label: '에너지(kg)', value: advancedNutrition.calories_per_kg, icon: Activity, tip: "해당 제품의 kg당 칼로리 밀도입니다." },
+                   { label: '수분(Original)', value: advancedNutrition.moisture, icon: HeartPulse, tip: "제조 시 포함된 원본 수분 함량입니다." },
+                   { label: '칼슘:인 비율', value: advancedNutrition.calcium_phosphorus_ratio, icon: Scale, tip: "뼈 건강에 중요한 미네랄 비율입니다. 보통 1.1~1.4:1이 이상적입니다." }
                  ].map((item, i) => (
                     <div key={i} className="space-y-1 text-center">
-                       <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{item.label}</p>
+                       <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center justify-center">
+                         {item.label}
+                         <InfoIcon content={item.tip} />
+                       </p>
                        <p className="text-xl font-black text-foreground">{item.value}</p>
                     </div>
                  ))}
@@ -347,24 +380,23 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </CardContent>
         </Card>
 
-        {/* CTA Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Button 
-            onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(productName)}`, '_blank')} 
-            size="lg" 
-            className="h-20 text-xl font-black rounded-[2rem] shadow-2xl bg-primary flex items-center justify-center gap-4 text-white"
-          >
-            <ShoppingBag className="h-6 w-6"/> 최저가 검색하기
-          </Button>
-
-          <Button 
-            onClick={onReset} 
-            variant="outline" 
-            size="lg" 
-            className="h-20 text-xl font-black rounded-[2rem] border-2 shadow-xl"
-          >
-            <Repeat className="h-6 w-6 text-primary" /> 다른 제품 분석하기
-          </Button>
+        {/* Sticky Action Bar */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t shadow-[0_-8px_30px_rgb(0,0,0,0.04)] p-4 z-50 flex justify-center">
+          <div className="w-full max-w-4xl flex gap-3">
+            <Button 
+              onClick={onReset} 
+              variant="outline" 
+              className="flex-[1] h-14 rounded-2xl border-2 shadow-sm flex items-center justify-center"
+            >
+              <Repeat className="h-5 w-5 text-primary" />
+            </Button>
+            <Button 
+              onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(productName)}`, '_blank')} 
+              className="flex-[3] h-14 text-lg font-black rounded-2xl shadow-xl bg-primary hover:bg-primary/90 flex items-center justify-center gap-3 text-white"
+            >
+              <ShoppingBag className="h-5 w-5"/> 최저가 검색하기
+            </Button>
+          </div>
         </div>
       </div>
     </TooltipProvider>
