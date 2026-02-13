@@ -5,20 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis } from 'recharts';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { 
-  Repeat, ShoppingBag, Share2, Star, 
+  Repeat, ShoppingBag, 
   Dog, Cat, ThumbsUp, ThumbsDown, 
-  Scale, Sparkles, ShieldCheck, Microscope,
-  AlertCircle, History, LogIn, HeartPulse, GraduationCap,
-  ArrowRight, Award, Zap, Activity
+  Scale, Sparkles, Microscope,
+  AlertCircle, HeartPulse, GraduationCap,
+  Award, Zap, Activity, Edit2, Check,
+  Smile, Meho, Frown
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
-import React from 'react';
+import React, { useState } from 'react';
 import { TooltipProvider } from './ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { useUser } from '@/firebase';
-import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import Image from 'next/image';
 
 type AnalysisResultProps = {
   result: AnalyzePetFoodIngredientsOutput;
@@ -30,8 +31,10 @@ type AnalysisResultProps = {
 export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const { user } = useUser();
-  const router = useRouter();
+  
+  const [productName, setProductName] = useState(result.productIdentity.name);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [palatability, setPalatability] = useState<'good' | 'normal' | 'bad' | null>(null);
 
   if (result.status === 'error') {
      return (
@@ -50,20 +53,9 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
      );
   }
 
-  const { productIdentity, scoreCard, advancedNutrition, ingredientCheck, expertVerdict, radarChart, scientificReferences } = result;
+  const { scoreCard, advancedNutrition, ingredientCheck, expertVerdict, radarChart, scientificReferences } = result;
   const petType = input.petType.toLowerCase();
   const PetIcon = petType === 'cat' ? Cat : Dog;
-
-  const handleShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'Pettner 정밀 분석 리포트', url: window.location.href });
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        toast({ title: "링크가 복사되었습니다!" });
-      }
-    } catch (err) { console.error(err); }
-  };
 
   const getGradeColor = (grade: string) => {
     switch(grade) {
@@ -76,31 +68,89 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     }
   };
 
+  const BenchmarkBar = ({ label, position, value }: { label: string, position: number, value: string }) => (
+    <div className="space-y-2">
+      <div className="flex justify-between items-end">
+        <span className="text-xs font-bold text-muted-foreground">{label}</span>
+        <span className="text-sm font-black text-primary">{value}</span>
+      </div>
+      <div className="relative h-6 flex items-center">
+        <div className="absolute inset-0 bg-muted/30 rounded-full" />
+        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-muted-foreground/30 z-10">
+          <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] font-bold text-muted-foreground whitespace-nowrap">시장 평균(Avg)</span>
+        </div>
+        <div className="flex justify-between absolute inset-x-0 px-2 text-[8px] font-bold text-muted-foreground/40 pointer-events-none">
+          <span>낮음</span>
+          <span>높음</span>
+        </div>
+        <div 
+          className="absolute h-3 w-3 bg-primary rounded-full shadow-lg border-2 border-white transition-all duration-1000 z-20"
+          style={{ left: `calc(${position}% - 6px)` }}
+        />
+      </div>
+    </div>
+  );
+
   return (
     <TooltipProvider>
-      <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-4xl mx-auto">
+      <div className="space-y-10 animate-in fade-in duration-700 pb-32 max-w-4xl mx-auto px-4">
         
-        {/* Header Section */}
+        {/* Header & Verification Section */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <Badge variant="outline" className="px-4 py-1.5 border-primary/30 text-primary bg-primary/5 rounded-full flex gap-2 items-center font-bold text-xs uppercase tracking-widest">
-              <Microscope className="w-4 h-4"/> Pettner Core Analysis v3.0
+              <Microscope className="w-4 h-4"/> Pettner Core Analysis v3.1
             </Badge>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="icon" onClick={handleShare} className="rounded-full bg-white shadow-md border">
-                <Share2 className="w-5 h-5 text-muted-foreground"/>
-              </Button>
-            </div>
           </div>
+
+          {/* Product Verification UI */}
+          <Card className="border-none shadow-md overflow-hidden bg-white/80 backdrop-blur-sm ring-1 ring-black/5 rounded-3xl">
+            <div className="p-4 flex items-center gap-4">
+              <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-muted flex-shrink-0 border">
+                {input.photoDataUri ? (
+                  <Image src={input.photoDataUri} alt="원본 이미지" fill className="object-cover" />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-muted-foreground">
+                    <PetIcon size={24} />
+                  </div>
+                )}
+              </div>
+              <div className="flex-grow space-y-1">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+                  <Sparkles size={10} className="text-primary" /> AI 인식 제품명
+                </p>
+                <div className="flex items-center gap-2">
+                  {isEditingName ? (
+                    <Input 
+                      value={productName} 
+                      onChange={(e) => setProductName(e.target.value)} 
+                      className="h-9 font-bold focus:ring-primary rounded-lg"
+                      autoFocus
+                    />
+                  ) : (
+                    <h2 className="text-lg font-black tracking-tight truncate">{productName}</h2>
+                  )}
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-primary/40 hover:text-primary"
+                    onClick={() => setIsEditingName(!isEditingName)}
+                  >
+                    {isEditingName ? <Check size={16} /> : <Edit2 size={16} />}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
           
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-primary/70 font-black uppercase tracking-[0.2em] text-sm">
                 <PetIcon className="w-5 h-5" />
-                {productIdentity.brand || 'Premium Pet Food'}
+                {result.productIdentity.brand || 'Premium Pet Food'}
               </div>
               <h1 className="text-4xl md:text-5xl font-black font-headline tracking-tighter text-foreground leading-tight">
-                {productIdentity.name}
+                {productName}
               </h1>
               <div className="flex flex-wrap gap-2 pt-2">
                 {scoreCard.tags.map((tag, i) => (
@@ -118,36 +168,31 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </div>
         </div>
 
-        {/* [NEW] Advanced Nutrition - DM Basis Analysis */}
+        {/* Advanced Nutrition - Benchmark Gauges */}
         <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white ring-1 ring-black/5">
            <CardHeader className="bg-muted/30 p-10 border-b">
               <CardTitle className="flex items-center gap-3 text-xl font-black">
                  <Zap className="text-primary w-6 h-6"/> 건물 기준(DM) 정밀 영양 분석
               </CardTitle>
            </CardHeader>
-           <CardContent className="p-10">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+           <CardContent className="p-10 space-y-12">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                 <BenchmarkBar label="DM 단백질" position={advancedNutrition.benchmarks.protein.position} value={advancedNutrition.dm_protein} />
+                 <BenchmarkBar label="DM 지방" position={advancedNutrition.benchmarks.fat.position} value={advancedNutrition.dm_fat} />
+                 <BenchmarkBar label="DM 탄수화물" position={advancedNutrition.benchmarks.carbs.position} value={advancedNutrition.dm_carbs} />
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-8 pt-6 border-t">
                  {[
-                   { label: 'DM 단백질', value: advancedNutrition.dm_protein, icon: Activity },
-                   { label: 'DM 지방', value: advancedNutrition.dm_fat, icon: HeartPulse },
-                   { label: 'DM 탄수화물', value: advancedNutrition.dm_carbs, icon: Scale },
-                   { label: '에너지(kg)', value: advancedNutrition.calories_per_kg, icon: Activity }
+                   { label: '에너지(kg)', value: advancedNutrition.calories_per_kg, icon: Activity },
+                   { label: '수분(Original)', value: advancedNutrition.moisture, icon: HeartPulse },
+                   { label: '칼슘:인 비율', value: advancedNutrition.calcium_phosphorus_ratio, icon: Scale }
                  ].map((item, i) => (
-                    <div key={i} className="space-y-2 text-center p-4 bg-muted/20 rounded-2xl">
+                    <div key={i} className="space-y-1 text-center">
                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">{item.label}</p>
-                       <p className="text-2xl font-black text-primary">{item.value}</p>
+                       <p className="text-xl font-black text-foreground">{item.value}</p>
                     </div>
                  ))}
-              </div>
-              <div className="mt-8 grid md:grid-cols-2 gap-4">
-                 <div className="flex justify-between items-center p-4 border rounded-2xl bg-muted/10">
-                    <span className="text-sm font-bold text-muted-foreground">수분(Original)</span>
-                    <span className="font-black">{advancedNutrition.moisture}</span>
-                 </div>
-                 <div className="flex justify-between items-center p-4 border rounded-2xl bg-muted/10">
-                    <span className="text-sm font-bold text-muted-foreground">칼슘:인 비율</span>
-                    <span className="font-black">{advancedNutrition.calcium_phosphorus_ratio}</span>
-                 </div>
               </div>
            </CardContent>
         </Card>
@@ -296,10 +341,45 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
            </Card>
         </div>
 
+        {/* Palatability Record Section */}
+        <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden ring-1 ring-black/5">
+          <CardHeader className="p-8 pb-4 text-center">
+            <CardTitle className="text-lg font-black">우리 아이 기호성 기록하기</CardTitle>
+          </CardHeader>
+          <CardContent className="p-8 pt-0">
+             <div className="grid grid-cols-3 gap-4">
+                <Button 
+                  variant={palatability === 'good' ? 'default' : 'outline'}
+                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'good' && "bg-success hover:bg-success border-success")}
+                  onClick={() => setPalatability('good')}
+                >
+                  <Smile size={24} />
+                  <span className="font-bold">잘 먹어요</span>
+                </Button>
+                <Button 
+                  variant={palatability === 'normal' ? 'default' : 'outline'}
+                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'normal' && "bg-primary hover:bg-primary border-primary")}
+                  onClick={() => setPalatability('normal')}
+                >
+                  <Meho size={24} />
+                  <span className="font-bold">보통</span>
+                </Button>
+                <Button 
+                  variant={palatability === 'bad' ? 'default' : 'outline'}
+                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'bad' && "bg-destructive hover:bg-destructive border-destructive")}
+                  onClick={() => setPalatability('bad')}
+                >
+                  <Frown size={24} />
+                  <span className="font-bold">안 먹어요</span>
+                </Button>
+             </div>
+          </CardContent>
+        </Card>
+
         {/* CTA Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Button 
-            onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(productIdentity.name)}`, '_blank')} 
+            onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(productName)}`, '_blank')} 
             size="lg" 
             className="h-20 text-xl font-black rounded-[2rem] shadow-2xl bg-primary hover:bg-primary/90 flex items-center justify-center gap-4"
           >
@@ -319,3 +399,12 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     </TooltipProvider>
   );
 }
+
+const Meho = ({ size = 24 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10" />
+    <line x1="8" y1="15" x2="16" y2="15" />
+    <line x1="9" y1="9" x2="9.01" y2="9" />
+    <line x1="15" y1="9" x2="15.01" y2="9" />
+  </svg>
+);
