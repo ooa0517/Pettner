@@ -1,11 +1,10 @@
-
 'use server';
 
 /**
- * @fileOverview [초고도화 버전] 반려동물 정밀 영양 분석 AI 에이전트
- * - 글로벌 표준(AAFCO, FEDIAF, NRC) 기반 성분 분석
- * - 품종별 유전적 취약점 및 복합 기저질환(비만+알러지 등) 입체 매칭
- * - 정밀 수의학 리포트 생성
+ * @fileOverview [Pettner Core v3.0] 수의 영양 분석 엔진
+ * - NFE(탄수화물) 계산 및 DM(건물 기준) 환산 로직 탑재
+ * - AAFCO/FEDIAF 가이드라인 기반 정밀 분석
+ * - 초개인화 건강 상태(비만, 알러지 등) 입체 매칭
  */
 
 import {ai} from '@/ai/genkit';
@@ -36,39 +35,46 @@ export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngred
 
 const AnalyzePetFoodIngredientsOutputSchema = z.object({
   status: z.enum(['success', 'error']),
-  productInfo: z.object({
+  // [NEW] 사용자 요청 JSON 스키마 반영
+  productIdentity: z.object({
     name: z.string(),
     brand: z.string().optional(),
-    type: z.string().optional()
+    category: z.string()
   }),
-  // 초개인화 적합도 분석
-  matchingScore: z.object({
-    score: z.number().min(0).max(100),
-    clinicalReason: z.string().describe('수의학적 근거 (글로벌 가이드라인 및 논문 참조)'),
-    geneticInsight: z.string().describe('품종 특성 및 유전적 취약점 매칭 분석'),
-    complexConditionAdvice: z.string().describe('비만+알러지 등 복합 상황에 대한 정밀 조언')
+  scoreCard: z.object({
+    grade: z.enum(['S', 'A', 'B', 'C', 'D']),
+    headline: z.string().describe('핵심 이점/리스크를 강조하는 한 줄 요약'),
+    tags: z.array(z.string()),
+    matchingScore: z.number().min(0).max(100).describe('반려동물 프로필 대비 적합도')
   }),
-  summary: z.object({
-    headlines: z.array(z.string()).describe('전문가 시각의 핵심 요약'),
-    hashtags: z.array(z.string())
+  advancedNutrition: z.object({
+    moisture: z.string().describe('라벨 표기 수분 %'),
+    dm_protein: z.string().describe('DM 기준 단백질 %'),
+    dm_fat: z.string().describe('DM 기준 지방 %'),
+    dm_carbs: z.string().describe('DM 기준 탄수화물 % (NFE)'),
+    dm_ash: z.string().describe('실제 또는 추정된 조회분 %'),
+    calories_per_kg: z.string().describe('kcal/kg 추정치'),
+    calcium_phosphorus_ratio: z.string().describe('칼슘:인 비율')
   }),
-  ingredientsAnalysis: z.object({
+  ingredientCheck: z.object({
+    first_ingredient_type: z.string().describe('Meat / Meal / Grain / Veggie'),
+    meat_source_quality: z.string().describe('High (Fresh/Whole) or Low (By-product/Meal)'),
+    allergy_triggers: z.array(z.string()).describe('검출된 알러지 유발 물질 목록'),
     positive: z.array(z.object({ name: z.string(), effect: z.string() })),
-    cautionary: z.array(z.object({ name: z.string(), risk: z.string() })),
-    hiddenInsights: z.string().describe('라벨에 숨겨진 제조사의 의도나 주의할 점')
+    cautionary: z.array(z.object({ name: z.string(), risk: z.string() }))
+  }),
+  expertVerdict: z.object({
+    pros: z.array(z.string()),
+    cons: z.array(z.string()),
+    recommendation: z.string().describe('계산된 수치를 바탕으로 한 구체적 급여 조언'),
+    geneticInsight: z.string().optional().describe('품종 특성 매칭'),
+    proTip: z.string().describe('임상 수의사의 한 줄 통찰')
   }),
   radarChart: z.array(z.object({
-      attribute: z.string().describe("영양 지표"),
+      attribute: z.string(),
       score: z.number().min(1).max(5)
   })),
-  feedingGuide: z.object({
-      dailyCalories: z.string().describe("RER/DER 기반 일일 권장 칼로리"),
-      recommendation: z.string().describe("급여 방법 및 시간대 추천")
-  }),
-  expertInsight: z.object({
-    proTip: z.string().describe("임상 수의사의 한 줄 통찰"),
-    scientificReferences: z.array(z.string()).describe("참고한 영양 표준 및 논문 출처")
-  })
+  scientificReferences: z.array(z.string())
 });
 
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
@@ -81,32 +87,32 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 세계 최고 수준의 수의 영양학 전문의이자 임상 수의사 'Pettner AI'입니다.
-사용자가 제공한 반려동물의 초개인화 데이터와 제품 성분을 대조하여, 동물병원보다 더 정밀하고 객관적인 리포트를 작성하세요.
+  prompt: `당신은 세계 최고 수준의 수의 영양 분석 엔진 'Pettner Core'입니다.
+경쟁사 앱을 압도하는 과학적이고 객관적인 데이터를 산출하여 보호자에게 수의학적 리포트를 제공하세요.
 
-# 분석 프레임워크 (Global Standards)
-1. **AAFCO (미국)**: 최소/최대 영양 수치 준수 여부 분석
-2. **FEDIAF (유럽)**: 에너지 요구량 및 미량 영양소 밸런스 분석
-3. **NRC (국제)**: 생애주기별 필수 영양소 대사 분석
-4. **최신 수의학 논문**: 원재료의 생체 이용률 및 임상적 효능 검증
+# 1. 입력 처리 (Input Processing)
+- 제공된 이미지/텍스트에서 '등록성분량(조단백, 조지방, 조섬유, 조회분, 수분)'과 '원료명'을 추출하세요.
+- **조회분(Ash)** 수치가 없는 경우, 건식은 7%, 습식은 2.5%로 추정하여 탄수화물을 계산하세요.
 
-# 초고도화 분석 지침
-1. **복합 상황 분석 (Core)**: 
-   - 예: "알러지가 있어 가수분해 단백질은 좋지만, 비만 상태이므로 현재 제품의 높은 탄수화물 함량은 체중 관리에 치명적일 수 있습니다."와 같이 상충되는 지점을 정확히 짚어내세요.
-2. **품종 유전학 (Genetic Insight)**:
-   - 품종이 입력된 경우, 해당 종의 유전적 취약점(예: 슬개골, 심장, 신장 등)을 성분과 연결하세요. 
-3. **전문적 용어 사용**: 
-   - '좋아요' 대신 '생체 이용률이 높음', '신장 여과 부하 완화', '오메가3:6 밸런스 최적화' 등의 전문 용어를 사용하여 신뢰도를 높이되, 설명은 다정하게 하세요.
-4. **객관적 데이터**: 분석 근거에는 반드시 "AAFCO 2024 가이드라인 기준" 또는 "최신 영양 논문에 근거하여"라는 표현을 포함하세요.
+# 2. 핵심 계산 로직 (Calculation Logic)
+보고서 생성 전 반드시 내부적으로 다음 계산을 수행하세요:
+1. **NFE (탄수화물)**: 100 - (단백질 + 지방 + 섬유 + 회분 + 수분)
+2. **DM (건물 기준) 환산**: (성분 수치 / (100 - 수분)) * 100
+3. **칼로리 추정**: 수정된 Atwater 계수 사용 (단백질*3.5 + 지방*8.5 + 탄수화물*3.5)
+
+# 3. 분석 지침 (Guidelines)
+- **객관성**: '프리미엄' 같은 모호한 표현 대신 숫자로 증명하세요.
+- **임계값**: DM 기준 탄수화물이 50%를 초과하면 '비만 리스크'로 표시하세요.
+- **안전**: 유해 성분(자일리톨, 양파, 포도 등) 검출 시 즉시 'D' 등급을 부여하세요.
+- **초개인화**: 반려동물의 이름({{{petProfile.name}}}), 품종({{{petProfile.breed}}}), 체중({{{petProfile.weight}}}kg), 기저질환({{{petProfile.healthConditions}}})을 성분과 대조하여 적합도 점수를 산출하세요.
 
 # 입력 데이터
-- 제품: {{{productName}}} ({{{brandName}}})
-- 유형: {{{foodType}}}
+- 제품: {{{productName}}} ({{{brandName}}}) / {{{foodType}}}
 - 반려동물: {{{petType}}} ({{{petProfile.breed}}})
 - 프로필: {{{petProfile}}}
-- 원재료: {{{ingredientsText}}}
+- 원재료/성분: {{{ingredientsText}}}
 
-모든 결과는 한국어로 작성하며, 보호자가 "아, 우리 아이 상태가 이래서 이 제품이 맞구나!"라고 무릎을 탁 칠 정도의 깊이 있는 통찰을 제공하세요.`,
+모든 결과는 한국어로 작성하며, 수의 영양학적 근거(AAFCO, NRC 등)를 바탕으로 신뢰도 높은 리포트를 생성하세요.`,
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(
