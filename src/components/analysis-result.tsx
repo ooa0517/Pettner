@@ -1,17 +1,10 @@
-
 'use client';
 
 import Image from 'next/image';
 import type { AnalyzePetFoodIngredientsOutput, AnalyzePetFoodIngredientsInput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ResponsiveContainer } from 'recharts';
-import { 
-  ChartRadar, 
-  ChartRadarChart, 
-  ChartPolarGrid, 
-  ChartPolarAngleAxis 
-} from '@/components/ui/chart';
+import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { 
   Repeat, ShoppingBag, Share2, Star, ChevronRight, 
@@ -266,17 +259,17 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               <CardContent className="p-8 flex items-center justify-center min-h-[350px]">
                  <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                       <ChartRadarChart data={radarChart} cx="50%" cy="50%" outerRadius="80%">
-                          <ChartPolarGrid strokeDasharray="3 3" />
-                          <ChartPolarAngleAxis dataKey="attribute" tick={{fontSize: 12, fontWeight: '900', fill: 'hsl(var(--foreground))'}} />
-                          <ChartRadar 
+                       <RadarChart data={radarChart} cx="50%" cy="50%" outerRadius="80%">
+                          <PolarGrid strokeDasharray="3 3" />
+                          <PolarAngleAxis dataKey="attribute" tick={{fontSize: 12, fontWeight: '900', fill: 'hsl(var(--foreground))'}} />
+                          <Radar 
                             name="Score" 
                             dataKey="score" 
                             stroke="hsl(var(--primary))" 
                             fill="hsl(var(--primary))" 
                             fillOpacity={0.4} 
                           />
-                       </ChartRadarChart>
+                       </RadarChart>
                     </ResponsiveContainer>
                  </div>
               </CardContent>

@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Camera, Sparkles, Dog, Cat, ShieldCheck, AlertTriangle, Info, Star, CheckCircle2 } from 'lucide-react';
+import { Camera, Sparkles, Dog, Cat, ShieldCheck, AlertTriangle, Info, Star, CheckCircle2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,6 +16,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type AnalysisFormValues = {
   petType: 'dog' | 'cat';
@@ -44,7 +44,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
       petType: z.enum(['dog', 'cat']),
       productName: z.string().min(1, { message: t('scannerHome.productNameRequired') }),
       brandName: z.string().optional(),
-      foodType: z.string().optional().default('dry'),
+      foodType: z.string().min(1, { message: '제품 유형을 선택해주세요.' }),
       ingredientsText: z.string().optional(),
       image: imageSchema,
     }).refine(data => data.ingredientsText || (data.image && data.image.length > 0), {
@@ -89,7 +89,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                </Badge>
             </div>
             <h1 className="text-4xl font-black font-headline tracking-tight text-foreground">성분 분석 스캔</h1>
-            <CardDescription className="text-base pt-2">라벨의 '원료명'이 잘 보이게 찍어주세요.</CardDescription>
+            <CardDescription className="text-base pt-2">제품 정보와 원재료가 잘 보이게 촬영해주세요.</CardDescription>
           </CardHeader>
           
           <CardContent className="p-10">
@@ -165,7 +165,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                                       type="file" 
                                       accept="image/*" 
                                       capture="environment" 
-                                      className="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full" 
+                                      className="absolute inset-0 opacity-0 cursor-pointer z-20 w-full h-full" 
                                       onChange={(e) => onChange(e.target.files)} 
                                       name={name}
                                       onBlur={onBlur}
@@ -179,29 +179,59 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                   />
                 </div>
                 
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  <FormLabel className="text-xl font-black flex items-center gap-3">
+                     <span className="w-2 h-8 bg-primary rounded-full" /> 제품 상세 정보
+                  </FormLabel>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="productName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-bold text-foreground/80">제품명</FormLabel>
+                          <FormControl>
+                            <Input placeholder="예: 인스팅트 오리지널" className="h-14 rounded-xl border-2 focus:ring-primary" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="brandName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-bold text-foreground/80">브랜드명</FormLabel>
+                          <FormControl>
+                            <Input placeholder="예: 인스팅트 (Instinct)" className="h-14 rounded-xl border-2 focus:ring-primary" {...field} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
                   <FormField
                     control={form.control}
-                    name="productName"
+                    name="foodType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-black text-foreground/80">제품명</FormLabel>
-                        <FormControl>
-                          <Input placeholder="예: 인스팅트 오리지널" className="h-14 rounded-xl border-2 focus:ring-primary" {...field} />
-                        </FormControl>
+                        <FormLabel className="font-bold text-foreground/80">분석 카테고리 (필수)</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-14 rounded-xl border-2">
+                              <SelectValue placeholder="카테고리를 선택해주세요" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="rounded-xl">
+                            <SelectItem value="dry">건식 사료 (Dry Food)</SelectItem>
+                            <SelectItem value="wet">습식 사료 (Wet Food)</SelectItem>
+                            <SelectItem value="cooked">화식/생식 (Cooked/Raw)</SelectItem>
+                            <SelectItem value="treat">간식 (Treat)</SelectItem>
+                            <SelectItem value="supplement">영양제 (Supplement)</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="brandName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-black text-foreground/80">브랜드명</FormLabel>
-                        <FormControl>
-                          <Input placeholder="예: 인스팅트 (Instinct)" className="h-14 rounded-xl border-2 focus:ring-primary" {...field} />
-                        </FormControl>
                       </FormItem>
                     )}
                   />
