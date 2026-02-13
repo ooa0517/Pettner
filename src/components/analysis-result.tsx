@@ -12,7 +12,7 @@ import {
   Scale, Sparkles, Microscope,
   AlertCircle, HeartPulse, GraduationCap,
   Award, Zap, Activity, Edit2, Check,
-  Smile, Meho, Frown
+  Smile, Frown
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import React, { useState } from 'react';
@@ -299,11 +299,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                  <CardTitle className="text-xs font-black uppercase tracking-widest text-muted-foreground">영양 밸런스 프로필</CardTitle>
               </CardHeader>
               <CardContent className="p-4 flex items-center justify-center min-h-[300px]">
-                 <div className="h-[250px] w-full">
+                 <div className="h-[280px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                       <RadarChart data={radarChart} cx="50%" cy="50%" outerRadius="80%">
+                       <RadarChart data={radarChart} cx="50%" cy="50%" outerRadius="65%" margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
                           <PolarGrid strokeDasharray="3 3" />
-                          <PolarAngleAxis dataKey="attribute" tick={{fontSize: 10, fontWeight: 'bold'}} />
+                          <PolarAngleAxis 
+                            dataKey="attribute" 
+                            tick={{fontSize: 10, fontWeight: '800', fill: 'hsl(var(--foreground))'}} 
+                          />
                           <Radar 
                             name="Score" 
                             dataKey="score" 
@@ -350,7 +353,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
              <div className="grid grid-cols-3 gap-4">
                 <Button 
                   variant={palatability === 'good' ? 'default' : 'outline'}
-                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'good' && "bg-success hover:bg-success border-success")}
+                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'good' && "bg-success hover:bg-success border-success text-white")}
                   onClick={() => setPalatability('good')}
                 >
                   <Smile size={24} />
@@ -358,7 +361,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 </Button>
                 <Button 
                   variant={palatability === 'normal' ? 'default' : 'outline'}
-                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'normal' && "bg-primary hover:bg-primary border-primary")}
+                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'normal' && "bg-primary hover:bg-primary border-primary text-white")}
                   onClick={() => setPalatability('normal')}
                 >
                   <Meho size={24} />
@@ -366,7 +369,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 </Button>
                 <Button 
                   variant={palatability === 'bad' ? 'default' : 'outline'}
-                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'bad' && "bg-destructive hover:bg-destructive border-destructive")}
+                  className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'bad' && "bg-destructive hover:bg-destructive border-destructive text-white")}
                   onClick={() => setPalatability('bad')}
                 >
                   <Frown size={24} />
@@ -381,7 +384,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           <Button 
             onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(productName)}`, '_blank')} 
             size="lg" 
-            className="h-20 text-xl font-black rounded-[2rem] shadow-2xl bg-primary hover:bg-primary/90 flex items-center justify-center gap-4"
+            className="h-20 text-xl font-black rounded-[2rem] shadow-2xl bg-primary hover:bg-primary/90 flex items-center justify-center gap-4 text-white"
           >
             <ShoppingBag className="h-6 w-6"/> 최저가 검색하기
           </Button>
