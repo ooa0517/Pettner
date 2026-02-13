@@ -141,12 +141,12 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                   <FormField
                       control={form.control}
                       name="image"
-                      render={({ field: { onChange, value, ...rest } }) => (
+                      render={({ field: { onChange, value, name, onBlur, ref } }) => (
                           <FormItem>
                               <FormControl>
                                 <div 
                                   className={cn(
-                                    "relative w-full aspect-video border-3 border-dashed rounded-[2rem] flex flex-col justify-center items-center text-center cursor-pointer transition-all duration-500",
+                                    "relative w-full aspect-video border-3 border-dashed rounded-[2rem] flex flex-col justify-center items-center text-center cursor-pointer transition-all duration-500 overflow-hidden",
                                     imageFile && imageFile.length > 0 ? "border-success bg-success/5" : "border-muted hover:border-primary hover:bg-primary/5 bg-muted/10"
                                   )}
                                 >
@@ -161,13 +161,16 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                                         {imageFile && imageFile.length > 0 ? imageFile[0].name : "사료/간식 라벨의 '원재료명'을 촬영하세요."}
                                       </p>
                                     </div>
-                                    <Input 
+                                    {/* 파일 인풋은 절대로 value를 직접 받으면 안 됩니다. z-index 10으로 클릭을 최우선으로 받게 합니다. */}
+                                    <input 
                                       type="file" 
                                       accept="image/*" 
                                       capture="environment" 
-                                      className="absolute inset-0 opacity-0 cursor-pointer" 
+                                      className="absolute inset-0 opacity-0 cursor-pointer z-10 w-full h-full" 
                                       onChange={(e) => onChange(e.target.files)} 
-                                      {...rest} 
+                                      name={name}
+                                      onBlur={onBlur}
+                                      ref={ref}
                                     />
                                 </div>
                               </FormControl>
