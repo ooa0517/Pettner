@@ -77,7 +77,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
             <AlertDescription className="text-muted-foreground text-sm leading-relaxed mt-1">
               AAFCO(미국)와 FEDIAF(유럽)의 최신 가이드라인을 실시간으로 대조합니다. <br/>
               사진이 선명할수록 분석의 정확도가 올라갑니다.
-            </div>
+            </AlertDescription>
           </div>
         </Alert>
 
