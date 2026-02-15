@@ -12,7 +12,7 @@ import {
   Scale, Sparkles, Microscope,
   AlertCircle, HeartPulse, GraduationCap,
   Award, Zap, Activity, Edit2, Check,
-  Smile, Frown, Info
+  Smile, Frown, Info, ShieldAlert
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import React, { useState } from 'react';
@@ -51,9 +51,8 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
      );
   }
 
-  const { scoreCard, advancedNutrition, ingredientCheck, expertVerdict, radarChart, scientificReferences } = result;
-  const petType = input.petType.toLowerCase();
-  const PetIcon = petType === 'cat' ? Cat : Dog;
+  const { scoreCard, advancedNutrition, ingredientCheck, expertVerdict, radarChart, scientificReferences, safety_check, protocol_used } = result;
+  const PetIcon = protocol_used === 'Cat' ? Cat : Dog;
 
   const getGradeColor = (grade: string) => {
     switch(grade) {
@@ -63,6 +62,16 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
       case 'C': return 'bg-orange-400 text-white';
       case 'D': return 'bg-destructive text-destructive-foreground';
       default: return 'bg-muted text-muted-foreground';
+    }
+  };
+
+  const getSafetyColor = (grade: string) => {
+    switch(grade) {
+      case 'Green': return 'text-success';
+      case 'Yellow': return 'text-yellow-500';
+      case 'Red': return 'text-destructive';
+      case 'Danger': return 'text-destructive font-black animate-pulse';
+      default: return 'text-muted-foreground';
     }
   };
 
@@ -105,9 +114,16 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         
         {/* Header & Verification Section */}
         <div className="space-y-6">
-          <Badge variant="outline" className="px-4 py-1.5 border-primary/30 text-primary bg-primary/5 rounded-full flex gap-2 items-center font-bold text-xs uppercase tracking-widest">
-            <Microscope className="w-4 h-4"/> Pettner Core Analysis v3.3
-          </Badge>
+          <div className="flex justify-between items-center">
+            <Badge variant="outline" className="px-4 py-1.5 border-primary/30 text-primary bg-primary/5 rounded-full flex gap-2 items-center font-bold text-xs uppercase tracking-widest">
+              <Microscope className="w-4 h-4"/> Pettner Core Engine v3.5 ({protocol_used})
+            </Badge>
+            {safety_check.toxic_detected && (
+              <Badge variant="destructive" className="animate-bounce flex gap-1 items-center font-black">
+                <ShieldAlert size={14} /> 독성 주의!
+              </Badge>
+            )}
+          </div>
 
           <Card className="border-none shadow-md overflow-hidden bg-white/80 backdrop-blur-sm ring-1 ring-black/5 rounded-3xl">
             <div className="p-4 flex items-center gap-4">
@@ -230,7 +246,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   초개인화 적합도 분석
                 </CardTitle>
                 <div className="flex flex-col items-center">
-                   <span className="text-4xl font-black">{scoreCard.matchingScore}</span>
+                   <span className="text-4xl font-black">{scoreCard.match_score}</span>
                    <span className="text-[10px] uppercase font-bold opacity-70">Score</span>
                 </div>
               </div>
@@ -245,9 +261,19 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                       {scoreCard.headline}
                     </p>
                  </div>
-                 <p className="text-base leading-relaxed text-muted-foreground">
-                    {expertVerdict.recommendation}
-                 </p>
+                 <div className="space-y-4">
+                    <p className="text-base leading-relaxed text-muted-foreground">
+                        {expertVerdict.recommendation}
+                    </p>
+                    {safety_check.toxic_detected && (
+                        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-2xl flex items-center gap-3">
+                            <ShieldAlert className="text-destructive" />
+                            <p className="text-sm font-bold text-destructive">
+                                주의: {safety_check.toxic_items.join(', ')} 성분이 감지되었습니다. 즉시 급여를 중단하십시오.
+                            </p>
+                        </div>
+                    )}
+                 </div>
               </div>
            </CardContent>
         </Card>
