@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PawPrint, PlusCircle, Loader2, Crown, ChevronRight, Star, HeartPulse } from 'lucide-react';
+import { PlusCircle, Loader2, ChevronRight, Star, HeartPulse, ClipboardCheck } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { Badge } from '@/components/ui/badge';
 import PetProfileSurvey from '@/components/pet-profile-survey';
@@ -76,34 +76,6 @@ export default function AccountPage() {
           </CardHeader>
         </Card>
 
-        <Card className="bg-gradient-to-r from-primary to-indigo-600 text-white border-none shadow-xl overflow-hidden relative">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
-            <Crown size={120} />
-          </div>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Crown className="w-6 h-6" />
-              Pettner 프리미엄 멤버십
-            </CardTitle>
-            <CardDescription className="text-white/80">
-              우리 아이 맞춤형 정밀 분석을 무제한으로 이용하세요.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-center gap-2">✓ 기저질환 및 종 특성 유전 분석</li>
-              <li className="flex items-center gap-2">✓ 활동량/BCS 기반 맞춤 급여량 계산</li>
-              <li className="flex items-center gap-2">✓ 수의 영양학 논문 기반 정밀 리포트</li>
-              <li className="flex items-center gap-2">✓ 가족 공유 및 멀티 프로필 관리</li>
-            </ul>
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full bg-white text-primary hover:bg-white/90 font-bold shadow-lg">
-              구독하고 혜택 받기 (월 4,900원)
-            </Button>
-          </CardFooter>
-        </Card>
-
         <Card className="border-none shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl font-headline">
@@ -121,7 +93,7 @@ export default function AccountPage() {
                   <DialogTrigger asChild>
                     <Button variant="outline" className="rounded-full">
                       <PlusCircle className="mr-2 h-4 w-4" />
-                      정밀 설문 시작하기 (구독 필요)
+                      정밀 설문 시작하기
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-3xl p-0 overflow-hidden border-none bg-transparent shadow-none">

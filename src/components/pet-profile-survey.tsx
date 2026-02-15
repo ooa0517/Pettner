@@ -11,8 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dog, Cat, Activity, HeartPulse, ClipboardCheck, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Activity, HeartPulse, ClipboardCheck, ArrowRight, ArrowLeft, Dog, Cat } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const petProfileSchema = z.object({
@@ -80,7 +79,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
             <Activity className="w-6 h-6" />
           </div>
         </div>
-        <CardTitle className="text-2xl font-headline">정밀 프로필 등록 (구독 전용)</CardTitle>
+        <CardTitle className="text-2xl font-headline">정밀 프로필 등록</CardTitle>
         <CardDescription>정확한 영양 분석을 위해 아이의 상태를 알려주세요.</CardDescription>
       </CardHeader>
 

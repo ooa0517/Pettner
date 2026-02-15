@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Camera, Sparkles, Dog, Cat, ShieldCheck, AlertTriangle, Info, Star, CheckCircle2, ChevronDown } from 'lucide-react';
+import { Camera, Sparkles, Dog, Cat, ShieldCheck, AlertTriangle, Info, Star, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -242,7 +243,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                       <Star size={100} fill="currentColor" className="text-primary" />
                     </div>
                     <div className="flex justify-between items-start mb-3">
-                      <Badge className="bg-primary text-white font-bold px-3 py-1">PREMIUM MATCHING</Badge>
+                      <Badge className="bg-primary text-white font-bold px-3 py-1">ULTRA MATCHING</Badge>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Info className="w-5 h-5 text-primary/40 cursor-help" />
@@ -255,7 +256,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                     </div>
                     <h4 className="text-xl font-black text-primary mb-2">우리 아이 맞춤형 분석 안내</h4>
                     <p className="text-sm text-muted-foreground leading-relaxed pr-10">
-                      품종별 유전 분석, 비만/알러지 1:1 매칭 등 <strong>초개인화 리포트</strong>는 마이페이지에서 정밀 프로필 등록(구독형) 후 이용하실 수 있습니다. 지금은 일반 성분 분석을 제공합니다.
+                      품종별 유전 분석, 비만/알러지 1:1 매칭 등 <strong>초개인화 리포트</strong>를 위해 마이페이지에서 정밀 프로필을 등록해 보세요. 모든 기능은 무료로 제공됩니다.
                     </p>
                 </div>
 
