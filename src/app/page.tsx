@@ -41,11 +41,24 @@ export default function Home() {
     
     const analysisInput: AnalyzePetFoodIngredientsInput = {
         petType: formData.petType,
+        analysisMode: formData.analysisMode,
         productName: formData.productName,
         brandName: formData.brandName,
         foodType: formData.foodType,
         ingredientsText: formData.ingredientsText,
         language: language,
+        petProfile: formData.analysisMode === 'custom' ? {
+          name: formData.petProfile.name,
+          breed: formData.petProfile.breed,
+          age: Number(formData.petProfile.age) || undefined,
+          weight: Number(formData.petProfile.weight) || undefined,
+          neutered: formData.petProfile.neutered === 'yes',
+          activityLevel: formData.petProfile.activityLevel,
+          bcs: formData.petProfile.bcs,
+          environment: formData.petProfile.environment,
+          healthConditions: formData.petProfile.healthConditions,
+          allergies: formData.petProfile.allergies,
+        } : undefined
     };
 
     const processAndAnalyze = async (input: AnalyzePetFoodIngredientsInput) => {
@@ -54,8 +67,8 @@ export default function Home() {
         let finalResult: AnalyzePetFoodIngredientsOutput | null = null;
         let isCached = false;
 
-        // 1. 클라이언트 측 캐시 확인
-        if (db && productId && productId.length > 5) {
+        // 1. 클라이언트 측 캐시 확인 (제품 정보만 있는 경우에 주로 유용)
+        if (db && productId && productId.length > 5 && input.analysisMode === 'general') {
           const productRef = doc(db, 'products', productId);
           const productSnap = await getDoc(productRef);
           if (productSnap.exists()) {
@@ -64,7 +77,7 @@ export default function Home() {
           }
         }
 
-        // 2. 캐시가 없으면 서버 액션으로 AI 분석 실행
+        // 2. 캐시가 없거나 맞춤 분석인 경우 서버 액션으로 AI 분석 실행
         if (!finalResult) {
           const actionResponse = await getAnalysis(input);
           if (actionResponse.error) {
@@ -73,8 +86,8 @@ export default function Home() {
           if (actionResponse.data) {
             finalResult = actionResponse.data;
             
-            // 글로벌 캐시에 저장 (비동기)
-            if (db && productId && productId.length > 5 && finalResult.status === 'success') {
+            // 글로벌 캐시에 저장 (비동기, 제품 중심 정보만 저장)
+            if (db && productId && productId.length > 5 && finalResult.status === 'success' && input.analysisMode === 'general') {
               setDoc(doc(db, 'products', productId), finalResult).catch(e => console.error("Global cache save failed:", e));
             }
           }
@@ -86,17 +99,7 @@ export default function Home() {
           
           // 사용자 히스토리에 저장
           if (user && db && finalResult.status === 'success') {
-            const userInputForHistory = {
-                petType: formData.petType,
-                productName: formData.productName || finalResult.productIdentity.name,
-                brandName: formData.brandName || finalResult.productIdentity.brand || '',
-                foodType: formData.foodType || finalResult.productIdentity.category || 'dry',
-                lifeStage: 'ADULT' as any,
-                ingredientsText: formData.ingredientsText || '',
-                healthConditions: '',
-                photoProvided: !!file,
-            };
-            saveAnalysisToHistory(db, user.uid, userInputForHistory, finalResult);
+            saveAnalysisToHistory(db, user.uid, input, finalResult);
           }
           
           setStep('result');

@@ -116,11 +116,11 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <Badge variant="outline" className="px-4 py-1.5 border-primary/30 text-primary bg-primary/5 rounded-full flex gap-2 items-center font-bold text-xs uppercase tracking-widest">
-              <Microscope className="w-4 h-4"/> Pettner Core Engine v3.6 ({protocol_used})
+              <Microscope className="w-4 h-4"/> Pettner Core Engine v3.8 ({protocol_used})
             </Badge>
             {safety_check.toxic_detected && (
               <Badge variant="destructive" className="animate-bounce flex gap-1 items-center font-black">
-                <ShieldAlert size={14} /> 독성 주의!
+                <ShieldAlert size={14} /> 위험 감지!
               </Badge>
             )}
           </div>
@@ -138,7 +138,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               </div>
               <div className="flex-grow space-y-1">
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1">
-                  <Sparkles size={10} className="text-primary" /> AI 인식 제품명
+                  <Sparkles size={10} className="text-primary" /> AI 분석 제품명
                 </p>
                 <div className="flex items-center gap-2">
                   {isEditingName ? (

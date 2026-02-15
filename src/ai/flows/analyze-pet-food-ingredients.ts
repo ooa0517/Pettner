@@ -1,8 +1,9 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v3.6] Deterministic Veterinary Analysis System
- * - Breed-Specific Genetic Risk Analysis Layer added
+ * @fileOverview [Pettner Core Engine v3.8] Deterministic Veterinary Analysis System
+ * - Strictly Deterministic Output for Consistency
+ * - Breed-Specific Genetic Risk Analysis Layer
  * - Species bifurcation (Protocol_Dog / Protocol_Cat)
  * - AAFCO/NRC nutritional standards validation
  * - Deterministic DM (Dry Matter) & NFE (Carbs) calculations
@@ -13,6 +14,7 @@ import {z} from 'genkit';
 
 const AnalyzePetFoodIngredientsInputSchema = z.object({
   petType: z.enum(['dog', 'cat']).describe('반려동물 종류'),
+  analysisMode: z.enum(['general', 'custom']).default('custom').describe('분석 모드'),
   productName: z.string().optional().describe('제품명'),
   brandName: z.string().optional().describe('브랜드명'),
   foodType: z.string().optional().describe('제품 유형 (건식/습식/화식/간식/영양제)'),
@@ -24,7 +26,12 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
     breed: z.string().optional(),
     age: z.number().optional(),
     weight: z.number().optional(),
+    neutered: z.boolean().optional(),
+    activityLevel: z.string().optional(),
+    bcs: z.string().optional(),
+    environment: z.string().optional(),
     healthConditions: z.array(z.string()).optional(),
+    allergies: z.array(z.string()).optional(),
   }).optional(),
 });
 
@@ -84,10 +91,10 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     allergy_hit: z.boolean(),
     detected_allergens: z.array(z.string())
   }),
-  expertVerdict: z.object({
+  expertVerdict: {
     recommendation: z.string(),
     proTip: z.string()
-  }),
+  },
   radarChart: z.array(z.object({
       attribute: z.string(),
       score: z.number().min(1).max(5)
@@ -105,7 +112,7 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 엄격히 결정론적인 수의 영양 분석 엔진 'Pettner Core v3.6'입니다.
+  prompt: `당신은 엄격히 결정론적인 수의 영양 분석 엔진 'Pettner Core v3.8'입니다.
 제공된 이미지나 텍스트를 분석하여 AAFCO/NRC 기준에 부합하는 과학적 리포트를 생성하십시오.
 
 # INPUT DATA
@@ -113,7 +120,17 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
 {{#if productName}}Product: {{{productName}}}{{/if}}
 {{#if foodType}}Type: {{{foodType}}}{{/if}}
 {{#if petType}}Pet Species: {{{petType}}}{{/if}}
-{{#if petProfile}}Pet Profile: {{{petProfile}}}{{/if}}
+{{#if petProfile}}
+Pet Profile: 
+- Breed: {{{petProfile.breed}}}
+- Age: {{{petProfile.age}}}
+- Weight: {{{petProfile.weight}}}
+- Neutered: {{{petProfile.neutered}}}
+- Activity: {{{petProfile.activityLevel}}}
+- BCS: {{{petProfile.bcs}}}
+- Conditions: {{#each petProfile.healthConditions}}{{{this}}}, {{/each}}
+- Allergies: {{#each petProfile.allergies}}{{{this}}}, {{/each}}
+{{/if}}
 
 {{#if ingredientsText}}
 # INGREDIENTS TEXT
@@ -125,28 +142,19 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
 {{media url=photoDataUri}}
 {{/if}}
 
-# PART 1. 품종별 유전 리스크 분석 (Genetic Analysis)
-제공된 반려동물 프로필의 'Breed' 정보를 기반으로 유전적 취약점을 사료 성분과 대조하십시오.
+# 분석 가이드라인 (Deterministic Protocol)
+1. **수분/조회분 결측치 보정**: 건식(수분 10%, 조회분 8%), 습식(수분 75%, 조회분 2.5%).
+2. **건물 기준(DM) 환산**: 모든 영양소 수치는 반드시 (수치 / (100-수분) * 100) 공식을 사용해 환산하십시오.
+3. **탄수화물(NFE) 계산**: 100 - (조단백+조지방+조섬유+조회분+수분).
+4. **알러지 체크**: petProfile.allergies 리스트에 포함된 단어(예: 닭고기, 소고기 등)가 원재료에 포함되어 있다면 즉시 safety_check 등급을 'Red' 또는 'Danger'로 올리고 경고하십시오.
+5. **품종별 유전 리스크**: 
+   - 강아지(Dog): 슈나우저(고지방 15% 이상 위험), 말티즈/푸들(관절 성분 부재 시 경고), 달마시안(내장육/퓨린 위험).
+   - 고양이(Cat): 페르시안(인 함량 1.2% 이상 또는 단백질 45% 이상 위험), 메인쿤/랙돌(타우린 필수 보충).
+6. **일관성**: 동일한 입력값에 대해 항상 동일한 수학적 결과와 논리적 조언을 출력하십시오.
 
-## 🐶 강아지 프로토콜 (Dog Breed Risks)
-1. **고지혈증/췌장염 그룹 (슈나우저, 셔틀랜드 쉽독 등)**: DM 지방 > 15% 시 "고지방 리스크" 경고.
-2. **관절 질환 그룹 (말티즈, 푸들, 포메라니안, 리트리버 등)**: 원재료에 관절 보조 성분(글루코사민, 콘드로이친, 초록입홍합, MSM) 부재 시 "관절 케어 필요" 고지.
-3. **요산 결석 그룹 (달마시안, 불독 등)**: 원재료에 내장육, 간, 정어리, 효모 포함 시 "고퓨린 리스크" 위험 경고.
-
-## 🐱 고양이 프로토콜 (Cat Breed Risks)
-1. **신장 질환 그룹 (페르시안, 엑조틱 등)**: DM 인(P) > 1.2% 또는 DM 단백질 > 45% 시 "신장 부담 리스크" 경고.
-2. **심장 질환 그룹 (메인쿤, 랙돌 등)**: 원재료에 '타우린' 직접 추가 표기 부재 시 "심장 보조 필요" 경고.
-
-# PART 2. 종별 분리 및 계산 로직
-- 강아지(Dog)와 고양이(Cat) 영양 기준 엄격 분리.
-- 결측치 보정: 조회분(건식 8%, 습식 2.5%), 수분(건식 10%, 습식 75%).
-- NFE(탄수화물): 100 - (조단백+조지방+조섬유+조회분+수분).
-- DM(건물기준): 영양소 / (100-수분) * 100.
-
-# PART 3. 출력 지침
-- 모든 원재료 이름 앞에는 적절한 이모지를 붙이십시오 (예: 🐔 닭고기).
-- 'genetic_analysis' 섹션에 품종별 분석 결과를 상세히 포함하십시오.
-- 결과는 한국어로 작성하며, JSON 스키마를 엄격히 준수하십시오.`,
+# 출력 지침
+- 모든 원재료 앞에는 이모지를 붙이십시오 (예: 🐔 닭고기).
+- 결과는 한국어로 작성하며, 제공된 JSON 스키마를 엄격히 준수하십시오.`,
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(
