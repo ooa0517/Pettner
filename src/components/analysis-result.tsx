@@ -12,7 +12,8 @@ import {
   Scale, Sparkles, Microscope,
   AlertCircle, HeartPulse, GraduationCap,
   Award, Zap, Activity, Edit2, Check,
-  Smile, Frown, Info, ShieldAlert
+  Smile, Frown, Info, ShieldAlert,
+  Dna
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import React, { useState } from 'react';
@@ -51,7 +52,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
      );
   }
 
-  const { scoreCard, advancedNutrition, ingredientCheck, expertVerdict, radarChart, scientificReferences, safety_check, protocol_used } = result;
+  const { scoreCard, advancedNutrition, ingredientCheck, expertVerdict, radarChart, scientificReferences, safety_check, protocol_used, genetic_analysis } = result;
   const PetIcon = protocol_used === 'Cat' ? Cat : Dog;
 
   const getGradeColor = (grade: string) => {
@@ -65,13 +66,12 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     }
   };
 
-  const getSafetyColor = (grade: string) => {
-    switch(grade) {
-      case 'Green': return 'text-success';
-      case 'Yellow': return 'text-yellow-500';
-      case 'Red': return 'text-destructive';
-      case 'Danger': return 'text-destructive font-black animate-pulse';
-      default: return 'text-muted-foreground';
+  const getWarningLevelColor = (level: string) => {
+    switch(level) {
+      case 'Red': return 'bg-destructive/10 text-destructive border-destructive/20';
+      case 'Yellow': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      case 'Green': return 'bg-success/10 text-success border-success/20';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -116,7 +116,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <Badge variant="outline" className="px-4 py-1.5 border-primary/30 text-primary bg-primary/5 rounded-full flex gap-2 items-center font-bold text-xs uppercase tracking-widest">
-              <Microscope className="w-4 h-4"/> Pettner Core Engine v3.5 ({protocol_used})
+              <Microscope className="w-4 h-4"/> Pettner Core Engine v3.6 ({protocol_used})
             </Badge>
             {safety_check.toxic_detected && (
               <Badge variant="destructive" className="animate-bounce flex gap-1 items-center font-black">
@@ -188,6 +188,29 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </div>
           </div>
         </div>
+
+        {/* Genetic Analysis Warning */}
+        {genetic_analysis.is_risk_breed && (
+          <Card className={cn("border-2 rounded-3xl overflow-hidden shadow-sm", getWarningLevelColor(genetic_analysis.warning_level))}>
+            <div className="p-6 flex gap-4 items-start">
+              <div className="p-3 bg-white/50 rounded-2xl shadow-sm">
+                <Dna className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-black text-sm uppercase tracking-wider">유전적 질환 예방 알림: {genetic_analysis.breed_name}</h3>
+                  <Badge variant="outline" className="text-[10px] font-bold border-current/20">PREVENTIVE</Badge>
+                </div>
+                <p className="text-sm font-bold leading-relaxed">{genetic_analysis.message}</p>
+                {genetic_analysis.risk_factor_detected && (
+                  <p className="text-[11px] opacity-70 font-medium pt-1">
+                    탐지된 요인: {genetic_analysis.risk_factor_detected} ({genetic_analysis.trigger_value})
+                  </p>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Advanced Nutrition */}
         <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white ring-1 ring-black/5">
