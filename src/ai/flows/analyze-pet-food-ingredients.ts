@@ -108,6 +108,23 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   prompt: `당신은 엄격히 결정론적인 수의 영양 분석 엔진 'Pettner Core v3.6'입니다.
 제공된 이미지나 텍스트를 분석하여 AAFCO/NRC 기준에 부합하는 과학적 리포트를 생성하십시오.
 
+# INPUT DATA
+{{#if brandName}}Brand: {{{brandName}}}{{/if}}
+{{#if productName}}Product: {{{productName}}}{{/if}}
+{{#if foodType}}Type: {{{foodType}}}{{/if}}
+{{#if petType}}Pet Species: {{{petType}}}{{/if}}
+{{#if petProfile}}Pet Profile: {{{petProfile}}}{{/if}}
+
+{{#if ingredientsText}}
+# INGREDIENTS TEXT
+{{{ingredientsText}}}
+{{/if}}
+
+{{#if photoDataUri}}
+# PRODUCT PHOTO
+{{media url=photoDataUri}}
+{{/if}}
+
 # PART 1. 품종별 유전 리스크 분석 (Genetic Analysis)
 제공된 반려동물 프로필의 'Breed' 정보를 기반으로 유전적 취약점을 사료 성분과 대조하십시오.
 
@@ -140,8 +157,9 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await analyzePetFoodIngredientsPrompt(input);
+    if (!output) throw new Error('AI failed to generate a response');
     return {
-      ...output!,
+      ...output,
       status: 'success'
     };
   }

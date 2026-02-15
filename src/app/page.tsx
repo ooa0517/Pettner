@@ -12,6 +12,15 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { saveAnalysisToHistory } from '@/lib/history';
 import { useLanguage } from '@/contexts/language-context';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+
+/**
+ * 제품 아이디(슬러그) 생성
+ */
+function generateProductId(brandName: string = '', productName: string = ''): string {
+  const combined = `${brandName.trim()}-${productName.trim()}`.toLowerCase();
+  return combined.replace(/[^a-z0-9가-힣]/g, '-').replace(/-+/g, '-');
+}
 
 export default function Home() {
   const { language, t } = useLanguage();
@@ -41,32 +50,59 @@ export default function Home() {
 
     const processAndAnalyze = async (input: AnalyzePetFoodIngredientsInput) => {
       try {
-        const result = await getAnalysis(input);
-        if (result.error) {
-          throw new Error(t(result.error));
+        const productId = generateProductId(input.brandName, input.productName);
+        let finalResult: AnalyzePetFoodIngredientsOutput | null = null;
+        let isCached = false;
+
+        // 1. 클라이언트 측 캐시 확인
+        if (db && productId && productId.length > 5) {
+          const productRef = doc(db, 'products', productId);
+          const productSnap = await getDoc(productRef);
+          if (productSnap.exists()) {
+            finalResult = productSnap.data() as AnalyzePetFoodIngredientsOutput;
+            isCached = true;
+          }
         }
-        if (result.data) {
-          setAnalysisResult(result.data);
+
+        // 2. 캐시가 없으면 서버 액션으로 AI 분석 실행
+        if (!finalResult) {
+          const actionResponse = await getAnalysis(input);
+          if (actionResponse.error) {
+            throw new Error(t(actionResponse.error));
+          }
+          if (actionResponse.data) {
+            finalResult = actionResponse.data;
+            
+            // 글로벌 캐시에 저장 (비동기)
+            if (db && productId && productId.length > 5 && finalResult.status === 'success') {
+              setDoc(doc(db, 'products', productId), finalResult).catch(e => console.error("Global cache save failed:", e));
+            }
+          }
+        }
+
+        if (finalResult) {
+          setAnalysisResult(finalResult);
           setResultInput(input);
           
-          if (user && db && result.data.status === 'success') {
+          // 사용자 히스토리에 저장
+          if (user && db && finalResult.status === 'success') {
             const userInputForHistory = {
                 petType: formData.petType,
-                productName: formData.productName || result.data.productIdentity.name,
-                brandName: formData.brandName || result.data.productIdentity.brand || '',
-                foodType: formData.foodType || result.data.productIdentity.category || 'dry',
+                productName: formData.productName || finalResult.productIdentity.name,
+                brandName: formData.brandName || finalResult.productIdentity.brand || '',
+                foodType: formData.foodType || finalResult.productIdentity.category || 'dry',
                 lifeStage: 'ADULT' as any,
                 ingredientsText: formData.ingredientsText || '',
                 healthConditions: '',
                 photoProvided: !!file,
             };
-            saveAnalysisToHistory(db, user.uid, userInputForHistory, result.data);
+            saveAnalysisToHistory(db, user.uid, userInputForHistory, finalResult);
           }
           
           setStep('result');
           toast({
-            title: result.isCached ? "기존 분석 리포트 확인" : t('homePage.analysisCompleteTitle'),
-            description: result.isCached ? "이미 검증된 제품 데이터로 리포트를 불러왔습니다." : t('homePage.analysisCompleteDescription'),
+            title: isCached ? "기존 분석 리포트 확인" : t('homePage.analysisCompleteTitle'),
+            description: isCached ? "이미 검증된 제품 데이터로 리포트를 불러왔습니다." : t('homePage.analysisCompleteDescription'),
           });
         }
       } catch (error) {
