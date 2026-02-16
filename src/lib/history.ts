@@ -1,3 +1,4 @@
+
 'use client';
 
 import { collection, addDoc, serverTimestamp, type Firestore } from 'firebase/firestore';
@@ -7,6 +8,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 
 /**
  * 분석 결과를 Firebase Firestore에 저장합니다.
+ * Firestore는 'undefined' 값을 지원하지 않으므로 모든 선택적 필드를 null로 명시적 변환합니다.
  */
 export function saveAnalysisToHistory(
     db: Firestore, 
@@ -18,7 +20,6 @@ export function saveAnalysisToHistory(
 
   const historyCollectionRef = collection(db, 'users', userId, 'analysisHistory');
   
-  // Firestore does not support 'undefined'. Convert optional fields to null or provide defaults.
   const dataToSave = {
     userInput: {
       petType: userInput.petType,
@@ -27,11 +28,16 @@ export function saveAnalysisToHistory(
       brandName: userInput.brandName || analysisOutput.productIdentity?.brand || '',
       foodType: userInput.foodType || analysisOutput.productIdentity?.category || 'unknown',
       petProfile: userInput.petProfile ? {
-        name: userInput.petProfile.name || null,
-        breed: userInput.petProfile.breed || null,
-        age: userInput.petProfile.age !== undefined ? userInput.petProfile.age : null,
-        weight: userInput.petProfile.weight !== undefined ? userInput.petProfile.weight : null,
-        healthConditions: userInput.petProfile.healthConditions || [],
+        name: userInput.petProfile.name ?? null,
+        breed: userInput.petProfile.breed ?? null,
+        age: userInput.petProfile.age ?? null,
+        weight: userInput.petProfile.weight ?? null,
+        neutered: userInput.petProfile.neutered ?? null,
+        activityLevel: userInput.petProfile.activityLevel ?? null,
+        bcs: userInput.petProfile.bcs ?? null,
+        environment: userInput.petProfile.environment ?? null,
+        healthConditions: userInput.petProfile.healthConditions ?? [],
+        allergies: userInput.petProfile.allergies ?? [],
       } : null,
       photoProvided: !!userInput.photoDataUri,
     },
