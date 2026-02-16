@@ -18,7 +18,7 @@ export function saveAnalysisToHistory(
 
   const historyCollectionRef = collection(db, 'users', userId, 'analysisHistory');
   
-  // Save a cleaner version of input for history
+  // Firestore does not support 'undefined'. Convert optional fields to null or provide defaults.
   const dataToSave = {
     userInput: {
       petType: userInput.petType,
@@ -27,12 +27,12 @@ export function saveAnalysisToHistory(
       brandName: userInput.brandName || analysisOutput.productIdentity?.brand || '',
       foodType: userInput.foodType || analysisOutput.productIdentity?.category || 'unknown',
       petProfile: userInput.petProfile ? {
-        name: userInput.petProfile.name,
-        breed: userInput.petProfile.breed,
-        age: userInput.petProfile.age,
-        weight: userInput.petProfile.weight,
-        healthConditions: userInput.petProfile.healthConditions,
-      } : undefined,
+        name: userInput.petProfile.name || null,
+        breed: userInput.petProfile.breed || null,
+        age: userInput.petProfile.age !== undefined ? userInput.petProfile.age : null,
+        weight: userInput.petProfile.weight !== undefined ? userInput.petProfile.weight : null,
+        healthConditions: userInput.petProfile.healthConditions || [],
+      } : null,
       photoProvided: !!userInput.photoDataUri,
     },
     analysisOutput: analysisOutput,
