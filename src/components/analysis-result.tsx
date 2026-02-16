@@ -8,10 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Repeat, ShoppingBag, 
   AlertCircle, Scale,
-  TrendingDown,
   CheckCircle2, AlertTriangle,
   Stethoscope, FlaskConical, ShieldCheck, Dna, Activity,
-  Award, BarChart3, Flame, Bone, ShieldAlert, Info,
+  Award, BarChart3, Flame, ShieldAlert,
   History, Globe, Leaf, Microscope, Zap, Heart, CheckCircle
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
@@ -51,8 +50,8 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
      return (
         <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl mx-auto py-20 text-center">
           <AlertCircle className="w-20 h-20 text-destructive mx-auto opacity-30"/>
-          <h1 className="text-3xl font-black">분석 중 오류 발생</h1>
-          <p className="text-muted-foreground">데이터를 불러오는 중 문제가 발생했습니다. 다시 시도해 주세요.</p>
+          <h1 className="text-3xl font-black">분석 데이터 오류</h1>
+          <p className="text-muted-foreground">AI가 상세 리포트를 생성하는 중 문제가 발생했습니다. 다시 촬영해 주세요.</p>
           <Button onClick={onReset} variant="outline" size="lg" className="rounded-full">다시 시도하기</Button>
         </div>
      );
@@ -63,26 +62,26 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-40 max-w-4xl mx-auto px-4">
       
-      {/* 1. Summary Header (Progressive Disclosure - Level 1) */}
+      {/* [LEVEL 1] 종합 요약 (Headline) */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
         <CardContent className="p-10 space-y-8">
-          <div className="flex justify-between items-start">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-6">
             <div className="space-y-1">
               <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary font-black px-4 py-1.5 rounded-full text-[10px] tracking-widest uppercase">
-                {isCustomMode ? 'Veterinary Medical Report' : 'Product Quality Audit'}
+                {isCustomMode ? 'Veterinary Precision Medical Report' : 'Product Quality Audit Report'}
               </Badge>
-              <h1 className="text-3xl font-black tracking-tighter pt-2">
+              <h1 className="text-3xl font-black tracking-tighter pt-2 leading-tight">
                 {result.productIdentity.name}
               </h1>
               <p className="text-muted-foreground font-bold">{result.productIdentity.brand} · {result.productIdentity.category}</p>
             </div>
-            <div className="text-right">
-               <div className="text-5xl font-black text-primary">{result.scoreCard.totalScore}<span className="text-xl">점</span></div>
-               <Badge className={cn("mt-2 font-black px-4 py-1 rounded-full", 
+            <div className="text-left md:text-right shrink-0">
+               <div className="text-6xl font-black text-primary leading-none">{result.scoreCard.totalScore}<span className="text-xl ml-1">점</span></div>
+               <Badge className={cn("mt-3 font-black px-4 py-1 rounded-full text-sm", 
                  result.scoreCard.totalScore >= 80 ? "bg-success" : 
                  result.scoreCard.totalScore >= 60 ? "bg-yellow-500" : "bg-destructive"
                )}>
-                 Grade {result.productIdentity.qualityGrade}
+                 Quality Grade {result.productIdentity.qualityGrade}
                </Badge>
             </div>
           </div>
@@ -91,14 +90,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
              <div className="relative z-10 space-y-4">
                <h3 className="text-xl font-black flex items-center gap-2">
                  {isCustomMode ? <Stethoscope className="text-primary" size={20}/> : <Award className="text-primary" size={20}/>} 
-                 종합 진단 결과
+                 전문가 종합 결론
                </h3>
                <p className="text-lg font-bold leading-relaxed break-keep">
                  {result.scoreCard.headline}
                </p>
                <div className="flex flex-wrap gap-2">
                  {result.scoreCard.statusTags.map((tag, i) => (
-                   <Badge key={i} variant="secondary" className={cn("bg-white font-bold px-3 py-1", tag.includes('주의') || tag.includes('비만') || tag.includes('경고') ? "text-destructive" : "text-primary")}>
+                   <Badge key={i} variant="secondary" className={cn("bg-white font-bold px-3 py-1 shadow-sm", tag.includes('주의') || tag.includes('비만') || tag.includes('경고') ? "text-destructive" : "text-primary")}>
                      {tag}
                    </Badge>
                  ))}
@@ -108,12 +107,12 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </CardContent>
       </Card>
 
-      {/* 2. Personalized Feeding (Level 2 - Custom Mode Only) */}
+      {/* [LEVEL 2] 개인화 급여 & 비만 분석 (Custom Mode Only) */}
       {isCustomMode && result.weightDiagnosis && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-in fade-in duration-1000">
           <div className="flex items-center gap-2 px-2">
             <Scale className="text-primary w-6 h-6" />
-            <h2 className="text-2xl font-black font-headline tracking-tight">⚖️ 맞춤 체중 & 급여 솔루션</h2>
+            <h2 className="text-2xl font-black font-headline tracking-tight">⚖️ 초정밀 체중 & 급여 솔루션</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -125,13 +124,13 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                       <h4 className="text-3xl font-black">{result.weightDiagnosis.currentWeight}kg</h4>
                    </div>
                    <div className="text-right">
-                      <p className="text-xs font-black text-muted-foreground uppercase mb-1">Ideal Weight</p>
+                      <p className="text-xs font-black text-muted-foreground uppercase mb-1">Ideal Target</p>
                       <h4 className="text-3xl font-black text-success">{result.weightDiagnosis.idealWeight.toFixed(1)}kg</h4>
                    </div>
                 </div>
-                <div className="h-6 bg-muted rounded-full relative overflow-hidden">
+                <div className="h-6 bg-muted rounded-full relative overflow-hidden shadow-inner">
                    <div className="absolute inset-y-0 bg-success/20 w-[40%] left-[10%]" />
-                   <div className={cn("h-full transition-all duration-1000", result.weightDiagnosis.weightGap > 0 ? "bg-destructive" : "bg-primary")} 
+                   <div className={cn("h-full transition-all duration-1000 shadow-lg", result.weightDiagnosis.weightGap > 0 ? "bg-destructive" : "bg-primary")} 
                         style={{ width: `${Math.min(50 + result.weightDiagnosis.overweightPercentage, 100)}%` }} />
                 </div>
                 <p className="text-xs font-bold text-muted-foreground leading-relaxed">
@@ -140,16 +139,20 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               </div>
             </Card>
 
-            <Card className="border-none shadow-xl rounded-[2.5rem] bg-primary text-white p-10">
-               <div className="space-y-4">
+            <Card className="border-none shadow-xl rounded-[2.5rem] bg-primary text-white p-10 relative overflow-hidden group">
+               <div className="absolute top-[-20px] right-[-20px] opacity-10 group-hover:scale-110 transition-transform duration-700">
+                  <Dna size={120} />
+               </div>
+               <div className="space-y-4 relative z-10">
                   <div className="flex items-center gap-2">
                     <Dna size={18} className="opacity-70" />
                     <span className="text-[11px] font-black uppercase tracking-widest opacity-70">Breed Genetic Insight</span>
                   </div>
                   <p className="text-sm font-bold leading-relaxed">{result.weightDiagnosis.breedGeneticInsight}</p>
                   <div className="pt-4 border-t border-white/20">
-                     <p className="text-xs font-bold opacity-80">
-                        {result.weightDiagnosis.weightGap > 0 ? `체중 감량 목표: -${result.weightDiagnosis.weightGap.toFixed(1)}kg` : '현재 정상 체중을 유지하는 식단이 권장됩니다.'}
+                     <p className="text-xs font-bold opacity-80 flex items-center gap-2">
+                        <Activity size={14} />
+                        {result.weightDiagnosis.weightGap > 0 ? `감량 목표: 현재 체중의 약 ${(result.weightDiagnosis.weightGap / result.weightDiagnosis.currentWeight * 100).toFixed(0)}% 감량 필요` : '현재 정상 범위이며 유지 관리가 권장됩니다.'}
                      </p>
                   </div>
                </div>
@@ -160,7 +163,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <Card className="border-none shadow-xl rounded-[3rem] bg-white p-10 space-y-8">
               <CardHeader className="p-0">
                 <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                    📉 [5단계 정밀 다이어트 로드맵]
+                    📉 [V5.0 5단계 정밀 다이어트 로드맵]
                 </CardTitle>
               </CardHeader>
               <div className="h-[280px] w-full">
@@ -177,17 +180,18 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   </ResponsiveContainer>
                 </ChartContainer>
               </div>
-              <div className="bg-muted/20 p-6 rounded-3xl flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                   <Zap className="text-primary fill-primary" />
+              <div className="bg-primary/5 p-8 rounded-[2rem] flex justify-between items-center border border-primary/10">
+                <div className="flex items-center gap-4">
+                   <Zap className="text-primary fill-primary w-8 h-8" />
                    <div>
-                      <p className="text-xs font-black text-muted-foreground uppercase">Phase 1 권장 급여량</p>
-                      <p className="text-2xl font-black text-primary">{result.dietRoadmap[0]?.grams}g</p>
+                      <p className="text-xs font-black text-muted-foreground uppercase">Phase 1 시작 급여량</p>
+                      <p className="text-3xl font-black text-primary">{result.dietRoadmap[0]?.grams}<span className="text-lg">g</span></p>
                    </div>
                 </div>
                 <div className="text-right">
-                   <p className="text-[10px] font-bold text-muted-foreground">종이컵 기준</p>
-                   <p className="text-lg font-black">약 {(result.dietRoadmap[0]?.grams / 100).toFixed(1)}컵</p>
+                   <p className="text-[10px] font-bold text-muted-foreground uppercase">Feeding Guide</p>
+                   <p className="text-xl font-black">약 {(result.dietRoadmap[0]?.grams / 100).toFixed(1)}컵</p>
+                   <p className="text-[10px] text-muted-foreground font-bold">(200ml 종이컵 기준)</p>
                 </div>
               </div>
             </Card>
@@ -195,103 +199,109 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      {/* 3. Deep-Dive Report (Level 3 - Progressive Disclosure) */}
+      {/* [LEVEL 3] 전문가용 심층 분석 (Deep Dive - Progressive Disclosure) */}
       <div className="space-y-6">
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2">
             <Microscope className="text-primary w-6 h-6" />
             <h2 className="text-2xl font-black font-headline tracking-tight">전문가용 심층 분석 리포트</h2>
           </div>
-          <Badge variant="outline" className="border-primary text-primary font-bold">Deep Dive</Badge>
+          <Badge variant="outline" className="border-primary text-primary font-black px-3 py-1">Deep Dive v5.0</Badge>
         </div>
 
         <Accordion type="single" collapsible className="w-full space-y-4">
           
-          {/* Section A: Ingredient Quality Audit */}
+          {/* Section 1: Ingredient Quality Audit */}
           <AccordionItem value="ingredients" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-primary/10 rounded-2xl text-primary"><FlaskConical /></div>
                 <div className="text-left">
                   <h3 className="font-black text-lg">🧬 원재료 등급 정밀 감사</h3>
-                  <p className="text-xs text-muted-foreground font-medium">원료의 '계급'과 혈당 지수 분석</p>
+                  <p className="text-xs text-muted-foreground font-medium">원료의 '계급'과 혈당 지수(GI) 정밀 심사</p>
                 </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
-              {result.deepDive.ingredientAudit.tiers.map((tier, i) => (
-                <div key={i} className="p-5 rounded-3xl bg-muted/10 space-y-3">
-                   <div className="flex items-center gap-2">
-                      <Badge className={cn("font-black", 
-                        tier.level === 'Tier 1' ? "bg-success" : 
-                        tier.level === 'Tier 2' ? "bg-primary" : "bg-destructive"
-                      )}>
-                        {tier.level === 'Tier 1' ? '🥇 Tier 1 (최고급)' : tier.level === 'Tier 2' ? '🥈 Tier 2 (일반)' : '🥉 Tier 3 (저급/주의)'}
-                      </Badge>
-                   </div>
-                   <div className="flex flex-wrap gap-2">
-                      {tier.ingredients.map((ing, idx) => (
-                        <span key={idx} className="px-3 py-1 bg-white rounded-full text-xs font-bold border">{ing}</span>
-                      ))}
-                   </div>
-                   <p className="text-xs text-muted-foreground font-bold leading-relaxed">{tier.comment}</p>
-                </div>
-              ))}
-              <div className="p-5 rounded-3xl border-2 border-dashed flex justify-between items-center">
+              <div className="grid gap-4">
+                {result.deepDive.ingredientAudit.tiers.map((tier, i) => (
+                  <div key={i} className="p-6 rounded-[2rem] bg-muted/10 space-y-4 border border-transparent hover:border-muted-foreground/20 transition-all">
+                    <div className="flex items-center gap-2">
+                        <Badge className={cn("font-black px-4 py-1.5", 
+                          tier.level === 'Tier 1' ? "bg-success" : 
+                          tier.level === 'Tier 2' ? "bg-primary" : "bg-destructive"
+                        )}>
+                          {tier.level === 'Tier 1' ? '🥇 Tier 1: 최고급' : tier.level === 'Tier 2' ? '🥈 Tier 2: 일반/가공' : '🥉 Tier 3: 저급/주의'}
+                        </Badge>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {tier.ingredients.map((ing, idx) => (
+                          <span key={idx} className="px-3 py-1.5 bg-white rounded-xl text-xs font-bold border shadow-sm">{ing}</span>
+                        ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground font-bold leading-relaxed pl-1 border-l-4 border-muted-foreground/20">{tier.comment}</p>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="p-6 rounded-[2rem] border-2 border-dashed flex flex-col md:flex-row justify-between items-center gap-4 bg-muted/5">
                  <div className="flex items-center gap-2">
-                    <Flame className={cn("w-5 h-5", result.deepDive.ingredientAudit.giIndex === 'High' ? "text-destructive" : "text-success")} />
-                    <span className="text-sm font-black">GI 지수(혈당) 판정:</span>
+                    <Flame className={cn("w-6 h-6", result.deepDive.ingredientAudit.giIndex === 'High' ? "text-destructive" : "text-success")} />
+                    <span className="text-sm font-black">GI 지수(혈당 영향도) 판정:</span>
                  </div>
-                 <Badge variant="outline" className={cn("font-black", 
-                   result.deepDive.ingredientAudit.giIndex === 'High' ? "text-destructive border-destructive" : "text-success border-success"
+                 <Badge variant="outline" className={cn("font-black text-sm px-6 py-1.5 rounded-full", 
+                   result.deepDive.ingredientAudit.giIndex === 'High' ? "text-destructive border-destructive bg-destructive/5" : "text-success border-success bg-success/5"
                  )}>{result.deepDive.ingredientAudit.giIndex}</Badge>
               </div>
-              <p className="text-xs text-muted-foreground px-2 italic">{result.deepDive.ingredientAudit.giComment}</p>
+              <p className="text-xs text-muted-foreground px-4 italic font-medium">{result.deepDive.ingredientAudit.giComment}</p>
             </AccordionContent>
           </AccordionItem>
 
-          {/* Section B: Nutritional Engineering */}
+          {/* Section 2: Nutritional Engineering */}
           <AccordionItem value="nutrition" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-primary/10 rounded-2xl text-primary"><BarChart3 /></div>
                 <div className="text-left">
                   <h3 className="font-black text-lg">⚖️ 영양 밸런스 엔지니어링</h3>
-                  <p className="text-xs text-muted-foreground font-medium">AAFCO 기준 및 핵심 성분 비율</p>
+                  <p className="text-xs text-muted-foreground font-medium">건물(DM) 환산 및 핵심 미네랄 비율 추론</p>
                 </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-8 pb-8 pt-4 space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div className="p-5 rounded-3xl bg-primary/5 border border-primary/10 flex justify-between items-center">
-                    <span className="text-sm font-black">칼슘 : 인 비율</span>
-                    <span className="text-lg font-black text-primary">{result.deepDive.nutritionalEngineering.ratios.caPRatio}</span>
+                 <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/10 flex justify-between items-center shadow-sm">
+                    <span className="text-sm font-black">칼슘 : 인 비율 (Ca:P)</span>
+                    <span className="text-xl font-black text-primary">{result.deepDive.nutritionalEngineering.ratios.caPRatio}</span>
                  </div>
-                 <div className="p-5 rounded-3xl bg-primary/5 border border-primary/10 flex justify-between items-center">
+                 <div className="p-6 rounded-[2rem] bg-primary/5 border border-primary/10 flex justify-between items-center shadow-sm">
                     <span className="text-sm font-black">오메가 6 : 3 비율</span>
-                    <span className="text-lg font-black text-primary">{result.deepDive.nutritionalEngineering.ratios.omega63Ratio}</span>
+                    <span className="text-xl font-black text-primary">{result.deepDive.nutritionalEngineering.ratios.omega63Ratio}</span>
                  </div>
               </div>
-              <div className="p-5 rounded-3xl bg-muted/20">
-                 <h4 className="text-xs font-black text-muted-foreground uppercase mb-2">Engineering Verdict</h4>
+              <div className="p-6 rounded-[2rem] bg-muted/20 border-l-8 border-primary/30">
+                 <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2">Expert Engineering Verdict</h4>
                  <p className="text-sm font-bold leading-relaxed">{result.deepDive.nutritionalEngineering.ratios.balanceVerdict}</p>
               </div>
               
-              <div className="space-y-6 pt-4">
-                <h4 className="text-xs font-black text-muted-foreground uppercase px-2">Dry Matter (DM) 정밀 분석</h4>
+              <div className="space-y-8 pt-4 px-2">
+                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                   <Activity size={14} /> Dry Matter (DM) 정밀 분석
+                </h4>
                 {Object.entries(result.deepDive.nutritionalEngineering.metrics).map(([key, metric]) => (
-                  <div key={key} className="space-y-2">
-                    <div className="flex justify-between items-center px-2">
-                      <span className="text-xs font-black uppercase">{key}</span>
-                      <span className="text-xs font-bold text-muted-foreground">{metric.minStd}% ~ {metric.maxStd}% 권장</span>
+                  <div key={key} className="space-y-3">
+                    <div className="flex justify-between items-center px-1">
+                      <span className="text-xs font-black uppercase text-primary">{key}</span>
+                      <span className="text-[10px] font-bold text-muted-foreground">Standard: {metric.minStd}% ~ {metric.maxStd}%</span>
                     </div>
-                    <div className="h-4 bg-muted rounded-full relative overflow-hidden">
-                       <div className="absolute inset-y-0 bg-success/20 w-[40%] left-[10%]" />
-                       <div className={cn("h-full", metric.status === 'optimal' ? "bg-success" : "bg-destructive")} style={{ width: `${(metric.value / 60) * 100}%` }} />
+                    <div className="h-4 bg-muted rounded-full relative overflow-hidden shadow-inner">
+                       <div className="absolute inset-y-0 bg-success/20 w-[40%] left-[10%] opacity-50" />
+                       <div className={cn("h-full transition-all duration-1000", metric.status === 'optimal' ? "bg-success" : "bg-destructive")} 
+                            style={{ width: `${Math.min((metric.value / 60) * 100, 100)}%` }} />
                     </div>
-                    <div className="flex justify-between items-center px-2 text-[10px] font-bold">
+                    <div className="flex justify-between items-center px-1 text-[11px] font-black">
                        <span className={cn(metric.status === 'optimal' ? "text-success" : "text-destructive")}>{metric.verdict}</span>
-                       <span>현측치: {metric.value}%</span>
+                       <span className="text-foreground">분석치: {metric.value}%</span>
                     </div>
                   </div>
                 ))}
@@ -299,68 +309,68 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </AccordionContent>
           </AccordionItem>
 
-          {/* Section C: Safety & Toxicology */}
+          {/* Section 3: Safety & Toxicology Filter */}
           <AccordionItem value="safety" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-primary/10 rounded-2xl text-primary"><ShieldCheck /></div>
                 <div className="text-left">
                   <h3 className="font-black text-lg">🛡️ 유해 성분 & 안전성 필터</h3>
-                  <p className="text-xs text-muted-foreground font-medium">첨가물 검출 및 리콜 이력 추적</p>
+                  <p className="text-xs text-muted-foreground font-medium">첨가물 검출 및 제조 브랜드 신뢰도 추적</p>
                 </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                  {result.deepDive.safetyToxicology.checks.map((check, i) => (
-                   <div key={i} className="flex items-center gap-3 p-4 rounded-2xl bg-muted/10">
-                      {check.status ? <CheckCircle className="text-success w-5 h-5" /> : <AlertTriangle className="text-destructive w-5 h-5" />}
+                   <div key={i} className="flex items-center gap-3 p-5 rounded-[1.5rem] bg-muted/10 border border-transparent hover:border-muted-foreground/10">
+                      {check.status ? <CheckCircle className="text-success w-6 h-6 shrink-0" /> : <AlertTriangle className="text-destructive w-6 h-6 shrink-0" />}
                       <div className="space-y-0.5">
-                         <p className="text-xs font-black">{check.label}</p>
+                         <p className="text-sm font-black">{check.label}</p>
                          <p className="text-[10px] text-muted-foreground font-bold">{check.comment}</p>
                       </div>
                    </div>
                  ))}
               </div>
               {result.deepDive.safetyToxicology.riskAlert && (
-                 <div className="p-5 bg-destructive/5 border border-destructive/20 rounded-3xl flex gap-3">
-                    <ShieldAlert className="text-destructive shrink-0" />
-                    <p className="text-xs font-black text-destructive leading-relaxed">{result.deepDive.safetyToxicology.riskAlert}</p>
+                 <div className="p-6 bg-destructive/5 border-2 border-destructive/20 rounded-[2rem] flex gap-4 animate-pulse">
+                    <ShieldAlert className="text-destructive shrink-0 w-8 h-8" />
+                    <p className="text-sm font-black text-destructive leading-relaxed">{result.deepDive.safetyToxicology.riskAlert}</p>
                  </div>
               )}
-              <div className="p-5 bg-muted/20 rounded-3xl">
-                 <div className="flex items-center gap-2 mb-2">
-                    <History className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-xs font-black text-muted-foreground uppercase">Brand Recall History</span>
+              <div className="p-6 bg-muted/20 rounded-[2rem] border-t-4 border-muted-foreground/30">
+                 <div className="flex items-center gap-2 mb-3">
+                    <History className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">Brand Recall & Reputation</span>
                  </div>
                  <p className="text-sm font-bold leading-relaxed">{result.deepDive.safetyToxicology.recallHistory}</p>
               </div>
             </AccordionContent>
           </AccordionItem>
 
-          {/* Section D: Brand & ESG */}
+          {/* Section 4: Brand & ESG Score */}
           <AccordionItem value="brand" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Globe /></div>
                 <div className="text-left">
-                  <h3 className="font-black text-lg">🌍 기업 윤리 & 환경 점수</h3>
-                  <p className="text-xs text-muted-foreground font-medium">제조사 인프라 및 지속 가능성 평가</p>
+                  <h3 className="font-black text-lg">🌍 기업 윤리 & 환경 점수 (ESG)</h3>
+                  <p className="text-xs text-muted-foreground font-medium">지속 가능성 및 동물 복지 이행 수준</p>
                 </div>
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-8 pb-8 pt-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  {[
-                   { icon: Award, label: "제조 시설", value: result.deepDive.brandESG.facility },
-                   { icon: Microscope, label: "R&D 투자", value: result.deepDive.brandESG.rdLevel },
-                   { icon: Leaf, label: "친환경/패키징", value: result.deepDive.brandESG.sustainability },
-                   { icon: Heart, label: "동물 복지", value: result.deepDive.brandESG.animalWelfare }
+                   { icon: Award, label: "제조 시설 인증", value: result.deepDive.brandESG.facility, color: "text-blue-500" },
+                   { icon: Microscope, label: "수의 영양 R&D", value: result.deepDive.brandESG.rdLevel, color: "text-purple-500" },
+                   { icon: Leaf, label: "친환경/지속가능성", value: result.deepDive.brandESG.sustainability, color: "text-green-500" },
+                   { icon: Heart, label: "동물 복지 & 윤리", value: result.deepDive.brandESG.animalWelfare, color: "text-red-500" }
                  ].map((item, i) => (
-                   <div key={i} className="p-5 rounded-3xl bg-muted/5 border flex flex-col gap-2">
-                      <div className="flex items-center gap-2 text-primary">
-                        <item.icon size={16} />
-                        <span className="text-xs font-black uppercase">{item.label}</span>
+                   <div key={i} className="p-6 rounded-[2rem] bg-muted/5 border-2 border-transparent hover:border-primary/20 flex flex-col gap-3 transition-all group">
+                      <div className={cn("flex items-center gap-2", item.color)}>
+                        <item.icon size={20} className="group-hover:scale-110 transition-transform" />
+                        <span className="text-xs font-black uppercase tracking-tighter">{item.label}</span>
                       </div>
                       <p className="text-sm font-bold leading-relaxed">{item.value}</p>
                    </div>
@@ -371,27 +381,33 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </Accordion>
       </div>
 
-      {/* 4. Veterinary Final Advice */}
-      <Card className="border-none shadow-2xl rounded-[3rem] bg-primary text-white p-10">
-        <div className="flex items-center gap-4 mb-6">
-          <Stethoscope size={36} />
-          <h3 className="text-2xl font-black">수의학적 최종 조언</h3>
+      {/* [LEVEL 4] 최종 조언 (Final Advice) */}
+      <Card className="border-none shadow-2xl rounded-[3rem] bg-primary text-white p-12 relative overflow-hidden">
+        <div className="absolute top-[-20px] right-[-20px] opacity-10">
+           <Stethoscope size={150} />
         </div>
-        <p className="text-lg font-bold leading-relaxed opacity-95 break-keep">
+        <div className="flex items-center gap-5 mb-8 relative z-10">
+          <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-md">
+            <Stethoscope size={40} />
+          </div>
+          <h3 className="text-2xl font-black">수의학적 최종 처방 조언</h3>
+        </div>
+        <p className="text-xl font-bold leading-relaxed opacity-95 break-keep relative z-10">
           {result.veterinaryAdvice}
         </p>
       </Card>
 
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-xl border-t z-50 flex justify-center">
+      {/* Floating Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-2xl border-t z-50 flex justify-center shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.1)]">
         <div className="w-full max-w-4xl flex gap-4">
-          <Button onClick={onReset} variant="outline" className="flex-1 h-14 rounded-2xl border-2 font-black">
-            <Repeat size={18} className="mr-2" /> 다시 분석
+          <Button onClick={onReset} variant="outline" className="flex-1 h-16 rounded-2xl border-4 font-black text-primary hover:bg-primary/5">
+            <Repeat size={20} className="mr-2" /> {resetButtonText || '다시 분석하기'}
           </Button>
           <Button 
             onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(result.productIdentity.name)}`, '_blank')}
-            className="flex-[2] h-14 rounded-2xl text-lg font-black shadow-lg"
+            className="flex-[2] h-16 rounded-2xl text-xl font-black shadow-2xl shadow-primary/40"
           >
-            <ShoppingBag size={20} className="mr-2" /> 최저가 검색
+            <ShoppingBag size={24} className="mr-3" /> 최저가 구매하기
           </Button>
         </div>
       </div>
