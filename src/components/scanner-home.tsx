@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const bcsOptions = [
   { value: '1', label: '1. 매우 마름', description: '갈비뼈와 골반뼈가 보임', emoji: '🦴' },
@@ -236,9 +237,9 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                   <FormField control={form.control} name="petProfile.activityLevel" render={({ field }) => (
                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="space-y-3">
                       {[
-                        { v: 'LOW', t: selectedPet === 'dog' ? '집순이 (&lt;30분)' : '활동량 적음 (실내묘)', i: Ruler },
+                        { v: 'LOW', t: selectedPet === 'dog' ? '집순이 (<30분)' : '활동량 적음 (실내묘)', i: Ruler },
                         { v: 'NORMAL', t: '적당함 (보통 활동)', i: Activity },
-                        { v: 'HIGH', t: selectedPet === 'dog' ? '에너자이저 (&gt;1시간)' : '활동량 많음 (외출묘)', i: Zap }
+                        { v: 'HIGH', t: selectedPet === 'dog' ? '에너자이저 (>1시간)' : '활동량 많음 (외출묘)', i: Zap }
                       ].map(lvl => (
                         <Label key={lvl.v} className={cn("flex items-center gap-4 p-5 border-2 rounded-2xl cursor-pointer transition-all", field.value === lvl.v ? "border-primary bg-primary/5 shadow-md" : "border-muted opacity-50")}>
                           <RadioGroupItem value={lvl.v} className="sr-only" />
