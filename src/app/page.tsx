@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
@@ -84,7 +83,7 @@ function HomeContent() {
         let finalResult: AnalyzePetFoodIngredientsOutput | null = null;
         let isCached = false;
 
-        // Cache Check (Simple client-side cache for speed if needed, but here we check DB)
+        // Cache Check (Simple client-side cache for speed if needed)
         if (db && productId && productId.length > 5 && input.analysisMode === 'general') {
           const productRef = doc(db, 'products', productId);
           const productSnap = await getDoc(productRef);
@@ -142,7 +141,7 @@ function HomeContent() {
   };
   
   return (
-    <div className="flex flex-col items-center justify-center flex-grow p-4 md:p-8">
+    <div className="flex flex-col items-center justify-center flex-grow p-4 md:p-8 bg-muted/20">
       <div className="w-full max-w-4xl">
         {step === 'landing' && <LandingPage onStart={() => setStep('survey')} />}
         {step === 'survey' && <OnboardingSurvey onComplete={() => setStep('input')} />}
