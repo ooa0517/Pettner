@@ -22,12 +22,13 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+// 제공된 이미지의 스타일을 반영한 BCS 옵션
 const bcsOptions = [
-  { value: '1', label: '매우 마름', description: '뼈가 도드라짐', emoji: '🦴' },
-  { value: '2', label: '마름', description: '지방층이 매우 얇음', emoji: '🐕' },
-  { value: '3', label: '이상적', description: '적당한 허리선 (Best)', emoji: '✨' },
-  { value: '4', label: '통통함', description: '허리선이 잘 안 보임', emoji: '🍑' },
-  { value: '5', label: '비만', description: '지방층이 두껍고 무거움', emoji: '🍩' },
+  { value: '1', label: '1. 매우 마름', emoji: '😰', color: 'bg-[#E3F2FD]', activeBorder: 'border-blue-400' },
+  { value: '2', label: '2. 마름', emoji: '😟', color: 'bg-[#E0F7FA]', activeBorder: 'border-cyan-400' },
+  { value: '3', label: '3. 이상적', emoji: '😊', color: 'bg-[#E8F5E9]', activeBorder: 'border-green-400' },
+  { value: '4', label: '4. 통통', emoji: '🙂', color: 'bg-[#FFFDE7]', activeBorder: 'border-yellow-400' },
+  { value: '5', label: '5. 비만', emoji: '😖', color: 'bg-[#FBE9E7]', activeBorder: 'border-orange-400' },
 ];
 
 type AnalysisFormValues = {
@@ -246,16 +247,22 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                         <Badge variant="outline" className="rounded-full border-primary/20 text-primary font-black text-[10px]">VET RECOMMENDED</Badge>
                       </div>
                       <FormControl>
-                        <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-3">
+                        <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-3 md:grid-cols-5 gap-3">
                           {bcsOptions.map(opt => (
-                            <Label key={opt.value} htmlFor={`bcs-${opt.value}`} className={cn("flex items-center gap-5 p-6 border-4 rounded-[2.5rem] cursor-pointer transition-all active:scale-[0.98]", selectedBcs === opt.value ? "border-primary bg-primary/5 shadow-md" : "border-muted/30 opacity-60")}>
+                            <Label 
+                              key={opt.value} 
+                              htmlFor={`bcs-${opt.value}`} 
+                              className={cn(
+                                "flex flex-col items-center justify-center p-4 rounded-[2rem] cursor-pointer transition-all border-4 text-center",
+                                selectedBcs === opt.value 
+                                  ? cn("scale-105 shadow-xl", opt.activeBorder) 
+                                  : "border-transparent opacity-60",
+                                opt.color
+                              )}
+                            >
                               <RadioGroupItem value={opt.value} id={`bcs-${opt.value}`} className="sr-only" />
-                              <span className="text-4xl">{opt.emoji}</span>
-                              <div className="flex-1">
-                                <p className="font-black text-lg">{opt.label}</p>
-                                <p className="text-xs text-muted-foreground font-medium">{opt.description}</p>
-                              </div>
-                              {selectedBcs === opt.value && <CheckCircle2 className="text-primary w-6 h-6" />}
+                              <span className="text-4xl mb-2">{opt.emoji}</span>
+                              <p className="font-black text-[10px] whitespace-nowrap">{opt.label}</p>
                             </Label>
                           ))}
                         </RadioGroup>
