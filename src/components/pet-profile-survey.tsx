@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Activity, HeartPulse, ClipboardCheck, ArrowRight, ArrowLeft, Dog, Cat, Info, Calendar } from 'lucide-react';
+import { Activity, HeartPulse, ClipboardCheck, ArrowRight, ArrowLeft, Dog, Cat, Info, Calendar, Footprints, Droplets, Pill } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -20,12 +20,17 @@ const petProfileSchema = z.object({
   breed: z.string().min(1, '품종을 입력해주세요'),
   age: z.number().min(0, '나이를 입력해주세요'),
   weight: z.number().min(0.1, '몸무게를 입력해주세요'),
+  weightChange: z.string().default('none'),
   neutered: z.enum(['yes', 'no']),
-  bcs: z.string().default('5'),
-  activityLevel: z.enum(['LOW', 'NORMAL', 'HIGH']),
+  bcs: z.string().default('3'),
+  lifestyle: z.string().default('NORMAL'),
+  behaviorPattern: z.string().default('NORMAL'),
   healthConditions: z.array(z.string()).default([]),
   customHealthNote: z.string().optional(),
   allergies: z.array(z.string()).default([]),
+  stoolCondition: z.string().default('GOOD'),
+  medications: z.string().optional(),
+  waterIntake: z.string().default('NORMAL'),
 });
 
 type PetProfileValues = z.infer<typeof petProfileSchema>;
@@ -41,23 +46,22 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
       neutered: 'yes',
       healthConditions: [],
       allergies: [],
-      activityLevel: 'NORMAL',
-      bcs: '5',
-      customHealthNote: '',
+      lifestyle: 'NORMAL',
+      behaviorPattern: 'NORMAL',
+      bcs: '3',
+      weightChange: 'none',
+      stoolCondition: 'GOOD',
+      waterIntake: 'NORMAL',
     }
   });
 
   const selectedConditions = watch('healthConditions');
   const selectedAllergies = watch('allergies');
 
-  const commonConditions = ['피부 알러지', '눈물 자국', '소화 불량', '비만/체중 관리'];
-  const dogSpecific = ['슬개골 탈구', '관절염', '심장 질환'];
-  const catSpecific = ['방광염/요로결석', '신장 질환', '헤어볼'];
+  const dogConditions = ['슬개골 탈구', '관절염', '피부 알러지', '눈물 자국', '심장 질환', '소화 불량', '췌장염'];
+  const catConditions = ['방광염/요로결석', '신장 질환', '헤어볼', '구강 건강', '심부전', '당뇨'];
 
-  const conditions = petType === 'dog' 
-    ? [...commonConditions, ...dogSpecific] 
-    : [...commonConditions, ...catSpecific];
-
+  const conditions = petType === 'dog' ? dogConditions : catConditions;
   const allergyList = ['닭고기', '소고기', '연어', '양고기', '곡물', '달걀'];
 
   const onSubmit = (data: PetProfileValues) => {
@@ -69,180 +73,111 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
 
   return (
     <TooltipProvider>
-    <Card className="w-full max-w-2xl mx-auto shadow-2xl border-none ring-1 ring-black/5 bg-white rounded-[2.5rem] overflow-hidden">
+    <Card className="w-full max-w-2xl mx-auto shadow-2xl border-none bg-white rounded-[2.5rem] overflow-hidden">
       <CardHeader className="text-center bg-muted/30 p-8 border-b">
         <div className="flex justify-center mb-6">
-          <div className={cn("p-4 rounded-2xl transition-all duration-500", step === 1 ? "bg-primary text-white scale-110 shadow-lg" : "bg-white text-muted-foreground border")}>
-            <ClipboardCheck className="w-6 h-6" />
-          </div>
-          <div className="w-10 h-0.5 bg-muted self-center mx-2" />
-          <div className={cn("p-4 rounded-2xl transition-all duration-500", step === 2 ? "bg-primary text-white scale-110 shadow-lg" : "bg-white text-muted-foreground border")}>
-            <HeartPulse className="w-6 h-6" />
-          </div>
-          <div className="w-10 h-0.5 bg-muted self-center mx-2" />
-          <div className={cn("p-4 rounded-2xl transition-all duration-500", step === 3 ? "bg-primary text-white scale-110 shadow-lg" : "bg-white text-muted-foreground border")}>
-            <Activity className="w-6 h-6" />
-          </div>
+          {[1, 2, 3, 4].map(i => (
+            <React.Fragment key={i}>
+              <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all", step === i ? "bg-primary text-white scale-110" : "bg-muted text-muted-foreground")}>
+                {i}
+              </div>
+              {i < 4 && <div className="w-6 h-0.5 bg-muted self-center mx-1" />}
+            </React.Fragment>
+          ))}
         </div>
-        <CardTitle className="text-2xl font-black font-headline">우리 아이 정밀 프로필</CardTitle>
-        <CardDescription className="font-medium">나이, 체중, 건강 상태에 따른 맞춤 분석을 위해 꼭 필요해요.</CardDescription>
+        <CardTitle className="text-2xl font-black">초정밀 메디컬 프로필</CardTitle>
+        <CardDescription>아이의 라이프스타일과 병력을 분석에 반영합니다.</CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="p-10">
           {step === 1 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
-              <div className="space-y-4">
-                <Label className="text-lg font-black flex items-center gap-2">1. 어떤 아이인가요?</Label>
-                <RadioGroup 
-                  defaultValue="dog" 
-                  onValueChange={(val) => {
-                    setPetType(val as 'dog' | 'cat');
-                    setValue('petType', val as 'dog' | 'cat');
-                  }}
-                  className="grid grid-cols-2 gap-4"
-                >
-                  <Label htmlFor="dog-survey" className={cn("flex flex-col items-center p-6 border-2 rounded-[2rem] cursor-pointer transition-all", petType === 'dog' ? "border-primary bg-primary/5 ring-4 ring-primary/10" : "border-muted opacity-60")}>
-                    <RadioGroupItem value="dog" id="dog-survey" className="sr-only" />
-                    <Dog className={cn("w-12 h-12 mb-2", petType === 'dog' ? "text-primary" : "text-muted-foreground")} />
-                    <span className="font-bold">강아지</span>
-                  </Label>
-                  <Label htmlFor="cat-survey" className={cn("flex flex-col items-center p-6 border-2 rounded-[2rem] cursor-pointer transition-all", petType === 'cat' ? "border-primary bg-primary/5 ring-4 ring-primary/10" : "border-muted opacity-60")}>
-                    <RadioGroupItem value="cat" id="cat-survey" className="sr-only" />
-                    <Cat className={cn("w-12 h-12 mb-2", petType === 'cat' ? "text-primary" : "text-muted-foreground")} />
-                    <span className="font-bold">고양이</span>
-                  </Label>
-                </RadioGroup>
+            <div className="space-y-6 animate-in fade-in">
+              <div className="grid grid-cols-2 gap-4">
+                <Label htmlFor="dog-s" className={cn("flex flex-col items-center p-6 border-2 rounded-2xl cursor-pointer", watch('petType') === 'dog' ? "border-primary bg-primary/5" : "border-muted")}>
+                  <RadioGroupItem value="dog" id="dog-s" className="sr-only" onClick={() => { setPetType('dog'); setValue('petType', 'dog'); }} />
+                  <Dog className="w-10 h-10 mb-2"/> 강아지
+                </Label>
+                <Label htmlFor="cat-s" className={cn("flex flex-col items-center p-6 border-2 rounded-2xl cursor-pointer", watch('petType') === 'cat' ? "border-primary bg-primary/5" : "border-muted")}>
+                  <RadioGroupItem value="cat" id="cat-s" className="sr-only" onClick={() => { setPetType('cat'); setValue('petType', 'cat'); }} />
+                  <Cat className="w-10 h-10 mb-2"/> 고양이
+                </Label>
               </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="font-bold ml-1">이름</Label>
-                  <Input placeholder="이름" className="h-12 rounded-xl" {...register('name')} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-bold ml-1">품종</Label>
-                  <Input placeholder="예: 말티즈, 코숏" className="h-12 rounded-xl" {...register('breed')} />
-                </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Input placeholder="이름" {...register('name')} className="rounded-xl h-12" />
+                <Input placeholder="품종" {...register('breed')} className="rounded-xl h-12" />
               </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="font-bold ml-1">나이 (살)</Label>
-                  <Input type="number" step="0.1" className="h-12 rounded-xl" {...register('age', { valueAsNumber: true })} />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-bold ml-1">몸무게 (kg)</Label>
-                  <Input type="number" step="0.1" className="h-12 rounded-xl" {...register('weight', { valueAsNumber: true })} />
-                </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Input type="number" step="0.1" placeholder="나이(살)" {...register('age', { valueAsNumber: true })} className="rounded-xl h-12" />
+                <Input type="number" step="0.1" placeholder="체중(kg)" {...register('weight', { valueAsNumber: true })} className="rounded-xl h-12" />
               </div>
             </div>
           )}
 
           {step === 2 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
+            <div className="space-y-6 animate-in fade-in">
+              <Label className="font-bold">신체 변화 및 소화 상태</Label>
               <div className="space-y-4">
-                <Label className="text-lg font-black flex items-center gap-2">2. 건강 고민 ({petType === 'dog' ? '강아지' : '고양이'} 맞춤)</Label>
-                
-                <div className="grid grid-cols-2 gap-3">
-                   {conditions.map((condition) => (
-                     <div key={condition} className="flex items-center space-x-2 p-3 bg-white border rounded-xl hover:bg-muted/30 transition-colors">
-                       <Checkbox 
-                         id={condition} 
-                         checked={selectedConditions.includes(condition)}
-                         onCheckedChange={(checked) => {
-                           const current = selectedConditions;
-                           if (checked) {
-                             setValue('healthConditions', [...current, condition]);
-                           } else {
-                             setValue('healthConditions', current.filter(c => c !== condition));
-                           }
-                         }}
-                       />
-                       <Label htmlFor={condition} className="text-xs font-bold cursor-pointer flex-1">{condition}</Label>
-                     </div>
-                   ))}
+                <div className="p-4 bg-muted/20 rounded-2xl">
+                  <Label className="text-xs font-bold mb-2 block">최근 3개월 체중 변화</Label>
+                  <RadioGroup defaultValue="none" onValueChange={v => setValue('weightChange', v)} className="flex gap-2">
+                    {['변화없음', '찜', '빠짐'].map((v, i) => (
+                      <Label key={v} className={cn("flex-1 text-center p-2 border rounded-xl text-xs cursor-pointer", watch('weightChange') === (i===0?'none':i===1?'gain':'loss') ? "bg-primary text-white" : "bg-white")}>
+                        <RadioGroupItem value={i===0?'none':i===1?'gain':'loss'} className="sr-only"/> {v}
+                      </Label>
+                    ))}
+                  </RadioGroup>
                 </div>
-
-                <div className="space-y-2 pt-4">
-                   <Label className="font-bold text-sm ml-1">기타 고민 직접 입력</Label>
-                   <Input 
-                     placeholder="예: 최근 사료를 잘 안 먹어요, 특정 성분 눈물이 심해요 등" 
-                     className="h-12 rounded-xl"
-                     {...register('customHealthNote')}
-                   />
+                <div className="p-4 bg-muted/20 rounded-2xl">
+                  <Label className="text-xs font-bold mb-2 block">평소 변 상태</Label>
+                  <RadioGroup defaultValue="GOOD" onValueChange={v => setValue('stoolCondition', v)} className="flex gap-2">
+                    {['딱딱', '촉촉', '설사'].map((v, i) => (
+                      <Label key={v} className={cn("flex-1 text-center p-2 border rounded-xl text-xs cursor-pointer", watch('stoolCondition') === (i===0?'DRY':i===1?'GOOD':'SOFT') ? "bg-primary text-white" : "bg-white")}>
+                        <RadioGroupItem value={i===0?'DRY':i===1?'GOOD':'SOFT'} className="sr-only"/> {v}
+                      </Label>
+                    ))}
+                  </RadioGroup>
                 </div>
               </div>
             </div>
           )}
 
           {step === 3 && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
-              <div className="space-y-4">
-                <Label className="text-lg font-black">3. 식습관 & 활동량</Label>
-                
-                <div className="space-y-3">
-                   <Label className="font-bold text-sm ml-1">피해야 하는 성분 (알러지)</Label>
-                   <div className="flex flex-wrap gap-2">
-                      {allergyList.map(allergy => (
-                        <Badge 
-                          key={allergy} 
-                          variant={selectedAllergies.includes(allergy) ? "default" : "outline"}
-                          className="px-4 py-2 cursor-pointer rounded-full font-bold text-xs"
-                          onClick={() => {
-                            const current = selectedAllergies;
-                            if (current.includes(allergy)) {
-                              setValue('allergies', current.filter(a => a !== allergy));
-                            } else {
-                              setValue('allergies', [...current, allergy]);
-                            }
-                          }}
-                        >
-                          {allergy}
-                        </Badge>
-                      ))}
-                   </div>
-                </div>
-
-                <div className="space-y-3 pt-4">
-                   <Label className="font-bold text-sm ml-1">활동 수준</Label>
-                   <RadioGroup defaultValue="NORMAL" onValueChange={(val) => setValue('activityLevel', val as any)} className="space-y-2">
-                      {[
-                        { id: 'LOW', title: '낮음', desc: '거의 움직이지 않거나 노령견/묘' },
-                        { id: 'NORMAL', title: '보통', desc: '매일 꾸준히 활동하거나 산책' },
-                        { id: 'HIGH', title: '높음', desc: '활동량이 매우 많고 활동적' }
-                      ].map((level) => (
-                        <Label key={level.id} htmlFor={level.id} className={cn("flex items-center gap-4 p-4 border-2 rounded-2xl cursor-pointer transition-all", watch('activityLevel') === level.id ? "border-primary bg-primary/5 shadow-sm" : "border-muted opacity-70")}>
-                           <RadioGroupItem value={level.id} id={level.id} className="sr-only" />
-                           <div className="flex-1 text-left">
-                              <p className="font-black text-sm">{level.title}</p>
-                              <p className="text-[10px] text-muted-foreground font-medium">{level.desc}</p>
-                           </div>
-                        </Label>
-                      ))}
-                   </RadioGroup>
-                </div>
+            <div className="space-y-6 animate-in fade-in">
+              <Label className="font-bold">라이프스타일 및 행동</Label>
+              <div className="space-y-3">
+                <Label className="text-xs font-bold">{petType === 'dog' ? '산책 빈도' : '고양이 환경'}</Label>
+                <RadioGroup onValueChange={v => setValue('lifestyle', v)} className="grid gap-2">
+                  {(petType === 'dog' ? ['안함', '30분 미만', '1시간 내외', '활발함'] : ['실내묘', '산책묘', '외출묘']).map(v => (
+                    <Label key={v} className={cn("p-4 border rounded-2xl cursor-pointer text-sm font-bold", watch('lifestyle') === v ? "border-primary bg-primary/5" : "border-muted")}>
+                      <RadioGroupItem value={v} className="sr-only"/> {v}
+                    </Label>
+                  ))}
+                </RadioGroup>
               </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-6 animate-in fade-in">
+              <Label className="font-bold">질환 및 병력 관리</Label>
+              <div className="flex flex-wrap gap-2">
+                {conditions.map(c => (
+                  <Badge key={c} variant={selectedConditions.includes(c) ? "default" : "outline"} className="cursor-pointer px-4 py-2" onClick={() => {
+                    const cur = selectedConditions;
+                    setValue('healthConditions', cur.includes(c) ? cur.filter(x => x !== c) : [...cur, c]);
+                  }}>{c}</Badge>
+                ))}
+              </div>
+              <Input placeholder="복용 중인 약물 직접 기입" {...register('medications')} className="rounded-xl h-12 mt-4" />
+              <Input placeholder="기타 건강 고민 직접 기입" {...register('customHealthNote')} className="rounded-xl h-12" />
             </div>
           )}
         </CardContent>
 
         <CardFooter className="flex justify-between border-t p-8 bg-muted/10">
-          {step > 1 ? (
-            <Button type="button" variant="ghost" onClick={prevStep} className="font-bold rounded-xl h-12">
-              <ArrowLeft className="mr-2 h-4 w-4" /> 이전
-            </Button>
-          ) : <div />}
-          
-          {step < 3 ? (
-            <Button type="button" onClick={nextStep} className="bg-primary font-black rounded-xl h-12 px-8 shadow-lg shadow-primary/20">
-              다음 <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          ) : (
-            <Button type="submit" className="bg-primary hover:bg-primary/90 font-black rounded-xl h-12 px-8 shadow-xl shadow-primary/30">
-              프로필 등록 완료
-            </Button>
-          )}
+          {step > 1 ? <Button type="button" variant="ghost" onClick={prevStep}><ArrowLeft className="mr-2 h-4 w-4"/> 이전</Button> : <div/>}
+          {step < 4 ? <Button type="button" onClick={nextStep}>다음 <ArrowRight className="ml-2 h-4 w-4"/></Button> : <Button type="submit">프로필 등록 완료</Button>}
         </CardFooter>
       </form>
     </Card>
