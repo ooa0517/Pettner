@@ -1,10 +1,11 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v24.0 - Ultra Precision]
- * - Dual Analysis Core: Veterinary (Custom) vs Auditor (General)
- * - Strict 5-Point Weight Roadmap Logic
- * - Genetic Insight & Brand Recall Integration
+ * @fileOverview [Pettner Core Engine v25.0 - Ultra Precision]
+ * - Dual Analysis Persona: Veterinary Physician vs Food Safety Auditor
+ * - Advanced Obesity Logic: BCS-based Ideal Weight & 5-Point Diet Roadmap
+ * - Ingredient Tiering & Genetic Breed Insights
+ * - ESG & Brand Integrity Audit
  */
 
 import {ai} from '@/ai/genkit';
@@ -120,31 +121,28 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   prompt: `당신은 세계적인 수의 영양학 전문의이자 공인 펫푸드 감사관입니다. 
 입력된 데이터를 바탕으로 초정밀 분석 리포트를 생성하십시오.
 
-{{#if (eq analysisMode "custom")}}
-# [MODE: 수의사 정밀 진단]
-- 당신의 페르소나: 아이의 주치의
-- 목표: 아이의 개별 건강 데이터({{{petProfile.name}}}, {{{petType}}}, {{{petProfile.breed}}})와 제품 성분의 매칭률 진단.
+분석 모드: {{{analysisMode}}}
 
-# 비만 진단 가이드라인
-1. Ideal_Weight = Current_Weight * (100 - (BCS - 3) * 10) / 100
-2. dietRoadmap (반드시 5개 지점):
+# [MODE: 수의사 정밀 진단 (Custom Mode)]
+반드시 다음 로직을 적용하십시오:
+1. Ideal_Weight 계산: Current_Weight * (100 - (BCS - 3) * 10) / 100
+2. dietRoadmap 생성 (반드시 5개 지점):
    - 지점 1(현재): 감량 칼로리 (RER * 1.0) 기준 급여량(g)
    - 지점 5(목표): 유지 칼로리 (RER * 1.4) 기준 급여량(g)
    - 중간(2,3,4): 칼로리를 점진적으로 상향 조정. **목표에 가까워질수록 급여량은 늘어납니다.**
-3. Breed Insight: {{{petProfile.breed}}}의 유전적 질환과 비만의 상관관계를 인터넷 서칭급 지식으로 설명하십시오.
+3. Breed Genetic Insight: {{{petProfile.breed}}}의 유전적 취약점과 비만의 상관관계를 인터넷 서칭급 지식으로 설명하십시오.
 
-{{else}}
-# [MODE: 공인 감사관 제품 심사]
-- 당신의 페르소나: 객관적 펫푸드 감사관
-- 목표: 아이 정보 없이 제품 자체의 품질, 브랜드 신뢰도, 원료 등급만 심사.
-- 조언: 급여 조언 대신 제품의 객관적 장단점과 리콜 이력을 중심으로 기술하십시오.
-{{/if}}
+# [MODE: 공인 감사관 제품 심사 (General Mode)]
+반드시 다음 로직을 적용하십시오:
+1. 제품의 객관적 품질, 브랜드 신뢰도, 원료 등급만 심사하십시오.
+2. 브랜드 평판 및 최신 리콜 이력을 포함하십시오.
+3. ESG 평가: 환경 보호, 윤리적 원료(Non-GMO, 유기농) 사용 여부를 심사하십시오.
 
 # 원재료 심사 기준 (엄격)
-- Tier 1: Fresh Meat / Whole Fish
-- Tier 2: Named Meals (Chicken Meal 등)
-- Tier 3: By-products / Unspecified Fats (Vegetable Oil 등)
-- 비만견에게는 곡물(Corn, Wheat, Rice)을 High GI로 플래그하십시오.
+- Tier 1: Fresh Meat / Whole Fish (가공되지 않은 신선육)
+- Tier 2: Named Meals (Chicken Meal 등 단백질 농축분)
+- Tier 3: By-products / Unspecified Fats (Vegetable Oil 등 부산물 및 불분명한 유지)
+- 비만견에게는 옥수수(Corn), 밀(Wheat), 쌀(Rice)을 고혈당 유발 인자(High GI)로 플래그하십시오.
 
 사진 데이터: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음{{/if}}`,
 });
@@ -157,7 +155,7 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await analyzePetFoodIngredientsPrompt(input);
-    if (!output) throw new Error('AI 분석 실패');
+    if (!output) throw new Error('AI 분석 실패: 출력물이 생성되지 않았습니다.');
     return {
       ...output,
       status: 'success'
