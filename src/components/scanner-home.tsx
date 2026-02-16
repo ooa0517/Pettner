@@ -50,7 +50,6 @@ type AnalysisFormValues = {
     name: string;
     breed: string;
     isMix: boolean;
-    expectedSize: string;
     birthDate: string;
     dontKnowBirth: boolean;
     ageYears: string;
@@ -85,7 +84,6 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
         name: z.string().optional().default(''),
         breed: z.string().optional().default(''),
         isMix: z.boolean().default(false),
-        expectedSize: z.string().optional().default(''),
         birthDate: z.string().optional().default(''),
         dontKnowBirth: z.boolean().default(false),
         ageYears: z.string().optional().default(''),
@@ -110,7 +108,6 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
         name: '',
         breed: '',
         isMix: false,
-        expectedSize: '',
         birthDate: '',
         dontKnowBirth: false,
         ageYears: '',
@@ -234,7 +231,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                             <FormLabel className="font-black text-sm ml-1">품종</FormLabel>
                             <div className="space-y-3">
                               <FormControl>
-                                <Input placeholder="예: 말티즈, 샴" className="h-14 rounded-2xl border-2" {...field} />
+                                <Input placeholder="예: 말티즈, 진돗개 믹스" className="h-14 rounded-2xl border-2" {...field} />
                               </FormControl>
                               <div className="flex items-center space-x-2 ml-1">
                                 <Checkbox 
@@ -245,34 +242,15 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                                 <Label htmlFor="mix-breed" className="text-xs font-bold text-muted-foreground cursor-pointer">믹스견 / 품종 모름</Label>
                               </div>
                             </div>
+                            {isMix && (
+                              <p className="text-[10px] text-primary font-bold mt-1 ml-1 animate-in fade-in">
+                                * 믹스견의 경우 AI가 품종 명칭을 바탕으로 성견 크기를 자동 추정합니다.
+                              </p>
+                            )}
                           </FormItem>
                         )}
                       />
                     </div>
-
-                    {isMix && (
-                      <FormField
-                        control={form.control}
-                        name="petProfile.expectedSize"
-                        render={({ field }) => (
-                          <FormItem className="animate-in slide-in-from-top-2">
-                            <FormLabel className="font-black text-sm ml-1">{t('scannerHome.mixBreedLabel')}</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="h-14 rounded-2xl border-2">
-                                  <SelectValue placeholder="예상 성견 크기 선택" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="small">소형 (&lt; 10kg)</SelectItem>
-                                <SelectItem value="medium">중형 (10 ~ 25kg)</SelectItem>
-                                <SelectItem value="large">대형 (&gt; 25kg)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                    )}
 
                     <div className="space-y-4">
                       <FormLabel className="font-black text-sm ml-1">{t('scannerHome.birthDateLabel')}</FormLabel>

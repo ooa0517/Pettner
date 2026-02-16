@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -22,6 +23,7 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
   petProfile: z.object({
     name: z.string().optional(),
     breed: z.string().optional(),
+    isMix: z.boolean().optional(),
     age: z.number().optional(),
     weight: z.number().optional(),
     neutered: z.boolean().optional(),
@@ -116,20 +118,23 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
 
 # 핵심 가이드라인
 1. **아이 상태 우선**: 리포트 시작 시 사료보다 '아이의 현재 상태'와 '품종 표준'을 먼저 분석하십시오. 나이와 몸무게를 통해 현재 성장이 완료되었는지(Puppy/Kitten), 성묘/성견인지, 노령인지 판단하십시오.
-2. **급여량 계산 (RER/DER)**:
+2. **품종 및 믹스견 분석**:
+   - 입력된 품종(breed)이 믹스견(isMix: true)인 경우, 품종 명칭(예: "진돗개 믹스", "말티푸")을 바탕으로 예상 성견 크기와 유전적 취약점을 수의학적 데이터에 기반해 추론하십시오.
+   - 믹스견의 예상 체중과 활동 에너지를 결정론적으로 추정하여 'idealWeightRange'에 반영하십시오.
+3. **급여량 계산 (RER/DER)**:
    - 계산 공식: RER = 70 * (체중)^0.75
    - 활동계수 적용: 
      - 강아지: 중성화됨(1.6), 중성화안됨(1.8), 자견(3.0), 비만(1.0~1.2), 노령(1.4)
      - 고양이: 중성화됨(1.2), 중성화안됨(1.4), 자묘(2.5), 비만(0.8~1.0), 노령(1.1)
    - DER = RER * 활동계수
    - 사료의 칼로리(kcal/kg)를 바탕으로 정확한 일일 급여량(g)을 산출하십시오.
-3. **용어의 친숙함**: '건물 기준(DM)'을 언급할 때는 반드시 "수분을 제외한 실제 영양 농도"임을 함께 설명하십시오.
-4. **품종별 매칭**: 입력된 품종의 유전적 취약점(예: 말티즈의 슬개골, 슈나우저의 췌장염, 페르시안의 신장)과 제품 성분을 강력하게 연동하십시오.
-5. **성분 이모지**: 원재료 이름 앞에 적절한 이모지를 붙이십시오 (예: 🐔 닭고기, 🐟 연어, 🥬 완두콩).
+4. **용어의 친숙함**: '건물 기준(DM)'을 언급할 때는 반드시 "수분을 제외한 실제 영양 농도"임을 함께 설명하십시오.
+5. **품종별 매칭**: 입력된 품종의 유전적 취약점(예: 말티즈의 슬개골, 슈나우저의 췌장염, 페르시안의 신장)과 제품 성분을 강력하게 연동하십시오.
+6. **성분 이모지**: 원재료 이름 앞에 적절한 이모지를 붙이십시오 (예: 🐔 닭고기, 🐟 연어, 🥬 완두콩).
 
 # INPUT DATA
 {{#if petProfile}}
-Pet: {{{petProfile.name}}} ({{{petType}}}, {{{petProfile.breed}}}, {{{petProfile.age}}}세, {{{petProfile.weight}}}kg)
+Pet: {{{petProfile.name}}} ({{{petType}}}, {{{petProfile.breed}}}, 믹스여부: {{{petProfile.isMix}}}, {{{petProfile.age}}}세, {{{petProfile.weight}}}kg)
 - 중성화: {{{petProfile.neutered}}}
 - 활동량: {{{petProfile.activityLevel}}}
 - 고민: {{#each petProfile.healthConditions}}{{{this}}}, {{/each}}
@@ -137,7 +142,7 @@ Pet: {{{petProfile.name}}} ({{{petType}}}, {{{petProfile.breed}}}, {{{petProfile
 {{/if}}
 
 # 분석 결과 작성 지침
-- 'petSummary' 섹션에서 해당 품종의 표준 체중과 비교하여 현재 아이가 과체중인지, 정상인지 명확히 알려주십시오. 나이가 어린 경우 '성장기'임을 강조하십시오.
+- 'petSummary' 섹션에서 해당 품종(또는 추론된 믹스 크기)의 표준 체중과 비교하여 현재 아이가 과체중인지, 정상인지 명확히 알려주십시오. 나이가 어린 경우 '성장기'임을 강조하십시오.
 - 'expertVerdict.whyMatch' 섹션에서 "이 사료는 ~성분이 들어있어 현재 ~고민이 있는 {{{petProfile.name}}}에게 ~한 이유로 추천합니다/주의가 필요합니다"라고 구체적으로 서술하십시오.
 - 모든 수치는 수의학적 근거(AAFCO/NRC)를 바탕으로 결정론적으로 계산하십시오.`,
 });
