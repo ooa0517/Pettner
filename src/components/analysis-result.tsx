@@ -8,10 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Repeat, ShoppingBag, 
   AlertCircle, Scale,
-  ChevronRight, TrendingDown, Info,
+  TrendingDown, Info,
   CheckCircle2, AlertTriangle,
   Stethoscope, FlaskConical, ShieldCheck, Dna, Activity,
-  FileText, ShieldAlert, Award, Globe
+  Award, Globe, BarChart3
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
@@ -21,7 +21,7 @@ import {
   ChartTooltipContent,
   type ChartConfig
 } from '@/components/ui/chart';
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer } from 'recharts';
+import { Line, LineChart, XAxis, YAxis, CartesianGrid, ReferenceLine } from 'recharts';
 
 type AnalysisResultProps = {
   result: AnalyzePetFoodIngredientsOutput;
@@ -54,6 +54,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   const isCustomMode = input.analysisMode === 'custom';
   const isObese = (input.petProfile?.bcs && parseInt(input.petProfile.bcs) >= 4) || false;
 
+  const nutritionMetrics = [
+    { label: "단백질 (Protein)", data: result.advancedNutrition.protein },
+    { label: "지방 (Fat)", data: result.advancedNutrition.fat },
+    { label: "탄수화물 (Carbs/NFE)", data: result.advancedNutrition.carbs, isCritical: result.advancedNutrition.isHighCarb },
+    { label: "조섬유 (Fiber)", data: result.advancedNutrition.fiber },
+    { label: "조회분 (Ash)", data: result.advancedNutrition.ash }
+  ];
+
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-40 max-w-4xl mx-auto px-4">
       
@@ -63,7 +71,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           <div className="flex justify-between items-start">
             <div className="space-y-1">
               <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary font-black px-4 py-1.5 rounded-full text-[10px] tracking-widest uppercase">
-                {isCustomMode ? 'Veterinary Diagnosis v10.0' : 'Product Quality Audit v10.0'}
+                {isCustomMode ? 'Veterinary Diagnosis v13.0' : 'Product Quality Audit v13.0'}
               </Badge>
               <h1 className="text-3xl font-black tracking-tighter pt-2">
                 {isCustomMode 
@@ -83,10 +91,9 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </div>
 
           <div className={cn("p-8 rounded-[2.5rem] border-l-8 relative overflow-hidden", isCustomMode ? "bg-muted/20 border-primary" : "bg-primary/5 border-primary")}>
-             {isCustomMode ? <Stethoscope className="absolute right-[-20px] top-[-20px] w-40 h-40 text-primary opacity-5 rotate-12" /> : <ShieldCheck className="absolute right-[-20px] top-[-20px] w-40 h-40 text-primary opacity-5 rotate-12" />}
              <div className="relative z-10 space-y-4">
                <h3 className="text-xl font-black flex items-center gap-2">
-                 <Info className="text-primary" size={20}/> 
+                 {isCustomMode ? <Stethoscope className="text-primary" size={20}/> : <Award className="text-primary" size={20}/>} 
                  {isCustomMode ? '수의학적 진단 요약' : '전문 심사관 총평'}
                </h3>
                <p className="text-lg font-bold leading-relaxed break-keep">
@@ -168,51 +175,10 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   </LineChart>
                 </ChartContainer>
               </div>
-              <p className="text-[11px] text-center font-bold text-muted-foreground">감량기에는 적게 급여하고, 목표 체중 도달 후(유지기)에는 권장량까지 서서히 늘립니다.</p>
+              <p className="text-[11px] text-center font-bold text-muted-foreground">목표 체중 도달까지의 급여 가이드라인입니다.</p>
             </Card>
           )}
         </>
-      )}
-
-      {/* 2. General Mode: Brand & ESG Insights */}
-      {!isCustomMode && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10 space-y-6">
-            <h3 className="font-black flex items-center gap-2 text-primary">
-              <Award size={18} /> 브랜드 신뢰도 & 안전성
-            </h3>
-            <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
-                <p className="text-xs font-black text-primary uppercase">Market Reputation</p>
-                <p className="text-sm font-bold mt-1">{result.brandInsight.reputation}</p>
-              </div>
-              <div className="p-4 rounded-2xl bg-destructive/5 border border-destructive/10">
-                <p className="text-xs font-black text-destructive uppercase">Recall History</p>
-                <p className="text-sm font-bold mt-1 text-destructive">{result.brandInsight.recallHistory}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10 space-y-6">
-            <h3 className="font-black flex items-center gap-2 text-success">
-              <Globe size={18} /> ESG 및 윤리적 가치
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-bold">윤리 등급</p>
-                <Badge className="bg-success text-white font-black">{result.esgAudit.score}</Badge>
-              </div>
-              <div className="space-y-2">
-                {result.esgAudit.details.map((detail, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                    <CheckCircle2 size={12} className="text-success" />
-                    <span>{detail}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Card>
-        </div>
       )}
 
       {/* 3. Ingredient Anatomy */}
@@ -225,7 +191,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <div className="bg-muted/30 p-8 border-b">
             <h3 className="font-black flex items-center gap-2 text-muted-foreground">
-              <FlaskConical size={18} /> 제1~5원료 퀄리티 체크 (품질 등급)
+              <FlaskConical size={18} /> 제1~5원료 퀄리티 심사
             </h3>
           </div>
           <CardContent className="p-8 space-y-4">
@@ -249,7 +215,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8 space-y-6">
             <h3 className="font-black flex items-center gap-2 text-primary">
-              <Activity size={18} /> 기능성 성분 탐색
+              <Activity size={18} /> 기능성 성분 매칭
             </h3>
             <div className="space-y-3">
               {result.ingredientAnatomy.functionalBoosters.map((booster, i) => (
@@ -274,16 +240,11 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 <CheckCircle2 size={18} className={result.ingredientAnatomy.safetyFilter.noArtificialColors ? "text-success" : "text-muted-foreground"} />
                 <span>인공 착색료 무첨가</span>
               </div>
-              {result.ingredientAnatomy.safetyFilter.hiddenAdditives.length > 0 && (
-                <div className="p-4 bg-muted/20 rounded-2xl text-[10px] font-bold text-muted-foreground">
-                  검출된 첨가물: {result.ingredientAnatomy.safetyFilter.hiddenAdditives.join(', ')}
-                </div>
-              )}
               {result.ingredientAnatomy.safetyFilter.allergyWarning && (
                 <div className="mt-4 p-5 bg-destructive/5 border border-destructive/10 rounded-3xl flex gap-3">
                   <AlertTriangle className="text-destructive shrink-0" size={20} />
                   <p className="text-xs font-black text-destructive leading-relaxed">
-                    [주의] {result.ingredientAnatomy.safetyFilter.allergyWarning}
+                    [알러지 주의] {result.ingredientAnatomy.safetyFilter.allergyWarning}
                   </p>
                 </div>
               )}
@@ -292,36 +253,60 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       </div>
 
-      {/* 4. Nutritional Density (DM) */}
+      {/* 4. Nutritional Density (DM) - Enhanced with Standards */}
       <Card className="border-none shadow-xl rounded-[3rem] bg-white p-10 space-y-8">
         <div className="space-y-1">
           <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            📊 [수분 제외 영양 밀도 (DM)]
+            <BarChart3 className="text-primary" size={20}/> 📊 [수분 제외 영양 밀도 (DM) vs 표준 범위]
           </CardTitle>
-          <p className="text-[11px] text-muted-foreground font-black">* 실제 농도 기반 분석값입니다. 비만견은 탄수화물 함량이 매우 중요합니다.</p>
+          <p className="text-[11px] text-muted-foreground font-black">* AAFCO/NRC 가이드라인에 따른 종별 최적 범위와 비교한 결과입니다.</p>
         </div>
 
-        <div className="space-y-8">
-           {[
-             { label: "단백질 (Protein)", value: result.advancedNutrition.protein_dm, color: "bg-primary" },
-             { label: "지방 (Fat)", value: result.advancedNutrition.fat_dm, color: result.advancedNutrition.fat_dm > 20 ? "bg-yellow-500" : "bg-primary" },
-             { label: "탄수화물 (Carbs/NFE)", value: result.advancedNutrition.carbs_nfe_dm, color: result.advancedNutrition.isHighCarb ? "bg-destructive" : "bg-primary", isWarning: result.advancedNutrition.isHighCarb }
-           ].map((stat, i) => (
-             <div key={i} className="space-y-3">
-               <div className="flex justify-between items-end">
-                 <span className="text-sm font-black">{stat.label}</span>
-                 <span className={cn("text-xl font-black", stat.isWarning ? "text-destructive" : "text-primary")}>{stat.value}%</span>
-               </div>
-               <div className="h-5 bg-muted rounded-full relative overflow-hidden">
-                  <div className={cn("h-full transition-all duration-1000", stat.color)} style={{ width: `${Math.min(stat.value, 100)}%` }} />
-               </div>
-               {stat.isWarning && (
-                 <p className="text-[11px] font-black text-destructive leading-tight animate-pulse">
-                   ⚠️ 탄수화물 함량이 매우 높습니다. 체중 감량에 불리할 수 있습니다.
+        <div className="space-y-10">
+           {nutritionMetrics.map((metric, i) => {
+             const { value, minStd, maxStd, status, verdict } = metric.data;
+             const range = 100; // max scale
+             const idealStart = (minStd / range) * 100;
+             const idealWidth = ((maxStd - minStd) / range) * 100;
+
+             return (
+               <div key={i} className="space-y-4">
+                 <div className="flex justify-between items-end">
+                   <div className="space-y-1">
+                     <span className="text-sm font-black">{metric.label}</span>
+                     <p className="text-[10px] font-bold text-muted-foreground">권장 범위: {minStd}% ~ {maxStd}%</p>
+                   </div>
+                   <div className="text-right">
+                     <span className={cn("text-xl font-black", 
+                        status === 'optimal' ? "text-success" : "text-destructive"
+                     )}>{value}%</span>
+                     <Badge variant="outline" className={cn("ml-2 font-bold px-2", 
+                        status === 'optimal' ? "border-success text-success bg-success/5" : "border-destructive text-destructive bg-destructive/5"
+                     )}>{status.toUpperCase()}</Badge>
+                   </div>
+                 </div>
+
+                 <div className="h-6 bg-muted rounded-full relative overflow-hidden">
+                    {/* Ideal Range Highlight */}
+                    <div 
+                      className="absolute h-full bg-success/20 border-x border-success/30"
+                      style={{ left: `${idealStart}%`, width: `${idealWidth}%` }}
+                    />
+                    {/* Current Value Bar */}
+                    <div 
+                      className={cn("h-full transition-all duration-1000", 
+                        status === 'optimal' ? "bg-success" : 
+                        status === 'high' ? "bg-destructive" : "bg-yellow-500"
+                      )} 
+                      style={{ width: `${Math.min(value, 100)}%` }} 
+                    />
+                 </div>
+                 <p className="text-[11px] font-bold text-muted-foreground leading-relaxed italic">
+                   💡 {verdict}
                  </p>
-               )}
-             </div>
-           ))}
+               </div>
+             );
+           })}
         </div>
       </Card>
 

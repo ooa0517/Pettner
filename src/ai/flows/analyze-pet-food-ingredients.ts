@@ -1,9 +1,10 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v12.0] 
+ * @fileOverview [Pettner Core Engine v13.0] 
  * - Ultra-Precision Nutrition: Dog & Cat
  * - Integrated Bio-Behavioral Analysis
+ * - Enhanced Nutritional Standards Comparison (AAFCO/NRC)
  */
 
 import {ai} from '@/ai/genkit';
@@ -40,6 +41,14 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
 });
 
 export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngredientsInputSchema>;
+
+const NutritionalMetricSchema = z.object({
+  value: z.number().describe('분석된 DM 값 (%)'),
+  minStd: z.number().describe('권장 최소 DM (%)'),
+  maxStd: z.number().describe('권장 최대 DM (%)'),
+  status: z.enum(['low', 'optimal', 'high']),
+  verdict: z.string().describe('상태 판정 문구')
+});
 
 const AnalyzePetFoodIngredientsOutputSchema = z.object({
   status: z.enum(['success', 'error']),
@@ -78,9 +87,11 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     details: z.array(z.string())
   }),
   advancedNutrition: z.object({
-    carbs_nfe_dm: z.number().describe('DM 탄수화물 (%)'),
-    protein_dm: z.number().describe('DM 단백질 (%)'),
-    fat_dm: z.number().describe('DM 지방 (%)'),
+    protein: NutritionalMetricSchema,
+    fat: NutritionalMetricSchema,
+    carbs: NutritionalMetricSchema,
+    fiber: NutritionalMetricSchema,
+    ash: NutritionalMetricSchema,
     isHighCarb: z.boolean(),
     caloriesPerGram: z.number()
   }),
@@ -117,21 +128,19 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
   prompt: `당신은 세계적인 수의 영양학 전문의이자 펫푸드 감사관입니다. 
-아래의 초정밀 데이터를 바탕으로 사료/간식/영양제를 분석하십시오.
+아래의 데이터를 바탕으로 사료/간식/영양제를 초정밀 분석하십시오.
 
-# 환자(반려동물) 프로필 분석 지침
-1. [기초 정보]: {{{petProfile.name}}} ({{{petType}}}, {{{petProfile.breed}}}, {{{petProfile.age}}}세, {{{petProfile.weight}}}kg)
-2. [생리 상태]: 체중 변화({{{petProfile.weightChange}}}), 변 상태({{{petProfile.stoolCondition}}}), 음수량({{{petProfile.waterIntake}}})
-3. [생활 패턴]: 라이프스타일({{{petProfile.lifestyle}}}), 행동패턴({{{petProfile.behaviorPattern}}}), 환경({{{petProfile.environment}}})
-4. [건강 리스크]: 질환({{#each petProfile.healthConditions}}{{this}}, {{/each}} {{{petProfile.customHealthNote}}}), 약물({{{petProfile.medications}}}), 알러지({{#each petProfile.allergies}}{{this}}, {{/each}})
-5. [기호성]: 입맛({{{petProfile.pickiness}}}), 선호제형({{{petProfile.preferredTexture}}})
+# 환자(반려동물) 프로필
+- 이름/종/무게: {{{petProfile.name}}} ({{{petType}}}, {{{petProfile.breed}}}, {{{petProfile.weight}}}kg)
+- 상태: BCS {{{petProfile.bcs}}}, 변상태 {{{petProfile.stoolCondition}}}, 음수량 {{{petProfile.waterIntake}}}
+- 히스토리: 체중변화 {{{petProfile.weightChange}}}, 산책 {{{petProfile.lifestyle}}}, 행동패턴 {{{petProfile.behaviorPattern}}}
+- 의료정보: 질환({{#each petProfile.healthConditions}}{{this}}, {{/each}}), 약물({{{petProfile.medications}}}), 알러지({{#each petProfile.allergies}}{{this}}, {{/each}})
 
-# 종별 분석 핵심 (Species-Specific)
-- 고양이: 절대 육식동물. 탄수화물 제한(DM 25% 미만), 타우린 필수, 신장 및 비뇨기(음수량 관련) 리스크 집중 분석.
-- 강아지: 잡식성향 육식동물. 활동량 대비 에너지 밀도, 관절 건강, 체중 변화 추이에 따른 칼로리 적정성 분석.
-
-# 다이어트 알고리즘
-- BCS가 4 이상인 경우 목표 체중(Ideal Weight)을 계산하고, 감량 식단 로드맵을 3단계로 제시하십시오.
+# 분석 가이드라인
+1. [영양 표준 대조]: AAFCO 및 NRC 기준을 바탕으로 해당 반려동물 종/생애주기에 따른 단백질, 지방, 탄수화물, 조섬유, 조회분의 '최적 DM 범위(minStd, maxStd)'를 설정하고 분석값과 대조하십시오.
+2. [종별 특화]: 고양이는 타우린과 높은 단백질 농도, 탄수화물 제한(DM 25% 미만)을 엄격히 봅니다. 강아지는 활동량 대비 칼로리와 관절 보호 성분을 중점적으로 봅니다.
+3. [비만 알고리즘]: BCS 4 이상일 경우 Ideal Weight를 공식(Current * (100 - (BCS-3)*10)/100)에 따라 계산하고 감량 로드맵을 제시하십시오.
+4. [원재료 품질]: 제1~5원료를 분석하여 Tier 1(생육/통생선), Tier 2(명칭된 가공분말), Tier 3(부산물/익명분말)로 분류하십시오.
 
 사진 데이터: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음{{/if}}`,
 });
