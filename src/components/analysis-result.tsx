@@ -11,7 +11,7 @@ import {
   TrendingDown,
   CheckCircle2, AlertTriangle,
   Stethoscope, FlaskConical, ShieldCheck, Dna, Activity,
-  Award, BarChart3, Flame, Bone, ShieldAlert
+  Award, BarChart3, Flame, Bone, ShieldAlert, Info
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
@@ -52,7 +52,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   }
 
   const isCustomMode = input.analysisMode === 'custom';
-  const isObese = (input.petProfile?.bcs && parseInt(input.petProfile.bcs) >= 4) || false;
 
   const nutritionMetrics = [
     { label: "단백질 (Protein)", data: result.advancedNutrition.protein },
@@ -101,7 +100,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                </p>
                <div className="flex flex-wrap gap-2">
                  {result.scoreCard.statusTags.map((tag, i) => (
-                   <Badge key={i} variant="secondary" className={cn("bg-white font-bold px-3 py-1", tag.includes('주의') || tag.includes('비만') ? "text-destructive" : "text-primary")}>
+                   <Badge key={i} variant="secondary" className={cn("bg-white font-bold px-3 py-1", tag.includes('주의') || tag.includes('비만') || tag.includes('경고') ? "text-destructive" : "text-primary")}>
                      {tag}
                    </Badge>
                  ))}
@@ -148,17 +147,31 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 <p className="text-xs font-black opacity-70 uppercase tracking-widest">Target Weight</p>
                 <h3 className="text-4xl font-black">{result.weightDiagnosis.idealWeight.toFixed(1)}kg</h3>
               </div>
-              <p className="text-sm font-bold opacity-80 leading-relaxed">
-                현재 {result.weightDiagnosis.currentWeight}kg에서 목표 {result.weightDiagnosis.idealWeight.toFixed(1)}kg까지 안전하게 도달하기 위한 플랜입니다.
-              </p>
+              <div className="space-y-4">
+                <div className="flex items-start gap-2 bg-white/10 p-4 rounded-2xl">
+                    <Info className="w-5 h-5 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                        <p className="text-[11px] font-black uppercase opacity-70">Genetic Insight</p>
+                        <p className="text-xs font-bold leading-relaxed">{result.weightDiagnosis.breedGeneticInsight}</p>
+                    </div>
+                </div>
+                <p className="text-sm font-bold opacity-80 leading-relaxed">
+                    현재 {result.weightDiagnosis.currentWeight}kg에서 목표 {result.weightDiagnosis.idealWeight.toFixed(1)}kg까지 안전하게 도달하기 위한 플랜입니다.
+                </p>
+              </div>
             </Card>
           </div>
 
           {result.dietRoadmap && result.dietRoadmap.length > 0 && (
             <Card className="border-none shadow-xl rounded-[3rem] bg-white p-10 space-y-8">
-              <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                📉 [단계별 체중 조절 플랜]
-              </CardTitle>
+              <CardHeader className="p-0">
+                <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                    📉 [단계별 체중 조절 플랜]
+                </CardTitle>
+                <p className="text-xs text-muted-foreground font-bold mt-1 italic">
+                    * 감량 시기에는 칼로리를 엄격히 제한하고, 목표 체중 도달 후에는 건강 유지를 위해 급여량을 서서히 늘립니다.
+                </p>
+              </CardHeader>
               <div className="h-[250px] w-full">
                 <ChartContainer config={chartConfig} className="h-full w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -173,7 +186,16 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   </ResponsiveContainer>
                 </ChartContainer>
               </div>
-              <p className="text-[11px] text-center font-bold text-muted-foreground italic">체중이 줄어듦에 따라 권장 급여량도 미세하게 조정됩니다.</p>
+              <div className="flex justify-between items-center bg-muted/20 p-5 rounded-3xl">
+                <div className="flex items-center gap-2">
+                    <Activity className="text-primary w-5 h-5" />
+                    <span className="text-sm font-black">감량 식단 권장량:</span>
+                </div>
+                <div className="text-right">
+                    <span className="text-2xl font-black text-primary">{result.dietRoadmap[0]?.grams}g</span>
+                    <p className="text-[10px] font-bold text-muted-foreground">종이컵 약 {(result.dietRoadmap[0]?.grams / 100).toFixed(1)}컵</p>
+                </div>
+              </div>
             </Card>
           )}
         </>
@@ -272,7 +294,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
              if (!metricData) return null;
 
              const { value, minStd, maxStd, status, verdict } = metricData;
-             const range = 100;
+             const range = Math.max(value, maxStd, 100);
              const idealStart = (minStd / range) * 100;
              const idealWidth = ((maxStd - minStd) / range) * 100;
 
@@ -303,7 +325,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                         status === 'optimal' ? "bg-success" : 
                         status === 'high' ? "bg-destructive" : "bg-yellow-500"
                       )} 
-                      style={{ width: `${Math.min(value, 100)}%` }} 
+                      style={{ width: `${(value / range) * 100}%` }} 
                     />
                  </div>
                  <p className={cn("text-[11px] font-bold leading-relaxed italic", metric.isCritical ? "text-destructive" : "text-muted-foreground")}>
