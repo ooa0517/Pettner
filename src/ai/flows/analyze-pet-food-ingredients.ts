@@ -1,12 +1,10 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v3.8] Deterministic Veterinary Analysis System
- * - Strictly Deterministic Output for Consistency
- * - Breed-Specific Genetic Risk Analysis Layer
- * - Species bifurcation (Protocol_Dog / Protocol_Cat)
- * - AAFCO/NRC nutritional standards validation
- * - Deterministic DM (Dry Matter) & NFE (Carbs) calculations
+ * @fileOverview [Pettner Core Engine v4.0] 
+ * - Deterministic Veterinary Analysis System
+ * - Advanced Feeding Guide & Breed Standard Logic
+ * - Species-specific health mapping
  */
 
 import {ai} from '@/ai/genkit';
@@ -40,6 +38,11 @@ export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngred
 const AnalyzePetFoodIngredientsOutputSchema = z.object({
   status: z.enum(['success', 'error']),
   protocol_used: z.enum(['Dog', 'Cat']),
+  petSummary: z.object({
+    description: z.string().describe('아이의 현재 상태 요약 (나이, 체중, 특징 등)'),
+    idealWeightRange: z.string().describe('품종 및 나이 대비 표준 적합 체중 범위'),
+    statusMessage: z.string().describe('현재 상태에 대한 수의학적 코멘트')
+  }),
   productIdentity: z.object({
     name: z.string(),
     brand: z.string().optional(),
@@ -57,18 +60,9 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     toxic_detected: z.boolean(),
     toxic_items: z.array(z.string())
   }),
-  genetic_analysis: z.object({
-    is_risk_breed: z.boolean(),
-    breed_name: z.string(),
-    risk_factor_detected: z.string(),
-    trigger_value: z.string(),
-    warning_level: z.enum(['Green', 'Yellow', 'Red']),
-    message: z.string()
-  }),
   scoreCard: z.object({
     grade: z.enum(['S', 'A', 'B', 'C', 'D']),
-    headline: z.string(),
-    tags: z.array(z.string()),
+    headline: z.string().describe('아이의 상태와 제품의 궁합을 한 줄로 요약'),
     match_score: z.number().min(0).max(100)
   }),
   advancedNutrition: z.object({
@@ -76,14 +70,19 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     dm_protein: z.string(),
     dm_fat: z.string(),
     dm_carbs: z.string(),
-    dm_ash: z.string(),
     calories_per_kg: z.string(),
     calcium_phosphorus_ratio: z.string(),
     benchmarks: z.object({
-      protein: z.object({ position: z.number().min(0).max(100), label: z.string() }),
-      fat: z.object({ position: z.number().min(0).max(100), label: z.string() }),
-      carbs: z.object({ position: z.number().min(0).max(100), label: z.string() }),
+      protein: z.object({ position: z.number(), label: z.string() }),
+      fat: z.object({ position: z.number(), label: z.string() }),
+      carbs: z.object({ position: z.number(), label: z.string() }),
     })
+  }),
+  feedingGuide: z.object({
+    dailyKcal: z.string().describe('하루 필요 칼로리'),
+    dailyAmount: z.string().describe('하루 권장 급여량 (g)'),
+    perMealAmount: z.string().describe('1회 급여량 (g)'),
+    visualGuide: z.string().describe('종이컵 등으로 환산한 시각적 가이드')
   }),
   ingredientCheck: z.object({
     positive: z.array(z.object({ name: z.string(), effect: z.string() })),
@@ -92,7 +91,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     detected_allergens: z.array(z.string())
   }),
   expertVerdict: z.object({
-    recommendation: z.string(),
+    whyMatch: z.string().describe('왜 이 사료가 아이에게 좋은지/나쁜지 상태와 연관지어 설명'),
     proTip: z.string()
   }),
   radarChart: z.array(z.object({
@@ -112,49 +111,30 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 엄격히 결정론적인 수의 영양 분석 엔진 'Pettner Core v3.8'입니다.
-제공된 이미지나 텍스트를 분석하여 AAFCO/NRC 기준에 부합하는 과학적 리포트를 생성하십시오.
+  prompt: `당신은 반려동물의 건강 상태를 최우선으로 생각하는 'Pettner Core v4.0' 엔진입니다.
+보호자가 잘 모를 수 있는 부분까지 AI가 미리 짚어주는 친절하고 전문적인 수의 영양 분석을 제공하십시오.
+
+# 핵심 가이드라인
+1. **아이 상태 우선**: 리포트 시작 시 사료보다 '아이의 현재 상태'와 '품종 표준'을 먼저 분석하십시오.
+2. **급여량 계산 (RER/DER)**:
+   - 강아지: 70 * (체중)^0.75 * 활동계수 (자견: 3.0, 성견: 1.6~1.8, 중성화: 1.4, 비만: 1.0~1.2)
+   - 고양이: 70 * (체중)^0.75 * 활동계수 (자묘: 2.5, 성묘: 1.2~1.4, 중성화: 1.2, 비만: 0.8~1.0)
+   - 계산된 칼로리를 사료의 칼로리 밀도와 대조하여 정확한 급여량(g)을 산출하십시오.
+3. **용어의 친숙함**: '건물 기준(DM)'을 언급할 때는 반드시 "수분을 제외한 실제 영양 농도"임을 함께 설명하십시오.
+4. **품종별 매칭**: 입력된 품종의 유전적 취약점(예: 말티즈의 슬개골, 페르시안의 신장)과 제품 성분을 강력하게 연동하십시오.
 
 # INPUT DATA
-{{#if brandName}}Brand: {{{brandName}}}{{/if}}
-{{#if productName}}Product: {{{productName}}}{{/if}}
-{{#if foodType}}Type: {{{foodType}}}{{/if}}
-{{#if petType}}Pet Species: {{{petType}}}{{/if}}
 {{#if petProfile}}
-Pet Profile: 
-- Breed: {{{petProfile.breed}}}
-- Age: {{{petProfile.age}}}
-- Weight: {{{petProfile.weight}}}
-- Neutered: {{{petProfile.neutered}}}
-- Activity: {{{petProfile.activityLevel}}}
-- BCS: {{{petProfile.bcs}}}
-- Conditions: {{#each petProfile.healthConditions}}{{{this}}}, {{/each}}
-- Allergies: {{#each petProfile.allergies}}{{{this}}}, {{/each}}
+Pet: {{{petProfile.name}}} ({{{petType}}}, {{{petProfile.breed}}}, {{{petProfile.age}}}세, {{{petProfile.weight}}}kg)
+- 중성화: {{{petProfile.neutered}}}
+- 고민: {{#each petProfile.healthConditions}}{{{this}}}, {{/each}}
+- 알러지: {{#each petProfile.allergies}}{{{this}}}, {{/each}}
 {{/if}}
 
-{{#if ingredientsText}}
-# INGREDIENTS TEXT
-{{{ingredientsText}}}
-{{/if}}
-
-{{#if photoDataUri}}
-# PRODUCT PHOTO
-{{media url=photoDataUri}}
-{{/if}}
-
-# 분석 가이드라인 (Deterministic Protocol)
-1. **수분/조회분 결측치 보정**: 건식(수분 10%, 조회분 8%), 습식(수분 75%, 조회분 2.5%).
-2. **건물 기준(DM) 환산**: 모든 영양소 수치는 반드시 (수치 / (100-수분) * 100) 공식을 사용해 환산하십시오.
-3. **탄수화물(NFE) 계산**: 100 - (조단백+조지방+조섬유+조회분+수분).
-4. **알러지 체크**: petProfile.allergies 리스트에 포함된 단어(예: 닭고기, 소고기 등)가 원재료에 포함되어 있다면 즉시 safety_check 등급을 'Red' 또는 'Danger'로 올리고 경고하십시오.
-5. **품종별 유전 리스크**: 
-   - 강아지(Dog): 슈나우저(고지방 15% 이상 위험), 말티즈/푸들(관절 성분 부재 시 경고), 달마시안(내장육/퓨린 위험).
-   - 고양이(Cat): 페르시안(인 함량 1.2% 이상 또는 단백질 45% 이상 위험), 메인쿤/랙돌(타우린 필수 보충).
-6. **일관성**: 동일한 입력값에 대해 항상 동일한 수학적 결과와 논리적 조언을 출력하십시오.
-
-# 출력 지침
-- 모든 원재료 앞에는 이모지를 붙이십시오 (예: 🐔 닭고기).
-- 결과는 한국어로 작성하며, 제공된 JSON 스키마를 엄격히 준수하십시오.`,
+# 분석 결과 작성 지침
+- 'petSummary' 섹션에서 해당 품종의 표준 체중과 비교하여 현재 아이가 과체중인지, 정상인지 명확히 알려주십시오.
+- 'expertVerdict.whyMatch' 섹션에서 "이 사료는 ~성분이 들어있어 현재 ~고민이 있는 {{{petProfile.name}}}에게 ~한 이유로 추천합니다/주의가 필요합니다"라고 구체적으로 서술하십시오.
+- 모든 수치는 수의학적 근거(AAFCO/NRC)를 바탕으로 결정론적으로 계산하십시오.`,
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(
