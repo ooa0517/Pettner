@@ -30,17 +30,10 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
     breed: z.string().optional(),
     age: z.number().optional(),
     weight: z.number().optional(),
-    weightChange: z.string().optional(),
     neutered: z.boolean().optional(),
     bcs: z.string().optional(),
-    lifestyle: z.string().optional(),
-    behaviorPattern: z.string().optional(),
     healthConditions: z.array(z.string()).optional(),
-    customHealthNote: z.string().optional(),
     allergies: z.array(z.string()).optional(),
-    stoolCondition: z.string().optional(),
-    medications: z.string().optional(),
-    waterIntake: z.string().optional(),
   }).optional(),
 });
 
