@@ -50,11 +50,11 @@ type AnalysisFormValues = {
     name: string;
     breed: string;
     isMix: boolean;
-    expectedSize?: 'small' | 'medium' | 'large';
-    birthDate?: string;
+    expectedSize: string;
+    birthDate: string;
     dontKnowBirth: boolean;
-    ageYears?: string;
-    ageMonths?: string;
+    ageYears: string;
+    ageMonths: string;
     genderStatus: 'male' | 'female' | 'neutered_male' | 'neutered_female';
     weight: string;
     bcs: string;
@@ -83,18 +83,18 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
       foodType: z.enum(['dry', 'wet', 'treat', 'supplement']),
       image: imageSchema,
       petProfile: z.object({
-        name: z.string().optional(),
-        breed: z.string().optional(),
+        name: z.string().optional().default(''),
+        breed: z.string().optional().default(''),
         isMix: z.boolean().default(false),
-        expectedSize: z.string().optional(),
-        birthDate: z.string().optional(),
+        expectedSize: z.string().optional().default(''),
+        birthDate: z.string().optional().default(''),
         dontKnowBirth: z.boolean().default(false),
-        ageYears: z.string().optional(),
-        ageMonths: z.string().optional(),
+        ageYears: z.string().optional().default(''),
+        ageMonths: z.string().optional().default(''),
         genderStatus: z.enum(['male', 'female', 'neutered_male', 'neutered_female']),
-        weight: z.string().optional(),
-        bcs: z.string().optional(),
-        activityLevel: z.string().optional(),
+        weight: z.string().optional().default(''),
+        bcs: z.string().optional().default('3'),
+        activityLevel: z.string().optional().default('NORMAL'),
         healthConditions: z.array(z.string()).default([]),
         allergies: z.array(z.string()).default([]),
       })
@@ -112,7 +112,11 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
         name: '',
         breed: '',
         isMix: false,
+        expectedSize: '',
+        birthDate: '',
         dontKnowBirth: false,
+        ageYears: '',
+        ageMonths: '',
         genderStatus: 'neutered_male',
         weight: '',
         bcs: '3',
@@ -257,7 +261,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                         render={({ field }) => (
                           <FormItem className="animate-in slide-in-from-top-2">
                             <FormLabel className="font-black text-sm ml-1">{t('scannerHome.mixBreedLabel')}</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger className="h-14 rounded-2xl border-2">
                                   <SelectValue placeholder="예상 성견 크기 선택" />
