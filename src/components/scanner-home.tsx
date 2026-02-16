@@ -129,7 +129,6 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
 
   const dogConditions = ['슬개골/관절', '눈물 자국', '피부 알러지', '비만 관리', '심장 건강'];
   const catConditions = ['신장/비뇨기', '헤어볼', '심장 건강', '비만 관리', '구강 건강'];
-  const allergyList = ['닭고기', '소고기', '연어', '곡물', '달걀'];
 
   const isFormValid = form.watch('productName') && (form.watch('ingredientsText') || (imageFile && imageFile.length > 0)) && (analysisMode === 'general' || (form.watch('petProfile.age') && form.watch('petProfile.weight')));
 
@@ -145,7 +144,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
             {t('scannerHome.title')}
           </h1>
           <p className="text-muted-foreground text-sm font-medium px-4">
-            단순 분석이 아닌, 아이의 품종과 나이에 맞춘 수의 영양학 리포트를 생성합니다.
+            {t('scannerHome.description')}
           </p>
         </div>
 
@@ -159,7 +158,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
           >
             <div className="p-6 flex flex-col items-center gap-3">
                <Stethoscope size={28} className={analysisMode === 'custom' ? "text-primary" : "text-muted-foreground"} />
-               <p className="font-black text-sm text-center">우리 아이 맞춤 분석<br/><span className="text-[10px] font-bold opacity-60">권장 급여량 포함</span></p>
+               <p className="font-black text-sm text-center">{t('scannerHome.modeCustom')}<br/><span className="text-[10px] font-bold opacity-60">{t('scannerHome.modeCustomSub')}</span></p>
             </div>
           </Card>
           <Card 
@@ -171,7 +170,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
           >
             <div className="p-6 flex flex-col items-center gap-3">
                <Database size={28} className={analysisMode === 'general' ? "text-primary" : "text-muted-foreground"} />
-               <p className="font-black text-sm text-center">제품 성분만 분석<br/><span className="text-[10px] font-bold opacity-60">객관적 영양 농도</span></p>
+               <p className="font-black text-sm text-center">{t('scannerHome.modeGeneral')}<br/><span className="text-[10px] font-bold opacity-60">{t('scannerHome.modeGeneralSub')}</span></p>
             </div>
           </Card>
         </div>
@@ -184,7 +183,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                 <CardHeader className="bg-muted/30 p-8 border-b">
                   <CardTitle className="flex items-center gap-3 text-xl font-black">
                     <Heart className="text-primary fill-primary" size={24} /> 
-                    반려동물 정밀 프로필
+                    {t('scannerHome.petProfileTitle')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-8 space-y-10">
@@ -202,7 +201,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                             )}>
                               <RadioGroupItem value="dog" id="dog" className="sr-only" />
                               <Dog size={32} className={cn("mb-2", selectedPet === 'dog' ? "text-primary" : "text-muted-foreground")} />
-                              <span className="font-black">강아지</span>
+                              <span className="font-black">{t('common.dog')}</span>
                             </Label>
                             <Label htmlFor="cat" className={cn(
                               "flex flex-col items-center p-6 border-2 rounded-[2rem] cursor-pointer transition-all", 
@@ -210,7 +209,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                             )}>
                               <RadioGroupItem value="cat" id="cat" className="sr-only" />
                               <Cat size={32} className={cn("mb-2", selectedPet === 'cat' ? "text-primary" : "text-muted-foreground")} />
-                              <span className="font-black">고양이</span>
+                              <span className="font-black">{t('common.cat')}</span>
                             </Label>
                           </RadioGroup>
                         </FormControl>
@@ -339,7 +338,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
               <CardHeader className="bg-muted/30 p-8 border-b">
                 <CardTitle className="flex items-center gap-3 text-xl font-black">
                   <Camera className="text-primary" size={24} /> 
-                  분석할 제품 정보
+                  {t('scannerHome.productInfoTitle')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-8 space-y-8">
@@ -354,8 +353,8 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                                   imageFile && imageFile.length > 0 ? "border-success bg-success/5 shadow-inner" : "border-muted hover:border-primary hover:bg-primary/5"
                                 )}>
                                   {imageFile && imageFile.length > 0 ? <CheckCircle2 className="h-16 w-16 text-success mb-4" /> : <Camera className="h-16 w-16 text-primary mb-4" />}
-                                  <p className="text-lg font-black">{imageFile && imageFile.length > 0 ? "라벨 업로드 완료" : "사료/간식 라벨 사진 촬영"}</p>
-                                  <p className="text-xs text-muted-foreground mt-1 font-medium">원재료와 성분이 잘 보이게 찍어주세요.</p>
+                                  <p className="text-lg font-black">{imageFile && imageFile.length > 0 ? "라벨 업로드 완료" : t('scannerHome.imageUploadLabel')}</p>
+                                  <p className="text-xs text-muted-foreground mt-1 font-medium">{t('scannerHome.imageUploadSub')}</p>
                                   <input 
                                     type="file" 
                                     accept="image/*" 
@@ -374,7 +373,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                     name="productName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-black text-sm ml-1">제품명 *</FormLabel>
+                        <FormLabel className="font-black text-sm ml-1">{t('scannerHome.productNameLabel')} *</FormLabel>
                         <FormControl>
                           <Input placeholder="예: 인스팅트 오리지널" className="h-14 rounded-2xl border-2" {...field} />
                         </FormControl>
@@ -386,7 +385,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                     name="foodType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-black text-sm ml-1">제품 유형 *</FormLabel>
+                        <FormLabel className="font-black text-sm ml-1">{t('scannerHome.productTypeLabel')} *</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger className="h-14 rounded-2xl border-2">
@@ -415,7 +414,7 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                 className="w-full h-20 text-2xl font-black rounded-[2.5rem] shadow-2xl shadow-primary/40 transition-all bg-primary hover:bg-primary/90 disabled:opacity-30"
               >
                 <Sparkles className="mr-3 h-8 w-8" />
-                정밀 분석 리포트 생성
+                {t('scannerHome.analyzeButton')}
               </Button>
             </div>
           </form>

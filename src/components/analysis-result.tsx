@@ -1,16 +1,16 @@
+
 'use client';
 
 import type { AnalyzePetFoodIngredientsOutput, AnalyzePetFoodIngredientsInput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis } from 'recharts';
 import { Badge } from '@/components/ui/badge';
 import { 
   Repeat, ShoppingBag, 
   Dog, Cat, ThumbsUp, ThumbsDown, 
   Sparkles, HeartPulse, 
   AlertCircle, Zap, Activity,
-  Smile, Frown, Info, 
+  Smile, Frown, 
   UtensilsCrossed, Weight, InfoIcon as InfoLucide
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
@@ -26,7 +26,7 @@ type AnalysisResultProps = {
 };
 
 export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [productName] = useState(result?.productIdentity?.name || '분석된 제품');
   const [palatability, setPalatability] = useState<'good' | 'normal' | 'bad' | null>(null);
 
@@ -52,7 +52,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     advancedNutrition, 
     ingredientCheck, 
     expertVerdict, 
-    safety_check, 
     protocol_used, 
     petSummary,
     feedingGuide
@@ -104,10 +103,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     </div>
   );
 
+  const dmDescription = language === 'ko' 
+    ? "수분을 0%로 가정했을 때의 실제 영양 농도입니다. 제품 간 정확한 비교를 위한 국제 수의 표준 기준입니다." 
+    : "Actual nutrient density assuming 0% moisture. This is the global veterinary standard for accurate comparisons.";
+
   return (
     <div className="space-y-10 animate-in fade-in duration-700 pb-40 max-w-4xl mx-auto px-4">
       
-      {/* 1. Pet Summary Section (아이 상태 우선) */}
+      {/* 1. Pet Summary Section */}
       <Card className="border-none shadow-2xl rounded-[2.5rem] overflow-hidden bg-gradient-to-br from-primary/5 to-indigo-50/30 ring-1 ring-black/5">
          <CardHeader className="pb-2">
             <Badge className="w-fit mb-2 bg-primary text-white font-bold">{input?.petProfile?.name || '우리 아이'} 맞춤 리포트</Badge>
@@ -150,47 +153,44 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         <div className="p-6 bg-primary text-white rounded-[2rem] shadow-xl shadow-primary/20">
            <div className="flex items-center gap-3 mb-2">
               <Sparkles className="w-5 h-5" />
-              <span className="text-sm font-black uppercase tracking-widest">Pettner Match Verdict</span>
+              <span className="text-sm font-black uppercase tracking-widest">Pettner Verdict</span>
            </div>
            <p className="text-xl font-black leading-snug">{scoreCard.headline}</p>
         </div>
       </div>
 
-      {/* 3. Feeding Guide (급여량 가이드) */}
+      {/* 3. Feeding Guide */}
       <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white ring-1 ring-black/5">
          <CardHeader className="bg-muted/30 p-8 border-b">
             <CardTitle className="flex items-center gap-3 text-lg font-black">
                <UtensilsCrossed className="text-primary w-5 h-5"/> 정밀 급여 가이드
-               <InfoTooltip content="아이의 품종, 나이, 체중, 중성화 여부 및 사료의 칼로리 밀도를 종합적으로 계산한 수치입니다." />
             </CardTitle>
          </CardHeader>
          <CardContent className="p-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                {[
-                 { label: '하루 필요 열량', value: feedingGuide.dailyKcal, sub: 'DER 기준' },
-                 { label: '하루 급여량', value: feedingGuide.dailyAmount, sub: 'Total Weight' },
-                 { label: '1회 급여량', value: feedingGuide.perMealAmount, sub: '2회 급여 기준' },
-                 { label: '직관적 가이드', value: feedingGuide.visualGuide, sub: 'Easy Measure' }
+                 { label: '하루 필요 열량', value: feedingGuide.dailyKcal },
+                 { label: '하루 급여량', value: feedingGuide.dailyAmount },
+                 { label: '1회 급여량', value: feedingGuide.perMealAmount },
+                 { label: '직관적 가이드', value: feedingGuide.visualGuide }
                ].map((item, i) => (
                   <div key={i} className="text-center space-y-1">
                      <p className="text-[10px] font-bold text-muted-foreground uppercase">{item.label}</p>
                      <p className="text-lg font-black text-primary">{item.value}</p>
-                     <p className="text-[9px] text-muted-foreground">{item.sub}</p>
                   </div>
                ))}
             </div>
          </CardContent>
       </Card>
 
-      {/* 4. Advanced Nutrition (DM 설명 보강) */}
+      {/* 4. Advanced Nutrition */}
       <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white ring-1 ring-black/5">
          <CardHeader className="bg-muted/30 p-10 border-b">
             <CardTitle className="flex flex-col gap-1">
                <div className="flex items-center gap-3 text-xl font-black">
-                 <Zap className="text-primary w-6 h-6"/> 건물 기준(DM) 정밀 영양 분석
-                 <InfoTooltip content="사료에서 수분을 0%로 가정하고 영양소만 계산한 수치입니다. 사료마다 수분 함량이 다르기 때문에, 실제 영양 밀도를 비교할 수 있는 가장 정확하고 전문적인 국제 표준 기준입니다." />
+                 <Zap className="text-primary w-6 h-6"/> 수분 제외 영양 밀도 (DM)
+                 <InfoTooltip content={dmDescription} />
                </div>
-               <p className="text-xs text-muted-foreground font-medium pl-9">수분을 제외한 실제 영양소 농도를 측정합니다.</p>
             </CardTitle>
          </CardHeader>
          <CardContent className="p-10 space-y-12">
@@ -217,10 +217,10 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
          </CardContent>
       </Card>
 
-      {/* 5. Expert Verdict (상태 중심 설명) */}
+      {/* 5. Expert Verdict */}
       <Card className="border-none shadow-2xl bg-white rounded-[3rem] ring-1 ring-black/5 overflow-hidden">
          <CardHeader className="p-10 pb-4">
-            <CardTitle className="text-sm font-black text-primary uppercase tracking-widest">AI 수의사 정밀 분석 소견</CardTitle>
+            <CardTitle className="text-sm font-black text-primary uppercase tracking-widest">AI 수의사 분석 소견</CardTitle>
          </CardHeader>
          <CardContent className="p-10 pt-0 space-y-8">
             <div className="p-8 bg-gradient-to-br from-primary/10 to-indigo-50 rounded-3xl border border-primary/10">
@@ -275,68 +275,24 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
          </Card>
       </div>
 
-      {/* 7. Palatability Record */}
-      <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden ring-1 ring-black/5">
-        <CardHeader className="p-8 pb-4 text-center">
-          <CardTitle className="text-lg font-black">우리 아이 기호성 기록하기</CardTitle>
-        </CardHeader>
-        <CardContent className="p-8 pt-0">
-           <div className="grid grid-cols-3 gap-4">
-              <Button 
-                variant={palatability === 'good' ? 'default' : 'outline'}
-                className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'good' && "bg-success border-success text-white")}
-                onClick={() => setPalatability('good')}
-              >
-                <Smile size={24} />
-                <span className="font-bold">잘 먹어요</span>
-              </Button>
-              <Button 
-                variant={palatability === 'normal' ? 'default' : 'outline'}
-                className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'normal' && "bg-primary border-primary text-white")}
-                onClick={() => setPalatability('normal')}
-              >
-                <Meho size={24} />
-                <span className="font-bold">보통</span>
-              </Button>
-              <Button 
-                variant={palatability === 'bad' ? 'default' : 'outline'}
-                className={cn("h-20 flex-col gap-2 rounded-2xl border-2 transition-all", palatability === 'bad' && "bg-destructive border-destructive text-white")}
-                onClick={() => setPalatability('bad')}
-              >
-                <Frown size={24} />
-                <span className="font-bold">안 먹어요</span>
-              </Button>
-           </div>
-        </CardContent>
-      </Card>
-
       {/* Sticky Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t shadow-[0_-8px_30px_rgb(0,0,0,0.04)] p-4 z-50 flex justify-center">
         <div className="w-full max-w-4xl flex gap-3">
           <Button 
             onClick={onReset} 
             variant="outline" 
-            className="flex-[1] h-14 rounded-2xl border-2 shadow-sm flex items-center justify-center"
+            className="flex-[1] h-14 rounded-2xl border-2"
           >
             <Repeat className="h-5 w-5 text-primary" />
           </Button>
           <Button 
             onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(productName)}`, '_blank')} 
-            className="flex-[3] h-14 text-lg font-black rounded-2xl shadow-xl bg-primary hover:bg-primary/90 flex items-center justify-center gap-3 text-white"
+            className="flex-[3] h-14 text-lg font-black rounded-2xl bg-primary text-white"
           >
-            <ShoppingBag className="h-5 w-5"/> 최저가 검색하기
+            <ShoppingBag className="h-5 w-5 mr-2"/> 최저가 검색
           </Button>
         </div>
       </div>
     </div>
   );
 }
-
-const Meho = ({ size = 24 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10" />
-    <line x1="8" y1="15" x2="16" y2="15" />
-    <line x1="9" y1="9" x2="9.01" y2="9" />
-    <line x1="15" y1="9" x2="15.01" y2="9" />
-  </svg>
-);

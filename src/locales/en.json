@@ -1,7 +1,7 @@
 
 {
   "metadata": {
-    "title": "Pettner Ingredient Analyzer - Beta"
+    "title": "Pettner | AI Pet Nutrition Analyzer"
   },
   "common": {
     "login": "Login",
@@ -12,42 +12,47 @@
     "error": "Error",
     "confirm": "Confirm",
     "dog": "Dog",
-    "cat": "Cat"
+    "cat": "Cat",
+    "share": "Share"
   },
   "header": {
     "title": "Pettner",
-    "firebaseErrorTitle": "Firebase Configuration Error",
-    "firebaseErrorDescription": "Firebase is not configured. Authentication will not work. Please ensure you have correctly entered your Firebase project information in the `.env` file.",
     "accountManagement": "Account Management",
-    "feedback": "Send Feedback"
+    "feedback": "Feedback"
   },
   "landingPage": {
-    "description": "Better health through veterinary nutrition.<br/>Total pet food & treat analysis service.",
+    "description": "Better health through veterinary nutrition.<br/>Integrated pet food analysis service.",
     "startButton": "Start Analysis",
-    "loginNotice": "Login to save your analysis history",
+    "loginNotice": "Login to save your history",
     "googleLogin": "Login with Google",
     "legalNotice": "Legal Notice",
-    "legalDescription": "Pettner is an AI-powered nutritional analysis tool and is not a substitute for professional veterinary diagnosis. All final decisions regarding your pet's health must be made in consultation with a professional veterinarian."
+    "legalDescription": "Pettner is an AI-powered nutritional analysis tool and is not a substitute for professional veterinary diagnosis. Always consult a veterinarian for final decisions."
   },
-  "loginPage": {
-    "title": "Login",
-    "description": "Enter your email and password to log in to your account.",
-    "emailLabel": "Email",
-    "emailPlaceholder": "m@example.com",
-    "passwordLabel": "Password",
-    "or": "or",
-    "googleLogin": "Login with Google",
-    "noAccount": "Don't have an account?",
-    "invalidEmail": "Please enter a valid email.",
-    "passwordRequired": "Please enter your password.",
-    "loginSuccessTitle": "Login Successful",
-    "loginSuccessDescription": "Welcome back!",
-    "firebaseErrorTitle": "Firebase Error",
-    "firebaseErrorDescription": "Firebase is not configured correctly. Please check your .env file.",
-    "loginFailedTitle": "Login Failed",
-    "loginFailedDescription": "Please check your email or password.",
-    "loginFailedNotAllowed": "Email/Password login is not enabled in the Firebase project. Please enable it in the Firebase console.",
-    "loginFailedInvalid": "The email or password is incorrect.",
-    "googleLoginFailed": "An error occurred during Google sign-in. Please try again later."
+  "scannerHome": {
+    "title": "Precision Nutrition Analysis",
+    "description": "Generates a veterinary nutrition report tailored to breed and age, not just a list of ingredients.",
+    "modeGeneral": "General Analysis",
+    "modeGeneralSub": "Objective nutrient density",
+    "modeCustom": "Customized Analysis",
+    "modeCustomSub": "Includes feeding guide",
+    "petProfileTitle": "Detailed Pet Profile",
+    "productInfoTitle": "Product Information",
+    "productNameLabel": "Product Name",
+    "productTypeLabel": "Product Type",
+    "imageUploadLabel": "Capture or Upload Label",
+    "imageUploadSub": "Ensure ingredients are clearly visible.",
+    "analyzeButton": "Generate Precision Report"
+  },
+  "analysisLoading": {
+    "titleV2": "Generating Report",
+    "descriptionV2": "Matching ingredients with your pet's status<br/>using our veterinary algorithm (v4.0)."
+  },
+  "homePage": {
+    "analysisCompleteTitle": "Analysis Complete!",
+    "analysisCompleteDescription": "A precise report tailored to your pet has been generated.",
+    "analysisFailedTitle": "Analysis Failed",
+    "analysisFailedDescription": "An error occurred during data analysis. Please try again.",
+    "fileReadFailedTitle": "File Read Failed",
+    "fileReadFailedDescription": "Failed to read the image file."
   }
 }
