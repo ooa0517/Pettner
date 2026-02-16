@@ -46,20 +46,8 @@ function HomeContent() {
   const handleAnalysis = async (formData: any) => {
     setStep('loading');
     
-    // Calculate Age precisely
-    let finalAge: number | undefined;
-    if (formData.petProfile.dontKnowBirth) {
-      finalAge = parseFloat(formData.petProfile.ageYears) || undefined;
-    } else if (formData.petProfile.birthDate) {
-      const birth = new Date(formData.petProfile.birthDate);
-      const today = new Date();
-      // Calculate years precisely as float
-      finalAge = (today.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-      finalAge = Math.round(finalAge * 10) / 10;
-      
-      // Safety check: if calculation fails or result is NaN
-      if (isNaN(finalAge)) finalAge = undefined;
-    }
+    // Simple Age parsing
+    const finalAge = parseFloat(formData.petProfile.age) || undefined;
 
     const analysisInput: AnalyzePetFoodIngredientsInput = {
         petType: formData.petType,

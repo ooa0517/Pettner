@@ -6,7 +6,7 @@ import {
   CheckCircle2, Database, Activity,
   Zap, ChevronRight,
   HeartPulse, Scale,
-  Dna, Calendar, AlertCircle
+  Dna, AlertCircle, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +21,6 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Checkbox } from '@/components/ui/checkbox';
 
 const bcsOptions = [
   { value: '1', label: '매우 마름', description: '뼈가 도드라짐', emoji: '🦴' },
@@ -40,9 +39,7 @@ type AnalysisFormValues = {
   petProfile: {
     name: string;
     breed: string;
-    birthDate: string;
-    dontKnowBirth: boolean;
-    ageYears: string;
+    age: string;
     genderStatus: string;
     weight: string;
     bcs: string;
@@ -64,9 +61,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
     petProfile: z.object({
       name: z.string().min(1, '이름을 입력해주세요'),
       breed: z.string().min(1, '품종을 입력해주세요'),
-      birthDate: z.string().optional(),
-      dontKnowBirth: z.boolean().default(false),
-      ageYears: z.string().optional(),
+      age: z.string().min(1, '나이를 입력해주세요'),
       genderStatus: z.string().default('neutered_male'),
       weight: z.string().min(1, '몸무게를 입력해주세요'),
       bcs: z.string().default('3'),
@@ -86,9 +81,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
       petProfile: {
         name: '',
         breed: '',
-        birthDate: '',
-        dontKnowBirth: false,
-        ageYears: '',
+        age: '',
         genderStatus: 'neutered_male',
         weight: '',
         bcs: '3',
@@ -101,20 +94,36 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
 
   const selectedPet = form.watch('petType');
   const imageFile = form.watch('image');
-  const dontKnowBirth = form.watch('petProfile.dontKnowBirth');
   const selectedBcs = form.watch('petProfile.bcs');
   const selectedGender = form.watch('petProfile.genderStatus');
   const selectedActivity = form.watch('petProfile.activityLevel');
+  const selectedHealth = form.watch('petProfile.healthConditions');
+  const selectedAllergies = form.watch('petProfile.allergies');
 
   const dogConditions = ['관절/슬개골', '피부/눈물', '소화기', '심장', '다이어트'];
   const catConditions = ['신장/비뇨기', '헤어볼', '구강/치아', '심장', '다이어트'];
   const allergyList = ['닭고기', '소고기', '연어', '양고기', '곡물', '달걀'];
 
+  const handleAllergyToggle = (allergy: string) => {
+    const current = [...selectedAllergies];
+    if (allergy === '없음') {
+      form.setValue('petProfile.allergies', []);
+      return;
+    }
+    const idx = current.indexOf(allergy);
+    if (idx > -1) {
+      current.splice(idx, 1);
+    } else {
+      current.push(allergy);
+    }
+    form.setValue('petProfile.allergies', current);
+  };
+
   return (
     <div className="space-y-12 max-w-2xl mx-auto pb-48 animate-in fade-in duration-700">
       <div className="text-center space-y-4 pt-10">
         <Badge className="bg-primary/10 text-primary border-none px-4 py-2 rounded-full font-black text-[10px] tracking-widest uppercase">
-          Veterinary Analysis Engine v5.1
+          Veterinary Analysis Engine v5.2
         </Badge>
         <h1 className="text-5xl md:text-7xl font-black font-headline tracking-tighter text-foreground leading-tight">
           Pettner Scan
@@ -136,7 +145,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
           <form onSubmit={form.handleSubmit(onAnalyze)} className="space-y-10">
             <TabsContent value="custom" className="space-y-10 mt-0">
               {/* 1. Identity Section */}
-              <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
+              <Card className="border-none shadow-2xl rounded-[3.5rem] overflow-hidden bg-white">
                 <CardHeader className="bg-muted/30 p-10 border-b">
                   <CardTitle className="flex items-center gap-3 text-2xl font-black"><Dna className="text-primary" size={28}/> 🧬 1. 아이 기본 정보</CardTitle>
                 </CardHeader>
@@ -145,12 +154,12 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-6">
                       <Label htmlFor="dog" className={cn("flex flex-col items-center p-8 border-4 rounded-[3.5rem] cursor-pointer transition-all active:scale-95", selectedPet === 'dog' ? "border-primary bg-primary/5 shadow-inner" : "border-muted opacity-40")}>
                         <RadioGroupItem value="dog" id="dog" className="sr-only" />
-                        <Dog size={56} className={cn("mb-3", selectedPet === 'dog' ? "text-primary" : "text-muted-foreground")} />
+                        <Dog size={56} className={cn("mb-3 transition-colors", selectedPet === 'dog' ? "text-primary" : "text-muted-foreground")} />
                         <span className="font-black text-xl">강아지</span>
                       </Label>
                       <Label htmlFor="cat" className={cn("flex flex-col items-center p-8 border-4 rounded-[3.5rem] cursor-pointer transition-all active:scale-95", selectedPet === 'cat' ? "border-primary bg-primary/5 shadow-inner" : "border-muted opacity-40")}>
                         <RadioGroupItem value="cat" id="cat" className="sr-only" />
-                        <Cat size={56} className={cn("mb-3", selectedPet === 'cat' ? "text-primary" : "text-muted-foreground")} />
+                        <Cat size={56} className={cn("mb-3 transition-colors", selectedPet === 'cat' ? "text-primary" : "text-muted-foreground")} />
                         <span className="font-black text-xl">고양이</span>
                       </Label>
                     </RadioGroup>
@@ -166,39 +175,24 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <FormLabel className="font-black ml-2 text-muted-foreground">생년월일 / 나이</FormLabel>
-                      {dontKnowBirth ? (
-                        <div className="relative">
-                          <Input 
-                            type="number" 
-                            step="0.1" 
-                            inputMode="decimal" 
-                            placeholder="예: 4.5" 
-                            className="rounded-2xl h-14 bg-muted/20 border-none px-6 pr-12" 
-                            {...form.register('petProfile.ageYears')} 
-                          />
-                          <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-muted-foreground">살</span>
-                        </div>
-                      ) : (
-                        <div className="relative">
-                          <Input 
-                            type="date" 
-                            className="rounded-2xl h-14 bg-muted/20 border-none px-6 block w-full appearance-none" 
-                            {...form.register('petProfile.birthDate')} 
-                          />
-                          <Calendar className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground opacity-30 pointer-events-none" />
-                        </div>
-                      )}
-                      <div className="flex items-center gap-2 px-2 mt-2">
-                        <Checkbox 
-                          id="dontKnowBirthCheck" 
-                          checked={dontKnowBirth}
-                          onCheckedChange={(v) => form.setValue('petProfile.dontKnowBirth', !!v)} 
-                        />
-                        <Label htmlFor="dontKnowBirthCheck" className="text-xs font-bold text-muted-foreground cursor-pointer">생일을 몰라요 (나이 직접 입력)</Label>
-                      </div>
-                    </div>
+                    <FormField control={form.control} name="petProfile.age" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-black ml-2 text-muted-foreground">나이 (살)</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Input 
+                              type="number" 
+                              step="0.1" 
+                              inputMode="decimal" 
+                              placeholder="예: 4.5" 
+                              className="rounded-2xl h-14 bg-muted/20 border-none px-6 pr-12" 
+                              {...field} 
+                            />
+                            <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-muted-foreground">살</span>
+                          </div>
+                        </FormControl>
+                      </FormItem>
+                    )}/>
                     <FormField control={form.control} name="petProfile.weight" render={({ field }) => (
                       <FormItem>
                         <FormLabel className="font-black ml-2 text-muted-foreground">현재 체중 (kg)</FormLabel>
@@ -222,7 +216,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
               </Card>
 
               {/* 2. Physical Stats Section */}
-              <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
+              <Card className="border-none shadow-2xl rounded-[3.5rem] overflow-hidden bg-white">
                 <CardHeader className="bg-muted/30 p-10 border-b">
                   <CardTitle className="flex items-center gap-3 text-2xl font-black"><HeartPulse className="text-primary" size={28}/> ⚖️ 2. 신체 상태</CardTitle>
                 </CardHeader>
@@ -272,7 +266,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
               </Card>
 
               {/* 3. Lifestyle Section */}
-              <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
+              <Card className="border-none shadow-2xl rounded-[3.5rem] overflow-hidden bg-white">
                 <CardHeader className="bg-muted/30 p-10 border-b">
                   <CardTitle className="flex items-center gap-3 text-2xl font-black"><Activity className="text-primary" size={28}/> 🏃‍♂️ 3. 라이프스타일</CardTitle>
                 </CardHeader>
@@ -303,7 +297,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
               </Card>
 
               {/* 4. Health & Allergy Section */}
-              <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
+              <Card className="border-none shadow-2xl rounded-[3.5rem] overflow-hidden bg-white">
                 <CardHeader className="bg-muted/30 p-10 border-b">
                   <CardTitle className="flex items-center gap-3 text-2xl font-black"><ShieldCheck className="text-primary" size={28}/> 🛡️ 4. 건강 & 알러지</CardTitle>
                 </CardHeader>
@@ -316,11 +310,15 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                           key={c} 
                           type="button"
                           className={cn("px-6 py-4 rounded-full font-black text-sm transition-all active:scale-90", 
-                            form.watch('petProfile.healthConditions').includes(c) ? "bg-primary text-white shadow-xl shadow-primary/20" : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                            selectedHealth.includes(c) ? "bg-primary text-white shadow-xl shadow-primary/20" : "bg-muted/50 text-muted-foreground hover:bg-muted"
                           )} 
                           onClick={() => {
-                            const cur = form.getValues('petProfile.healthConditions');
-                            form.setValue('petProfile.healthConditions', cur.includes(c) ? cur.filter(x => x !== c) : [...cur, c]);
+                            const cur = [...selectedHealth];
+                            if (cur.includes(c)) {
+                              form.setValue('petProfile.healthConditions', cur.filter(x => x !== c));
+                            } else {
+                              form.setValue('petProfile.healthConditions', [...cur, c]);
+                            }
                           }}
                         >
                           {c}
@@ -336,9 +334,9 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                         variant="ghost" 
                         size="sm" 
                         className="text-xs font-black text-destructive hover:bg-destructive/10"
-                        onClick={() => form.setValue('petProfile.allergies', [])}
+                        onClick={() => handleAllergyToggle('없음')}
                       >
-                        초기화
+                        <Trash2 className="w-3 h-3 mr-1" /> 초기화
                       </Button>
                     </div>
                     <div className="flex flex-wrap gap-3">
@@ -347,12 +345,9 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                           key={a} 
                           type="button"
                           className={cn("px-6 py-4 rounded-full font-black text-sm transition-all active:scale-90", 
-                            form.watch('petProfile.allergies').includes(a) ? "bg-destructive text-white shadow-xl shadow-destructive/20" : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                            selectedAllergies.includes(a) ? "bg-destructive text-white shadow-xl shadow-destructive/20" : "bg-muted/50 text-muted-foreground hover:bg-muted"
                           )} 
-                          onClick={() => {
-                            const cur = form.getValues('petProfile.allergies');
-                            form.setValue('petProfile.allergies', cur.includes(a) ? cur.filter(x => x !== a) : [...cur, a]);
-                          }}
+                          onClick={() => handleAllergyToggle(a)}
                         >
                           {a}
                         </button>
