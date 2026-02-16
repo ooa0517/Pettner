@@ -6,22 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Repeat, ShoppingBag, 
+  ShoppingBag, 
   AlertCircle, Scale,
-  Stethoscope, FlaskConical, ShieldCheck, Dna, Activity,
-  Award, BarChart3, Flame, ShieldAlert,
-  History, Globe, Leaf, Microscope, Zap, Heart, CheckCircle,
-  ThumbsUp, ThumbsDown, Sparkles
+  Stethoscope, FlaskConical, BarChart3, 
+  Award, ShieldAlert,
+  History, Globe, Microscope, Zap, CheckCircle,
+  ThumbsUp, ThumbsDown, Sparkles, Dna, Activity
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
-import { 
-  ChartContainer, 
-  ChartTooltip, 
-  ChartTooltipContent,
-  type ChartConfig
-} from '@/components/ui/chart';
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer } from 'recharts';
 import {
   Accordion,
   AccordionContent,
@@ -35,13 +28,6 @@ type AnalysisResultProps = {
   onReset: () => void;
   resetButtonText?: string;
 };
-
-const chartConfig = {
-  grams: {
-    label: "권장 급여량 (g)",
-    color: "hsl(var(--primary))",
-  },
-} satisfies ChartConfig;
 
 export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
   const { t } = useLanguage();
@@ -107,7 +93,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </CardContent>
       </Card>
 
-      {/* [LEVEL 2] 초개인화 매칭 리포트 */}
+      {/* [LEVEL 2] 초개인화 매칭 리포트 (수의사 모드 전용) */}
       {isCustomMode && result.personalMatching && (
         <div className="space-y-6">
            <div className="flex items-center gap-2 px-2">
@@ -151,35 +137,34 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      {/* [LEVEL 3] 체중 & 급여 솔루션 */}
+      {/* [LEVEL 3] 초정밀 체중 진단 솔루션 */}
       {isCustomMode && result.weightDiagnosis && (
         <div className="space-y-6">
           <div className="flex items-center gap-2 px-2">
             <Scale className="text-primary w-6 h-6" />
-            <h2 className="text-2xl font-black font-headline tracking-tight">⚖️ 초정밀 체중 & 급여 솔루션</h2>
+            <h2 className="text-2xl font-black font-headline tracking-tight">⚖️ 초정밀 체중 진단 솔루션</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10">
+            <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10 flex flex-col justify-center">
               <div className="space-y-6">
                 <div className="flex justify-between items-end">
                    <div>
-                      <p className="text-xs font-black text-muted-foreground uppercase mb-1">Current Weight</p>
-                      <h4 className="text-3xl font-black">{result.weightDiagnosis.currentWeight}kg</h4>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Current Weight</p>
+                      <h4 className="text-4xl font-black">{result.weightDiagnosis.currentWeight}kg</h4>
                    </div>
                    <div className="text-right">
-                      <p className="text-xs font-black text-muted-foreground uppercase mb-1">Ideal Target</p>
-                      <h4 className="text-3xl font-black text-success">{result.weightDiagnosis.idealWeight.toFixed(1)}kg</h4>
+                      <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Ideal Target</p>
+                      <h4 className="text-4xl font-black text-success">{result.weightDiagnosis.idealWeight.toFixed(1)}kg</h4>
                    </div>
                 </div>
-                <div className="h-6 bg-muted rounded-full relative overflow-hidden shadow-inner">
-                   <div className="absolute inset-y-0 bg-success/20 w-[30%] left-[10%]" />
+                <div className="h-4 bg-muted rounded-full relative overflow-hidden shadow-inner">
                    <div className={cn("h-full transition-all duration-1000 shadow-lg", result.weightDiagnosis.weightGap > 0 ? "bg-destructive" : "bg-primary")} 
                         style={{ width: `${Math.min(50 + (result.weightDiagnosis.overweightPercentage || 0), 100)}%` }} />
                 </div>
-                <div className="flex justify-between text-[10px] font-bold text-muted-foreground">
-                   <span>표준 범위: {result.weightDiagnosis.breedStandardRange}</span>
-                   <span>상태: {result.weightDiagnosis.verdict}</span>
+                <div className="flex justify-between text-[11px] font-bold text-muted-foreground">
+                   <span className="flex items-center gap-1"><Award size={14} className="text-primary"/> 품종 표준: {result.weightDiagnosis.breedStandardRange}</span>
+                   <span className="text-primary">{result.weightDiagnosis.verdict}</span>
                 </div>
               </div>
             </Card>
@@ -190,57 +175,19 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                </div>
                <div className="space-y-4 relative z-10">
                   <div className="flex items-center gap-2">
-                    <Dna size={18} className="opacity-70" />
-                    <span className="text-[11px] font-black uppercase tracking-widest opacity-70">Breed Genetic Insight</span>
+                    <Sparkles size={18} className="text-yellow-300" />
+                    <span className="text-[11px] font-black uppercase tracking-widest opacity-80">Breed Standard Precision</span>
                   </div>
-                  <p className="text-sm font-bold leading-relaxed">{result.weightDiagnosis.breedGeneticInsight}</p>
+                  <p className="text-base font-bold leading-relaxed break-keep">{result.weightDiagnosis.breedGeneticInsight}</p>
                   <div className="pt-4 border-t border-white/20">
-                     <p className="text-xs font-bold opacity-80 flex items-center gap-2">
-                        <Activity size={14} />
+                     <p className="text-sm font-black flex items-center gap-2">
+                        <Activity size={16} />
                         {result.weightDiagnosis.weightGap > 0 ? `감량 목표: 약 ${result.weightDiagnosis.weightGap.toFixed(1)}kg 감량 필요` : '현재 정상 체중 유지 권장'}
                      </p>
                   </div>
                </div>
             </Card>
           </div>
-
-          {result.dietRoadmap && (
-            <Card className="border-none shadow-xl rounded-[3rem] bg-white p-10 space-y-8">
-              <CardHeader className="p-0">
-                <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                    📉 [V20.0 5단계 정밀 감량 & 유지 로드맵]
-                </CardTitle>
-              </CardHeader>
-              <div className="h-[280px] w-full">
-                <ChartContainer config={chartConfig} className="h-full w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={result.dietRoadmap} margin={{ top: 20, right: 30, left: 30, bottom: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                      <XAxis dataKey="weight" tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                      <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} />
-                      <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                      <ReferenceLine x={result.weightDiagnosis.idealWeight} stroke="green" strokeDasharray="3 3" label={{ value: 'Ideal', position: 'top', fontSize: 10, fill: 'green' }} />
-                      <Line type="monotone" dataKey="grams" stroke="hsl(var(--primary))" strokeWidth={4} dot={{ r: 6, fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "#fff" }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </div>
-              <div className="bg-primary/5 p-8 rounded-[2rem] flex justify-between items-center border border-primary/10">
-                <div className="flex items-center gap-4">
-                   <Zap className="text-primary fill-primary w-8 h-8" />
-                   <div>
-                      <p className="text-xs font-black text-muted-foreground uppercase">Phase 1 (감량 시작기)</p>
-                      <p className="text-3xl font-black text-primary">{result.dietRoadmap[0]?.grams}<span className="text-lg">g</span></p>
-                   </div>
-                </div>
-                <div className="text-right">
-                   <p className="text-[10px] font-bold text-muted-foreground uppercase">Phase 5 (유지 관리기)</p>
-                   <p className="text-2xl font-black">{result.dietRoadmap[4]?.grams}<span className="text-sm">g</span></p>
-                   <p className="text-[10px] text-muted-foreground font-bold">목표 달성 시 급여량 상승</p>
-                </div>
-              </div>
-            </Card>
-          )}
         </div>
       )}
 
@@ -251,7 +198,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <Microscope className="text-primary w-6 h-6" />
             <h2 className="text-2xl font-black font-headline tracking-tight">전문가용 심층 분석 리포트</h2>
           </div>
-          <Badge variant="outline" className="border-primary text-primary font-black px-3 py-1">Deep Dive v20.0</Badge>
+          <Badge variant="outline" className="border-primary text-primary font-black px-3 py-1">Deep Dive v21.0</Badge>
         </div>
 
         <Accordion type="single" collapsible className="w-full space-y-4">
@@ -411,7 +358,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-2xl border-t z-50 flex justify-center shadow-lg">
         <div className="w-full max-w-4xl flex gap-4">
           <Button onClick={onReset} variant="outline" className="flex-1 h-16 rounded-2xl border-2 font-black text-primary">
-            <Repeat size={20} className="mr-2" /> {resetButtonText || '다시 분석하기'}
+            <Zap size={20} className="mr-2" /> {resetButtonText || '다시 분석하기'}
           </Button>
           <Button 
             onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(result.productIdentity.name)}`, '_blank')}

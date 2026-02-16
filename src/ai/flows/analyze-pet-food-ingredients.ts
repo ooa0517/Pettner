@@ -1,11 +1,10 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v20.0 - Veterinary Precision]
- * - AI Knowledge Augmentation: Supplements missing info from knowledge base.
- * - Strict V-Curve Feeding Logic: Weight loss phase (1.0x RER) vs Maintenance phase (1.4-1.6x RER)
- * - 5-Point Roadmap: Forces exactly 5 data points for the diet plan.
- * - Breed Standard DB: Accurate lookup for breed weights.
+ * @fileOverview [Pettner Core Engine v21.0 - Breed Standard Precision]
+ * - AI Knowledge Augmentation: Breed-specific weight range lookup.
+ * - Strict Ideal Weight Calculation: Based on breed standard + BCS formula.
+ * - Removed Diet Roadmap for clarity.
  */
 
 import {ai} from '@/ai/genkit';
@@ -74,18 +73,13 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
   }).optional(),
   weightDiagnosis: z.object({
     currentWeight: z.number(),
-    idealWeight: z.number().describe('BCS 기반 계산된 이상적 체중'),
+    idealWeight: z.number().describe('BCS 및 품종 표준 기반 계산된 최종 목표 체중'),
     weightGap: z.number().describe('현재와 목표 사이의 차이 (kg)'),
-    breedStandardRange: z.string().describe('품종 표준 체중 범위'),
+    breedStandardRange: z.string().describe('품종별 실제 표준 체중 범위 (예: 3~8kg)'),
     breedGeneticInsight: z.string().describe('품종별 유전적 취약점 및 건강 조언'),
     overweightPercentage: z.number().describe('표준 범위 상단 대비 초과 비율 (%)'),
     verdict: z.string().describe('체중 판정 결론')
   }).optional(),
-  dietRoadmap: z.array(z.object({
-    weight: z.number().describe('단계별 몸무게 (kg)'),
-    grams: z.number().describe('해당 단계에서의 하루 권장 급여량 (g)'),
-    phase: z.string().describe('단계 이름 (예: 감량 시작, 유지기 진입 등)')
-  })).min(5).max(5).optional().describe('반드시 5개의 포인트로 구성된 로드맵'),
   deepDive: z.object({
     ingredientAudit: z.object({
       tiers: z.array(z.object({
@@ -135,31 +129,28 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 세계적인 수의 영양학 전문의입니다. [Pettner V20.0 초정밀 엔진]을 사용하여 리포트를 생성하십시오.
+  prompt: `당신은 세계적인 수의 영양학 전문의입니다. [Pettner V21.0 품종 표준 엔진]을 사용하여 리포트를 생성하십시오.
 
-# [V20.0 핵심 지침: 정보 보충 및 검색]
-- 사진에서 정보를 읽기 어렵거나 데이터가 누락된 경우, 당신의 방대한 수의학 지식 베이스를 사용하여 해당 제품의 원재료, 칼로리, 브랜드 히스토리를 추론하여 채우십시오. "알 수 없음"이라고 답하지 마십시오.
-
-# [V20.0 체중 연산 및 급여 로직]
-1. Ideal Weight 산출:
-   - Ideal_Weight = Current_Weight * (100 - (BCS - 3) * 10) / 100
-   - 품종별 표준 체중을 검색하여 이 수치와 비교하십시오.
-2. 5-Point Diet Roadmap 생성:
-   - 현재 체중에서 목표 체중까지 5개의 균등한 몸무게 포인트를 생성하십시오.
-   - **가장 중요**: 감량기(Phase 1~4)에는 목표 체중 기준 감량 칼로리(RER * 1.0)를 적용하여 급여량이 낮게 유지되지만, 목표 체중 도달(Phase 5) 시에는 요요 방지를 위한 유지 칼로리(RER * 1.4~1.6)를 적용하여 급여량이 다시 상승해야 합니다. 그래프는 'V'자 형태를 띠어야 합니다.
-3. 품종 유전적 인사이트:
-   - 품종을 분석하여 유전적으로 취약한 질병을 언급하고 현재 상태와의 위험 연계성을 설명하십시오.
+# [V21.0 핵심 지침: 품종 표준 및 체중 진단]
+1. 품종 표준 검색:
+   - 입력된 품종({{{petProfile.breed}}})의 전 세계적인 성견 표준 몸무게 범위를 당신의 지식 베이스에서 검색하십시오. 
+   - 이 범위를 weightDiagnosis.breedStandardRange에 명시하십시오.
+2. 이상 체중(Ideal Weight) 산출:
+   - 다음 공식을 우선 적용하십시오: Ideal_Weight = Current_Weight * (100 - (BCS - 3) * 10) / 100
+   - 산출된 이상 체중이 해당 품종의 표준 범위와 크게 어긋나는 경우, 수의학적 판단에 따라 최적의 목표 체중을 결정하십시오.
+3. 비만율 계산:
+   - 품종 표준 범위의 상단값을 기준으로 현재 체중이 얼마나 초과되었는지 계산하십시오.
+4. 품종 유전적 인사이트:
+   - 해당 품종의 유전적 취약 질병(예: 말티푸의 슬개골, 리트리버의 고관절 등)을 언급하고, 현재 체중 상태와의 위험 연계성을 설명하십시오.
 
 # [Deep Dive 섹션 구성]
-- Ingredient Audit: 상위 10개 원료를 Tier 1~3으로 분류.
-- Nutritional Engineering: 칼슘:인 비율, 오메가 비율 산출.
-- Safety: 리콜 이력 및 첨가물 체크.
-- ESG: 제조사 신뢰도 심사.
+- Ingredient Audit: 원료를 Tier 1(생육), Tier 2(농축), Tier 3(부산물)로 분류.
+- Nutritional Engineering: 건물(DM) 기준 5대 영양소 분석 및 칼슘:인 비율 산출.
+- Safety & Brand: 리콜 이력 및 제조사 신뢰도 감사.
 
 입력 데이터:
-- 사진: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음 (지식 베이스 사용){{/if}}
-- 제품: {{{productName}}} ({{{foodType}}})
-- 반려동물: 이름:{{{petProfile.name}}}, 품종:{{{petProfile.breed}}}, 나이:{{{petProfile.age}}}, 체중:{{{petProfile.weight}}}kg, BCS:{{{petProfile.bcs}}}, 건강고민:{{{petProfile.healthConditions}}}`
+- 반려동물: 품종:{{{petProfile.breed}}}, 현재체중:{{{petProfile.weight}}}kg, BCS:{{{petProfile.bcs}}}, 건강고민:{{{petProfile.healthConditions}}}
+- 제품: {{{productName}}} ({{{foodType}}})`
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(
