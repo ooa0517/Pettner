@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -42,7 +41,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
   petSummary: z.object({
     description: z.string().describe('아이의 현재 상태 요약 (나이, 체중, 특징 등)'),
     idealWeightRange: z.string().describe('품종 및 나이 대비 표준 적합 체중 범위'),
-    statusMessage: z.string().describe('현재 상태에 대한 수의학적 코멘트')
+    statusMessage: z.string().describe('현재 상태에 대한 수의학적 코멘트 (예: "성장이 중요한 시기입니다")')
   }),
   productIdentity: z.object({
     name: z.string(),
@@ -83,7 +82,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     dailyKcal: z.string().describe('하루 필요 칼로리'),
     dailyAmount: z.string().describe('하루 권장 급여량 (g)'),
     perMealAmount: z.string().describe('1회 급여량 (g)'),
-    visualGuide: z.string().describe('종이컵 등으로 환산한 시각적 가이드')
+    visualGuide: z.string().describe('종이컵 등으로 환산한 시각적 가이드 (예: 종이컵 3/4컵)')
   }),
   ingredientCheck: z.object({
     positive: z.array(z.object({ name: z.string(), effect: z.string() })),
@@ -126,6 +125,7 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
    - 사료의 칼로리(kcal/kg)를 바탕으로 정확한 일일 급여량(g)을 산출하십시오.
 3. **용어의 친숙함**: '건물 기준(DM)'을 언급할 때는 반드시 "수분을 제외한 실제 영양 농도"임을 함께 설명하십시오.
 4. **품종별 매칭**: 입력된 품종의 유전적 취약점(예: 말티즈의 슬개골, 슈나우저의 췌장염, 페르시안의 신장)과 제품 성분을 강력하게 연동하십시오.
+5. **성분 이모지**: 원재료 이름 앞에 적절한 이모지를 붙이십시오 (예: 🐔 닭고기, 🐟 연어, 🥬 완두콩).
 
 # INPUT DATA
 {{#if petProfile}}
