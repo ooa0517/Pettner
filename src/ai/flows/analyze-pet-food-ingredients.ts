@@ -1,10 +1,10 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v13.0] 
+ * @fileOverview [Pettner Core Engine v14.0] 
  * - Ultra-Precision Nutrition: Dog & Cat
- * - Integrated Bio-Behavioral Analysis
- * - Enhanced Nutritional Standards Comparison (AAFCO/NRC)
+ * - Strict Obesity & Breed Standard Algorithm
+ * - Enhanced Breed Weight Database Matching
  */
 
 import {ai} from '@/ai/genkit';
@@ -59,33 +59,25 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     qualityGrade: z.enum(['A', 'B', 'C']).describe('원료 기반 품질 등급'),
     oneLineVerdict: z.string().describe('제품 품질 한 줄 요약')
   }),
-  scoreCard: z.object({
+  scoreCard: {
     totalScore: z.number().min(0).max(100).describe('적합성/품질 점수'),
     grade: z.string().describe('점수 기반 등급'),
     headline: z.string().describe('핵심 진단 문구'),
     statusTags: z.array(z.string()).describe('상태 태그')
-  }),
+  },
   weightDiagnosis: z.object({
     currentWeight: z.number(),
     idealWeight: z.number(),
     weightGap: z.number(),
-    breedStandardRange: z.string(),
-    overweightPercentage: z.number(),
-    verdict: z.string()
+    breedStandardRange: z.string().describe('해당 품종의 표준 체중 범위 (예: 3~8kg)'),
+    overweightPercentage: z.number().describe('표준 범위 상단 대비 초과 비율 (%)'),
+    verdict: z.string().describe('비만 및 체중 상태 진단 총평')
   }).optional(),
   dietRoadmap: z.array(z.object({
     weight: z.number(),
     grams: z.number(),
     phase: z.string()
   })).optional(),
-  brandInsight: z.object({
-    reputation: z.string().describe('브랜드 평판 정보'),
-    recallHistory: z.string().describe('리콜 이력')
-  }),
-  esgAudit: z.object({
-    score: z.string().describe('ESG 점수'),
-    details: z.array(z.string())
-  }),
   advancedNutrition: z.object({
     protein: NutritionalMetricSchema,
     fat: NutritionalMetricSchema,
@@ -132,15 +124,18 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
 
 # 환자(반려동물) 프로필
 - 이름/종/무게: {{{petProfile.name}}} ({{{petType}}}, {{{petProfile.breed}}}, {{{petProfile.weight}}}kg)
-- 상태: BCS {{{petProfile.bcs}}}, 변상태 {{{petProfile.stoolCondition}}}, 음수량 {{{petProfile.waterIntake}}}
-- 히스토리: 체중변화 {{{petProfile.weightChange}}}, 산책 {{{petProfile.lifestyle}}}, 행동패턴 {{{petProfile.behaviorPattern}}}
-- 의료정보: 질환({{#each petProfile.healthConditions}}{{this}}, {{/each}}), 약물({{{petProfile.medications}}}), 알러지({{#each petProfile.allergies}}{{this}}, {{/each}})
+- BCS: {{{petProfile.bcs}}} (1: 매우마름, 3: 이상적, 5: 비만)
+- 기타: 변상태 {{{petProfile.stoolCondition}}}, 음수량 {{{petProfile.waterIntake}}}, 체중변화 {{{petProfile.weightChange}}}
 
-# 분석 가이드라인
-1. [영양 표준 대조]: AAFCO 및 NRC 기준을 바탕으로 해당 반려동물 종/생애주기에 따른 단백질, 지방, 탄수화물, 조섬유, 조회분의 '최적 DM 범위(minStd, maxStd)'를 설정하고 분석값과 대조하십시오.
-2. [종별 특화]: 고양이는 타우린과 높은 단백질 농도, 탄수화물 제한(DM 25% 미만)을 엄격히 봅니다. 강아지는 활동량 대비 칼로리와 관절 보호 성분을 중점적으로 봅니다.
-3. [비만 알고리즘]: BCS 4 이상일 경우 Ideal Weight를 공식(Current * (100 - (BCS-3)*10)/100)에 따라 계산하고 감량 로드맵을 제시하십시오.
-4. [원재료 품질]: 제1~5원료를 분석하여 Tier 1(생육/통생선), Tier 2(명칭된 가공분말), Tier 3(부산물/익명분말)로 분류하십시오.
+# 분석 가이드라인 (중요)
+1. [품종 표준 데이터]: {{{petProfile.breed}}}의 성견 표준 체중 범위를 반드시 검색하여 적용하십시오. 
+   - 예: 말티푸는 보통 3~8kg이 표준입니다. 현재 체중이 12.6kg이라면 표준 범위 상단(8kg)보다 4.6kg 초과된 상태입니다.
+2. [비만 알고리즘]: 
+   - Ideal Weight 계산: 현재체중 * (100 - (BCS-3)*10) / 100
+   - overweightPercentage: (현재체중 - 표준범위상단) / 표준범위상단 * 100
+   - BCS가 4 이상인 경우, 감량 로드맵(dietRoadmap)을 반드시 3단계로 생성하십시오.
+3. [영양 표준 대조]: AAFCO 및 NRC 기준에 따라 단백질, 지방, 탄수화물 등의 '최적 DM 범위'를 설정하십시오.
+4. [원재료 품질]: 제1~5원료를 분석하여 Tier 1(생육), Tier 2(가공분말), Tier 3(부산물/익명원료)로 분류하십시오.
 
 사진 데이터: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음{{/if}}`,
 });
