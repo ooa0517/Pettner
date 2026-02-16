@@ -66,7 +66,7 @@ export default function HistoryPage() {
               id: doc.id,
               ...doc.data(),
             } as AnalysisRecord))
-            .filter(item => item.analysisOutput && item.analysisOutput.productInfo);
+            .filter(item => item.analysisOutput && item.analysisOutput.productIdentity);
           setHistory(historyData);
         } catch (err) {
           console.error("Error fetching history: ", err);
@@ -82,8 +82,8 @@ export default function HistoryPage() {
   }, [user, isUserLoading, db, t]);
 
   const filteredHistory = history.filter(item => 
-    item.analysisOutput.productInfo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.analysisOutput.productInfo.brand || '').toLowerCase().includes(searchTerm.toLowerCase())
+    item.analysisOutput.productIdentity?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.analysisOutput.productIdentity?.brand || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (isUserLoading || isLoading) {
@@ -143,7 +143,7 @@ export default function HistoryPage() {
           <div className="grid gap-4">
             {filteredHistory.map((item) => {
               const PetIcon = item.userInput.petType === 'cat' ? Cat : Dog;
-              const score = item.analysisOutput.matchingScore?.score;
+              const score = item.analysisOutput.scoreCard?.match_score;
               
               return (
               <Link href={`/history/${item.id}`} key={item.id}>
@@ -160,7 +160,7 @@ export default function HistoryPage() {
                         </div>
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                             <p className="font-black text-xl text-foreground leading-none">{item.analysisOutput.productInfo.name}</p>
+                             <p className="font-black text-xl text-foreground leading-none">{item.analysisOutput.productIdentity?.name}</p>
                              {score && (
                                <Badge variant="outline" className="font-bold text-primary border-primary/20 bg-primary/5">
                                  {score}점 적합
@@ -168,7 +168,7 @@ export default function HistoryPage() {
                              )}
                           </div>
                           <p className="text-sm text-muted-foreground font-medium">
-                            {item.analysisOutput.productInfo.brand || '브랜드 정보 없음'} · {item.analysisOutput.productInfo.type || '분석 유형'}
+                            {item.analysisOutput.productIdentity?.brand || '브랜드 정보 없음'} · {item.analysisOutput.productIdentity?.category || '분석 유형'}
                           </p>
                         </div>
                       </div>

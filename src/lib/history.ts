@@ -23,9 +23,9 @@ export function saveAnalysisToHistory(
     userInput: {
       petType: userInput.petType,
       analysisMode: userInput.analysisMode,
-      productName: userInput.productName || analysisOutput.productIdentity.name,
-      brandName: userInput.brandName || analysisOutput.productIdentity.brand || '',
-      foodType: userInput.foodType || analysisOutput.productIdentity.category || 'unknown',
+      productName: userInput.productName || analysisOutput.productIdentity?.name || 'Unknown Product',
+      brandName: userInput.brandName || analysisOutput.productIdentity?.brand || '',
+      foodType: userInput.foodType || analysisOutput.productIdentity?.category || 'unknown',
       petProfile: userInput.petProfile ? {
         name: userInput.petProfile.name,
         breed: userInput.petProfile.breed,

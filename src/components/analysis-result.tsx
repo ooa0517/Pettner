@@ -31,11 +31,12 @@ type AnalysisResultProps = {
 export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
   const { t } = useLanguage();
   
-  const [productName, setProductName] = useState(result.productIdentity.name);
+  const initialName = result?.productIdentity?.name || '분석된 제품';
+  const [productName, setProductName] = useState(initialName);
   const [isEditingName, setIsEditingName] = useState(false);
   const [palatability, setPalatability] = useState<'good' | 'normal' | 'bad' | null>(null);
 
-  if (result.status === 'error') {
+  if (!result || result.status === 'error') {
      return (
         <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl mx-auto">
             <Card className="text-center border-destructive/20 bg-destructive/5">
@@ -52,7 +53,18 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
      );
   }
 
-  const { scoreCard, advancedNutrition, ingredientCheck, expertVerdict, radarChart, scientificReferences, safety_check, protocol_used, genetic_analysis } = result;
+  const { 
+    scoreCard, 
+    advancedNutrition, 
+    ingredientCheck, 
+    expertVerdict = { recommendation: '전문 소견을 준비 중입니다.', proTip: '' }, 
+    radarChart, 
+    scientificReferences, 
+    safety_check, 
+    protocol_used, 
+    genetic_analysis 
+  } = result;
+  
   const PetIcon = protocol_used === 'Cat' ? Cat : Dog;
 
   const getGradeColor = (grade: string) => {
@@ -118,7 +130,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <Badge variant="outline" className="px-4 py-1.5 border-primary/30 text-primary bg-primary/5 rounded-full flex gap-2 items-center font-bold text-xs uppercase tracking-widest">
               <Microscope className="w-4 h-4"/> Pettner Core Engine v3.8 ({protocol_used})
             </Badge>
-            {safety_check.toxic_detected && (
+            {safety_check?.toxic_detected && (
               <Badge variant="destructive" className="animate-bounce flex gap-1 items-center font-black">
                 <ShieldAlert size={14} /> 위험 감지!
               </Badge>
@@ -128,7 +140,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           <Card className="border-none shadow-md overflow-hidden bg-white/80 backdrop-blur-sm ring-1 ring-black/5 rounded-3xl">
             <div className="p-4 flex items-center gap-4">
               <div className="relative h-16 w-16 rounded-2xl overflow-hidden bg-muted flex-shrink-0 border">
-                {input.photoDataUri ? (
+                {input?.photoDataUri ? (
                   <Image src={input.photoDataUri} alt="원본 이미지" fill className="object-cover" />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center text-muted-foreground">
@@ -168,13 +180,13 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-primary/70 font-black uppercase tracking-[0.2em] text-sm">
                 <PetIcon className="w-5 h-5" />
-                {result.productIdentity.brand || 'Premium Pet Food'}
+                {result.productIdentity?.brand || 'Premium Pet Food'}
               </div>
               <h1 className="text-4xl md:text-5xl font-black font-headline tracking-tighter text-foreground leading-tight">
                 {productName}
               </h1>
               <div className="flex flex-wrap gap-2 pt-2">
-                {scoreCard.tags.map((tag, i) => (
+                {scoreCard?.tags?.map((tag, i) => (
                   <Badge key={i} variant="secondary" className="bg-white border text-muted-foreground font-bold">
                     {tag}
                   </Badge>
@@ -182,15 +194,15 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               </div>
             </div>
 
-            <div className={cn("shrink-0 h-24 w-24 rounded-3xl flex flex-col items-center justify-center shadow-xl", getGradeColor(scoreCard.grade))}>
+            <div className={cn("shrink-0 h-24 w-24 rounded-3xl flex flex-col items-center justify-center shadow-xl", getGradeColor(scoreCard?.grade || ''))}>
                <span className="text-xs font-black uppercase tracking-widest opacity-70">Grade</span>
-               <span className="text-5xl font-black">{scoreCard.grade}</span>
+               <span className="text-5xl font-black">{scoreCard?.grade}</span>
             </div>
           </div>
         </div>
 
         {/* Genetic Analysis Warning */}
-        {genetic_analysis.is_risk_breed && (
+        {genetic_analysis?.is_risk_breed && (
           <Card className={cn("border-2 rounded-3xl overflow-hidden shadow-sm", getWarningLevelColor(genetic_analysis.warning_level))}>
             <div className="p-6 flex gap-4 items-start">
               <div className="p-3 bg-white/50 rounded-2xl shadow-sm">
@@ -269,7 +281,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   초개인화 적합도 분석
                 </CardTitle>
                 <div className="flex flex-col items-center">
-                   <span className="text-4xl font-black">{scoreCard.match_score}</span>
+                   <span className="text-4xl font-black">{scoreCard?.match_score}</span>
                    <span className="text-[10px] uppercase font-bold opacity-70">Score</span>
                 </div>
               </div>
@@ -281,14 +293,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                        <Sparkles className="w-4 h-4"/> Pettner Core Verdict
                     </h4>
                     <p className="text-lg leading-relaxed text-foreground font-bold">
-                      {scoreCard.headline}
+                      {scoreCard?.headline}
                     </p>
                  </div>
                  <div className="space-y-4">
                     <p className="text-base leading-relaxed text-muted-foreground">
-                        {expertVerdict.recommendation}
+                        {expertVerdict?.recommendation}
                     </p>
-                    {safety_check.toxic_detected && (
+                    {safety_check?.toxic_detected && (
                         <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-2xl flex items-center gap-3">
                             <ShieldAlert className="text-destructive" />
                             <p className="text-sm font-bold text-destructive">
@@ -310,7 +322,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                  </CardTitle>
               </CardHeader>
               <CardContent className="p-10 space-y-6">
-                 {ingredientCheck.positive.map((item, i) => (
+                 {ingredientCheck?.positive?.map((item, i) => (
                     <div key={i} className="flex gap-4">
                        <div className="h-2 w-2 rounded-full bg-success mt-2 shrink-0" />
                        <div className="space-y-1">
@@ -329,7 +341,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                  </CardTitle>
               </CardHeader>
               <CardContent className="p-10 space-y-6">
-                 {ingredientCheck.cautionary.map((item, i) => (
+                 {ingredientCheck?.cautionary?.map((item, i) => (
                     <div key={i} className="flex gap-4">
                        <div className="h-2 w-2 rounded-full bg-destructive mt-2 shrink-0" />
                        <div className="space-y-1">
@@ -377,13 +389,13 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               <CardContent className="p-10 flex-1 space-y-8">
                  <div className="p-8 bg-gradient-to-br from-primary/10 to-indigo-50 rounded-3xl border border-primary/10">
                     <h5 className="text-xs font-black text-primary mb-3 uppercase tracking-widest">VET'S PRO TIP</h5>
-                    <p className="text-xl font-black text-foreground leading-relaxed">{expertVerdict.proTip}</p>
+                    <p className="text-xl font-black text-foreground leading-relaxed">{expertVerdict?.proTip}</p>
                  </div>
 
                  <div className="space-y-4">
                     <h5 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">Scientific References</h5>
                     <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                       {scientificReferences.map((ref, i) => (
+                       {scientificReferences?.map((ref, i) => (
                           <li key={i} className="text-[10px] text-muted-foreground flex items-center gap-2">
                              <GraduationCap className="w-3 h-3 text-primary/40"/> {ref}
                           </li>

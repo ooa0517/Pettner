@@ -91,10 +91,10 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     allergy_hit: z.boolean(),
     detected_allergens: z.array(z.string())
   }),
-  expertVerdict: {
+  expertVerdict: z.object({
     recommendation: z.string(),
     proTip: z.string()
-  },
+  }),
   radarChart: z.array(z.object({
       attribute: z.string(),
       score: z.number().min(1).max(5)
