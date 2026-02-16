@@ -11,7 +11,8 @@ import {
   TrendingDown,
   CheckCircle2, AlertTriangle,
   Stethoscope, FlaskConical, ShieldCheck, Dna, Activity,
-  Award, BarChart3, Flame, Bone, ShieldAlert, Info
+  Award, BarChart3, Flame, Bone, ShieldAlert, Info,
+  History, Globe, Leaf
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
@@ -201,6 +202,41 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </>
       )}
 
+      {/* 2.5 Brand Insights (General Mode) */}
+      {!isCustomMode && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10 space-y-6">
+            <h3 className="font-black flex items-center gap-2 text-primary">
+              <History size={18} /> 브랜드 신뢰도 & 평판
+            </h3>
+            <div className="space-y-4">
+              <div className="p-4 bg-muted/20 rounded-2xl">
+                <p className="text-[11px] font-black uppercase text-muted-foreground mb-1">Reputation</p>
+                <p className="text-sm font-bold leading-relaxed">{result.brandInsight.reputation}</p>
+              </div>
+              <div className="p-4 bg-muted/20 rounded-2xl border-l-4 border-destructive">
+                <p className="text-[11px] font-black uppercase text-destructive mb-1">Recall History</p>
+                <p className="text-sm font-bold leading-relaxed">{result.brandInsight.recallHistory}</p>
+              </div>
+            </div>
+          </Card>
+          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10 space-y-6">
+            <h3 className="font-black flex items-center gap-2 text-success">
+              <Leaf size={18} /> ESG & 윤리적 심사
+            </h3>
+            <div className="space-y-4">
+              <div className="p-4 bg-success/5 rounded-2xl flex items-center gap-4">
+                <Globe className="text-success h-8 w-8" />
+                <p className="text-sm font-bold leading-relaxed">{result.brandInsight.esgScore}</p>
+              </div>
+              <p className="text-xs text-muted-foreground font-medium leading-relaxed italic">
+                * 유기농, Non-GMO, 지속 가능한 어업(MSC) 인증 여부 및 환경 보호 정책을 포함한 평가입니다.
+              </p>
+            </div>
+          </Card>
+        </div>
+      )}
+
       {/* 3. Deep Ingredient Anatomy */}
       <div className="space-y-6">
         <div className="flex items-center gap-2">
@@ -226,7 +262,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   <div className="space-y-1">
                     <p className="font-black text-lg flex items-center gap-2">
                       {ing.name}
-                      {(ing.description.includes('혈당') || ing.description.includes('지방')) && <ShieldAlert className="text-destructive w-4 h-4" />}
+                      {(ing.description.includes('혈당') || ing.description.includes('지방') || ing.description.includes('식물성 유지')) && <ShieldAlert className="text-destructive w-4 h-4" />}
                     </p>
                     <p className="text-xs text-muted-foreground font-bold leading-relaxed">{ing.description}</p>
                   </div>
