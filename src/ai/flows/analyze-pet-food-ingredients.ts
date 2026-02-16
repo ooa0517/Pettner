@@ -1,8 +1,9 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v5.0 - Professional Auditor & Veterinarian]
+ * @fileOverview [Pettner Core Engine v6.0 - Personalized Health Matcher]
  * - Dual Mode: Veterinary Diagnostic vs Product Quality Audit
+ * - Personalized Matching: Detailed comparison between pet profile and product ingredients
  * - Deep Dive Logic: Ingredient Tiering (1-3), Nutritional Engineering (Ca:P, Omega), ESG Audit
  * - Strict 5-Point Diet Roadmap for Obese Pets
  */
@@ -61,6 +62,16 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     headline: z.string().describe('핵심 진단 문구'),
     statusTags: z.array(z.string()).describe('상태 태그 (예: 🔴 비만경고, ✅ 글루텐프리)')
   }),
+  personalMatching: z.object({
+    matches: z.array(z.object({
+      feature: z.string().describe('맞춤 항목 (예: 관절 케어 성분)'),
+      reason: z.string().describe('맞춤 이유 (예: 슬개골 탈구가 있는 아이에게 필요한 콘드로이친 함유)')
+    })).describe('아이 프로필과 긍정적으로 매칭되는 포인트'),
+    mismatches: z.array(z.object({
+      feature: z.string().describe('부적합 항목 (예: 고탄수화물 원료)'),
+      reason: z.string().describe('부적합 이유 (예: 현재 과체중 상태인 아이에게 체지방 축적 위험)')
+    })).describe('아이 프로필과 부적합하거나 주의가 필요한 포인트')
+  }).optional().describe('반려동물 프로필과 제품의 1:1 매칭 분석 (Custom 모드 전용)'),
   weightDiagnosis: z.object({
     currentWeight: z.number(),
     idealWeight: z.number(),
@@ -81,7 +92,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
         level: z.enum(['Tier 1', 'Tier 2', 'Tier 3']),
         ingredients: z.array(z.string()),
         comment: z.string()
-      })).describe('상위 10개 원료 강제 티어 분류'),
+      })).describe('상위 원료 티어 분류'),
       giIndex: z.enum(['Low', 'Moderate', 'High']),
       giComment: z.string().describe('혈당 지수 및 탄수화물 원급에 대한 비판적 평가')
     }),
@@ -94,7 +105,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
         ash: NutritionalMetricSchema
       }),
       ratios: z.object({
-        caPRatio: z.string().describe('칼슘:인 비율 (예: 1.2:1)'),
+        caPRatio: z.string().describe('칼슘:인 비율'),
         omega63Ratio: z.string().describe('오메가 6:3 비율'),
         balanceVerdict: z.string().describe('영양 밸런스 최종 판정')
       })
@@ -104,15 +115,15 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
         label: z.string(),
         status: z.boolean(),
         comment: z.string()
-      })).describe('방부제, 색소, 부산물 등 안전성 체크리스트'),
+      })),
       riskAlert: z.string().optional().describe('심각한 위험 성분 발견 시 경고'),
       recallHistory: z.string().describe('해당 브랜드의 최신 리콜 이력 및 평판')
     }),
     brandESG: z.object({
-      facility: z.string().describe('제조 시설 인증 (HACCP 등)'),
-      rdLevel: z.string().describe('R&D 및 자체 연구소 보유 여부'),
-      sustainability: z.string().describe('친환경 패키징 및 경영 평가'),
-      animalWelfare: z.string().describe('동물 복지 및 윤리적 가치 평가')
+      facility: z.string().describe('제조 시설 인증'),
+      rdLevel: z.string().describe('R&D 수준'),
+      sustainability: z.string().describe('친환경성'),
+      animalWelfare: z.string().describe('동물 복지')
     })
   }),
   veterinaryAdvice: z.string().describe('수의학적 최종 종합 코멘트')
@@ -125,23 +136,28 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
   prompt: `당신은 세계적인 수의 영양학 전문의이자 공인 펫푸드 감사관입니다. 
-입력된 데이터를 바탕으로 [Pettner V5.0 Deep-Dive] 아키텍처에 따라 초정밀 리포트를 생성하십시오.
+입력된 데이터를 바탕으로 [Pettner V6.0 초개인화 매칭] 아키텍처에 따라 리포트를 생성하십시오.
 
 분석 모드: {{{analysisMode}}}
 
 # [분석 대원칙]
-1. 계층적 정보 공개: 상단 요약은 명확하고 결단력 있게, 하단 딥다이브는 방대한 수의학적 데이터를 제공하십시오.
-2. 원재료 강제 티어링: 상위 10개 원료를 Tier 1(생육/슈퍼푸드), Tier 2(농축분), Tier 3(부산물/필러)로 엄격히 분류하십시오.
-3. 영양 엔지니어링: 건물(DM) 기준으로 영양소를 환산하고, 칼슘:인 및 오메가 6:3 비율을 추론/계산하십시오.
-4. 개인화 매칭 (Custom Mode 시): 
-   - 비만 알고리즘: Ideal_Weight = Current_Weight * (100 - (BCS - 3) * 10) / 100
-   - 품종 유전학: 해당 품종의 유전적 취약점(예: 슬개골, 심장 등)과 현재 비만 상태를 결합하여 분석하십시오.
-   - dietRoadmap: 현재에서 목표까지 5개 지점 생성. 감량기에는 칼로리를 제한(RER*1.0)하고 유지기에는 늘립니다(RER*1.4).
-5. 브랜드 감사: 최신 지식 베이스를 활용하여 해당 브랜드의 리콜 이력과 ESG 경영(시설 인증, 동물복지)을 심사하십시오.
+1. 계층적 정보 공개: 상단은 결론, 하단 아코디언은 방대한 데이터를 제공하십시오.
+2. 초개인화 매칭 (Custom Mode 시): 
+   - petProfile의 나이, 품종, 건강 고민, 알러지를 제품의 성분과 1:1로 대조하십시오.
+   - 예: "슬개골 탈구가 있는 아이에게 콘드로이친 성분은 Match", "비만견에게 타피오카는 Mismatch"
+   - personalMatching 섹션을 반드시 풍성하게 채우십시오.
+3. 비만 알고리즘 (Custom Mode 시): 
+   - Ideal_Weight = Current_Weight * (100 - (BCS - 3) * 10) / 100
+   - 품종별 표준 체중을 고려하여 비만 여부를 판정하십시오.
+   - dietRoadmap은 현재부터 목표까지 5개 지점이며, 유지기에는 급여량이 늘어나야 합니다.
+4. 제품 감사 (General/Common): 
+   - 상위 10개 원료를 Tier 1~3으로 분류하십시오.
+   - 브랜드 평판과 최신 리콜 이력을 반영하십시오.
+   - ESG 및 윤리적 가치를 심사하십시오.
 
 사진 데이터: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음{{/if}}
 제품 정보: {{{productName}}} ({{{foodType}}})
-반려동물 정보: {{#if petProfile}}이름:{{{petProfile.name}}}, 품종:{{{petProfile.breed}}}, 나이:{{{petProfile.age}}}, 체중:{{{petProfile.weight}}}, BCS:{{{petProfile.bcs}}}{{else}}제공안됨{{/if}}`,
+반려동물 정보: {{#if petProfile}}이름:{{{petProfile.name}}}, 품종:{{{petProfile.breed}}}, 건강고민:{{{petProfile.healthConditions}}}, 알러지:{{{petProfile.allergies}}}, 비만상태:BCS {{{petProfile.bcs}}}{{else}}제공안됨{{/if}}`,
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(

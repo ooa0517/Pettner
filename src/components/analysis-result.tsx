@@ -11,7 +11,8 @@ import {
   CheckCircle2, AlertTriangle,
   Stethoscope, FlaskConical, ShieldCheck, Dna, Activity,
   Award, BarChart3, Flame, ShieldAlert,
-  History, Globe, Leaf, Microscope, Zap, Heart, CheckCircle
+  History, Globe, Leaf, Microscope, Zap, Heart, CheckCircle,
+  ThumbsUp, ThumbsDown, Sparkles
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
@@ -107,7 +108,61 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </CardContent>
       </Card>
 
-      {/* [LEVEL 2] 개인화 급여 & 비만 분석 (Custom Mode Only) */}
+      {/* [LEVEL 2] 우리 아이 맞춤 매칭 리포트 (Personalized Matching) */}
+      {isCustomMode && result.personalMatching && (
+        <div className="space-y-6 animate-in fade-in duration-1000 delay-200">
+           <div className="flex items-center gap-2 px-2">
+            <Sparkles className="text-primary w-6 h-6" />
+            <h2 className="text-2xl font-black font-headline tracking-tight">🤝 우리 아이 1:1 매칭 리포트</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Matches (Good) */}
+            <Card className="border-none shadow-xl rounded-[2.5rem] bg-success/5 border border-success/10 overflow-hidden">
+               <CardHeader className="bg-success/10 pb-4">
+                 <CardTitle className="text-lg font-black text-success flex items-center gap-2">
+                   <ThumbsUp size={20}/> Perfect Match
+                 </CardTitle>
+               </CardHeader>
+               <CardContent className="p-6 space-y-4">
+                  {result.personalMatching.matches.length > 0 ? (
+                    result.personalMatching.matches.map((match, i) => (
+                      <div key={i} className="space-y-1">
+                        <p className="font-black text-sm text-success">{match.feature}</p>
+                        <p className="text-xs text-muted-foreground font-bold leading-relaxed">{match.reason}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic font-medium">특별한 긍정 매칭 포인트가 발견되지 않았습니다.</p>
+                  )}
+               </CardContent>
+            </Card>
+
+            {/* Mismatches (Warning) */}
+            <Card className="border-none shadow-xl rounded-[2.5rem] bg-destructive/5 border border-destructive/10 overflow-hidden">
+               <CardHeader className="bg-destructive/10 pb-4">
+                 <CardTitle className="text-lg font-black text-destructive flex items-center gap-2">
+                   <ThumbsDown size={20}/> Risk / Mismatch
+                 </CardTitle>
+               </CardHeader>
+               <CardContent className="p-6 space-y-4">
+                  {result.personalMatching.mismatches.length > 0 ? (
+                    result.personalMatching.mismatches.map((mismatch, i) => (
+                      <div key={i} className="space-y-1">
+                        <p className="font-black text-sm text-destructive">{mismatch.feature}</p>
+                        <p className="text-xs text-muted-foreground font-bold leading-relaxed">{mismatch.reason}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-success italic font-bold">아이의 건강 상태와 충돌하는 위험 성분이 발견되지 않았습니다. 안심하세요!</p>
+                  )}
+               </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* [LEVEL 3] 개인화 급여 & 비만 분석 (Custom Mode Only) */}
       {isCustomMode && result.weightDiagnosis && (
         <div className="space-y-6 animate-in fade-in duration-1000">
           <div className="flex items-center gap-2 px-2">
@@ -199,14 +254,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      {/* [LEVEL 3] 전문가용 심층 분석 (Deep Dive - Progressive Disclosure) */}
+      {/* [LEVEL 4] 전문가용 심층 분석 (Deep Dive) */}
       <div className="space-y-6">
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2">
             <Microscope className="text-primary w-6 h-6" />
             <h2 className="text-2xl font-black font-headline tracking-tight">전문가용 심층 분석 리포트</h2>
           </div>
-          <Badge variant="outline" className="border-primary text-primary font-black px-3 py-1">Deep Dive v5.0</Badge>
+          <Badge variant="outline" className="border-primary text-primary font-black px-3 py-1">Deep Dive v6.0</Badge>
         </div>
 
         <Accordion type="single" collapsible className="w-full space-y-4">
@@ -381,7 +436,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </Accordion>
       </div>
 
-      {/* [LEVEL 4] 최종 조언 (Final Advice) */}
+      {/* [LEVEL 5] 최종 조언 (Final Advice) */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-primary text-white p-12 relative overflow-hidden">
         <div className="absolute top-[-20px] right-[-20px] opacity-10">
            <Stethoscope size={150} />
