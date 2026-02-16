@@ -1,11 +1,11 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v8.0] 
- * - Deep Ingredient Anatomy Algorithm
- * - First 5 Quality Tiering System
- * - GI (Glycemic Index) Impact Analysis
- * - Functional Additive Matching
+ * @fileOverview [Pettner Core Engine v9.0] 
+ * - Dual Mode: Veterinary Diagnosis (Custom) & Product Auditor (General)
+ * - Tiered Ingredient Classification (Tier 1-3)
+ * - Brand Reputation & Recall History Tracking
+ * - ESG & Ethical Value Evaluation
  */
 
 import {ai} from '@/ai/genkit';
@@ -38,27 +38,39 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
   productIdentity: z.object({
     name: z.string().describe('추출된 제품명'),
     brand: z.string().describe('추출된 브랜드'),
-    category: z.string().describe('제품 카테고리')
+    category: z.string().describe('제품 카테고리'),
+    qualityGrade: z.enum(['A', 'B', 'C']).describe('원료 기반 품질 등급'),
+    oneLineVerdict: z.string().describe('제품 품질 한 줄 요약')
   }),
   scoreCard: z.object({
-    totalScore: z.number().min(0).max(100).describe('현재 아이 상태 대비 적합성 점수'),
-    grade: z.string().describe('점수 기반 등급 (S~D)'),
-    headline: z.string().describe('아이 상태와 제품의 궁합 한 줄 요약'),
-    statusTags: z.array(z.string()).describe('상태 태그 (예: 비만 경고, 다이어트 필요)')
+    totalScore: z.number().min(0).max(100).describe('적합성/품질 점수'),
+    grade: z.string().describe('점수 기반 등급'),
+    headline: z.string().describe('핵심 진단 문구'),
+    statusTags: z.array(z.string()).describe('상태 태그 (예: 🥩 생육 위주, ⚠️ 리콜 주의)')
   }),
-  weightDiagnosis: {
+  // Custom Mode Only
+  weightDiagnosis: z.object({
     currentWeight: z.number(),
     idealWeight: z.number(),
     weightGap: z.number(),
     breedStandardRange: z.string(),
     overweightPercentage: z.number(),
     verdict: z.string()
-  },
+  }).optional(),
   dietRoadmap: z.array(z.object({
     weight: z.number(),
     grams: z.number(),
     phase: z.string()
-  })),
+  })).optional(),
+  // General Mode Enhancements
+  brandInsight: z.object({
+    reputation: z.string().describe('브랜드 평판 정보'),
+    recallHistory: z.string().describe('최근 리콜 이력 및 안전성 기록')
+  }),
+  esgAudit: z.object({
+    score: z.string().describe('ESG 점수 및 윤리적 요인 (Organic, Non-GMO 등)'),
+    details: z.array(z.string())
+  }),
   advancedNutrition: z.object({
     carbs_nfe_dm: z.number().describe('DM 기준 탄수화물 함량 (%)'),
     protein_dm: z.number().describe('DM 기준 단백질 함량 (%)'),
@@ -69,22 +81,23 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
   ingredientAnatomy: z.object({
     firstFive: z.array(z.object({
       name: z.string(),
-      tier: z.enum(['Fresh Meat', 'Meal', 'By-product', 'Grain', 'Fiber', 'Unknown']),
-      tierLabel: z.string().describe('품질 등급 라벨 (예: 🥩 생육)'),
-      description: z.string().describe('수의학적 품질 설명')
+      tier: z.enum(['Tier 1', 'Tier 2', 'Tier 3']),
+      tierLabel: z.string().describe('품질 등급 라벨 (예: 🥩 생육, 🚨 부산물)'),
+      description: z.string().describe('원료 품질 심사 의견')
     })).describe('상위 5개 원료 정밀 분석'),
     functionalBoosters: z.array(z.object({
       name: z.string(),
       benefit: z.string(),
       description: z.string()
-    })).describe('아이 상태와 매칭되는 기능성 성분'),
+    })).describe('발견된 기능성 성분'),
     safetyFilter: z.object({
       noArtificialPreservatives: z.boolean(),
       noArtificialColors: z.boolean(),
-      allergyWarning: z.string().optional()
+      allergyWarning: z.string().optional(),
+      hiddenAdditives: z.array(z.string()).describe('숨겨진 첨가물 (소금, 설탕 등)')
     })
   }),
-  veterinaryAdvice: z.string().describe('종합 수의학적 조언')
+  veterinaryAdvice: z.string().describe('종합 심사 의견')
 });
 
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
@@ -97,29 +110,37 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 세계적인 수의 영양학 전문가입니다. 제공된 정보와 사진을 바탕으로 '수의학적 정밀 진단 리포트'를 작성하십시오.
+  prompt: `당신은 '공인 펫푸드 감사관(Certified Pet Food Auditor)'이자 수의 영양학 전문가입니다.
 
-# 엄격한 비만 알고리즘
-1. 목표 체중(Ideal Weight) = 현재 체중 * (100 - (BCS - 3) * 10) / 100
-2. 비만인 아이(BCS 4 이상)의 경우:
-   - Target Kcal = (70 * (목표 체중^0.75)) * 1.0 (감량 계수 적용)
-   - 탄수화물(NFE)이 40%를 초과하면 강력한 경고를 생성하십시오.
+# 분석 모드에 따른 역할
+1. [분석 모드: custom]
+   - '수의사 주치의'로서 특정 반려동물({{{petProfile.name}}})의 상태에 맞춘 정밀 진단과 다이어트 솔루션을 제공합니다.
+   - 비만 알고리즘: Ideal Weight = Current Weight * (100 - (BCS - 3) * 10) / 100 를 적용하여 급여 로드맵을 작성합니다.
 
-# 원재료 정밀 분석 (Deep Ingredient Anatomy)
-1. 제1~5원료 분석: 상위 5개 원료의 품질을 구분하십시오.
-   - Fresh Meat: 🥩 생육 (가공되지 않은 신선육)
-   - Meal: ⚠️ 건조 분말 (농축 단백질)
-   - By-product: 🚨 부산물
-   - Grain: 고혈당 원료 (옥수수, 밀, 쌀 등)
-2. 기능성 성분 매칭: {{{petProfile.healthConditions}}} 및 비만 여부를 고려하여 L-카르니틴, 글루코사민, 오메가-3 등의 포함 여부를 분석하십시오.
-3. GI 임팩트: 비만인 아이에게 옥수수/밀 등은 혈당을 빠르게 올리는 부정적 요인으로 서술하십시오.
+2. [분석 모드: general]
+   - '제품 품질 심사관'으로서 반려동물 정보 없이 '제품 자체의 품질과 브랜드 신뢰도'만을 객관적으로 평가합니다.
+   - 개인화된 조언 대신 원료 티어, 리콜 이력, 브랜드 평판, ESG 요소를 중심으로 보고서를 작성합니다.
+   - 급여 로드맵이나 몸무게 진단은 생략합니다.
 
-# 다이어트 로드맵
-현재 체중에서 목표 체중까지 3단계(급속 감량기 -> 안정기 -> 유지기) 급여 로드맵을 생성하십시오. 유지기 시점에는 감량 칼로리가 아닌 유지 칼로리를 적용하여 급여량이 다시 약간 올라가야 합니다.
+# 원재료 심사 프레임워크 (Ingredient Anatomy)
+- 제1~5원료(First 5) 분석: 용량의 80%를 차지하는 상위 원료의 품질을 티어별로 구분합니다.
+  - Tier 1: 🥩 생육/통생선 (신선한 단백질원)
+  - Tier 2: 명확한 건조 단백질 (예: 닭고기 분말)
+  - Tier 3: 불명확한 단백질/부산물/찌꺼기 (예: 육분, 가금류 부산물)
+- GI 임팩트: 옥수수, 밀, 쌀 등의 함량과 혈당에 미치는 영향을 분석합니다.
+- 숨겨진 첨가물: 소금, 설탕, 프로필렌 글리콜, BHA/BHT 등 유해 가능 성분을 찾아냅니다.
+
+# 브랜드 인사이트 (Brand Insight)
+- 브랜드의 글로벌 평판, 제조 표준(HACCP, ISO), 최근 리콜 이력을 조사하여 반영합니다.
+- ESG 평가: 유기농(Organic), Non-GMO, 지속 가능한 어업(MSC), 친환경 포장재 사용 여부 등을 확인합니다.
+
+# 영양 밀도 (DM Basis)
+- 수분 제외(DM) 기준 단백질/지방/탄수화물을 계산합니다.
+- 탄수화물(NFE)이 40%를 초과하면 강력한 주의를 표기합니다.
 
 제품 정보: {{{productName}}} ({{{foodType}}})
-아이 정보: {{{petProfile.name}}} ({{{petProfile.breed}}}, {{{petProfile.weight}}}kg, BCS {{{petProfile.bcs}}})
-라벨 사진: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음{{/if}}`,
+아이 정보: {{#if petProfile.name}}{{{petProfile.name}}} ({{{petProfile.breed}}}){{else}}없음 (객관적 품질 심사){{/if}}
+사진 데이터: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음{{/if}}`,
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(

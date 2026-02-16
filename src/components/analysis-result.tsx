@@ -10,7 +10,8 @@ import {
   AlertCircle, Scale,
   ChevronRight, TrendingDown, Info,
   CheckCircle2, AlertTriangle,
-  Stethoscope, FlaskConical, ShieldCheck, Dna, Activity
+  Stethoscope, FlaskConical, ShieldCheck, Dna, Activity,
+  FileText, ShieldAlert, Award, Globe
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
@@ -56,16 +57,18 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-40 max-w-4xl mx-auto px-4">
       
-      {/* 1. Medical Summary Header */}
+      {/* 1. Header Section (Medical vs Auditor) */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
         <CardContent className="p-10 space-y-8">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
               <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary font-black px-4 py-1.5 rounded-full text-[10px] tracking-widest uppercase">
-                Veterinary Nutrition Report v8.0
+                {isCustomMode ? 'Veterinary Diagnosis v9.0' : 'Product Quality Audit v9.0'}
               </Badge>
               <h1 className="text-3xl font-black tracking-tighter pt-2">
-                {isCustomMode ? `${input.petProfile?.name}(${input.petProfile?.breed}) 진단 리포트` : '제품 성분 분석 리포트'}
+                {isCustomMode 
+                  ? `${input.petProfile?.name}(${input.petProfile?.breed}) 진단 리포트` 
+                  : `${result.productIdentity.name} 품질 심사 리포트`}
               </h1>
             </div>
             <div className="text-right">
@@ -79,19 +82,19 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </div>
           </div>
 
-          <div className="p-8 bg-muted/20 rounded-[2.5rem] border-l-8 border-primary relative overflow-hidden">
-             <Stethoscope className="absolute right-[-20px] top-[-20px] w-40 h-40 text-primary opacity-5 rotate-12" />
+          <div className={cn("p-8 rounded-[2.5rem] border-l-8 relative overflow-hidden", isCustomMode ? "bg-muted/20 border-primary" : "bg-primary/5 border-primary")}>
+             {isCustomMode ? <Stethoscope className="absolute right-[-20px] top-[-20px] w-40 h-40 text-primary opacity-5 rotate-12" /> : <ShieldCheck className="absolute right-[-20px] top-[-20px] w-40 h-40 text-primary opacity-5 rotate-12" />}
              <div className="relative z-10 space-y-4">
                <h3 className="text-xl font-black flex items-center gap-2">
                  <Info className="text-primary" size={20}/> 
-                 분석 요약
+                 {isCustomMode ? '수의학적 진단 요약' : '전문 감사관 심사 평'}
                </h3>
                <p className="text-lg font-bold leading-relaxed break-keep">
                  {result.scoreCard.headline}
                </p>
                <div className="flex flex-wrap gap-2">
                  {result.scoreCard.statusTags.map((tag, i) => (
-                   <Badge key={i} variant="secondary" className={cn("bg-white font-bold px-3 py-1", tag.includes('비만') || tag.includes('주의') ? "text-destructive" : "text-primary")}>
+                   <Badge key={i} variant="secondary" className={cn("bg-white font-bold px-3 py-1", tag.includes('주의') || tag.includes('리콜') ? "text-destructive" : "text-primary")}>
                      {tag}
                    </Badge>
                  ))}
@@ -101,7 +104,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </CardContent>
       </Card>
 
-      {/* 2. Weight Diagnosis & Roadmap - Only for Custom Mode */}
+      {/* 2. Custom Mode Only: Weight Diagnosis & Roadmap */}
       {isCustomMode && result.weightDiagnosis && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -148,7 +151,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </Card>
           </div>
 
-          {/* 3. Diet Roadmap Graph */}
           {result.dietRoadmap && result.dietRoadmap.length > 0 && (
             <Card className="border-none shadow-xl rounded-[3rem] bg-white p-10 space-y-8">
               <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
@@ -171,11 +173,52 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </>
       )}
 
-      {/* 4. Deep Ingredient Anatomy */}
+      {/* 2. General Mode Only: Brand & ESG Insights */}
+      {!isCustomMode && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10 space-y-6">
+            <h3 className="font-black flex items-center gap-2 text-primary">
+              <Award size={18} /> 브랜드 신뢰도 및 이력
+            </h3>
+            <div className="space-y-4">
+              <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
+                <p className="text-xs font-black text-primary uppercase">Reputation</p>
+                <p className="text-sm font-bold mt-1">{result.brandInsight.reputation}</p>
+              </div>
+              <div className="p-4 rounded-2xl bg-destructive/5 border border-destructive/10">
+                <p className="text-xs font-black text-destructive uppercase">Recall History</p>
+                <p className="text-sm font-bold mt-1 text-destructive">{result.brandInsight.recallHistory}</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10 space-y-6">
+            <h3 className="font-black flex items-center gap-2 text-success">
+              <Globe size={18} /> ESG 및 윤리적 심사
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-bold">윤리 등급</p>
+                <Badge className="bg-success text-white font-black">{result.esgAudit.score}</Badge>
+              </div>
+              <div className="space-y-2">
+                {result.esgAudit.details.map((detail, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <CheckCircle2 size={12} className="text-success" />
+                    <span>{detail}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* 3. Deep Ingredient Anatomy (Common) */}
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <Dna className="text-primary w-6 h-6" />
-          <h2 className="text-2xl font-black font-headline">🧬 원재료 정밀 분석</h2>
+          <h2 className="text-2xl font-black font-headline">🧬 [원재료 정밀 분석]</h2>
         </div>
         
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
@@ -187,7 +230,12 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           <CardContent className="p-8 space-y-4">
              {result.ingredientAnatomy.firstFive.map((ing, i) => (
                <div key={i} className="flex gap-4 p-4 rounded-2xl bg-muted/10 items-start hover:bg-muted/20 transition-colors">
-                  <div className="px-3 py-1 bg-white rounded-full text-xs font-black shadow-sm shrink-0">{ing.tierLabel}</div>
+                  <div className={cn("px-3 py-1 rounded-full text-[10px] font-black shadow-sm shrink-0", 
+                    ing.tier === 'Tier 1' ? "bg-success text-white" : 
+                    ing.tier === 'Tier 2' ? "bg-primary text-white" : "bg-destructive text-white"
+                  )}>
+                    {ing.tierLabel}
+                  </div>
                   <div className="space-y-1">
                     <p className="font-bold">{ing.name}</p>
                     <p className="text-xs text-muted-foreground leading-relaxed">{ing.description}</p>
@@ -200,7 +248,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8 space-y-6">
             <h3 className="font-black flex items-center gap-2 text-primary">
-              <Activity size={18} /> {isCustomMode ? '맞춤 기능성 성분' : '주요 기능성 성분'}
+              <Activity size={18} /> 기능성 성분 분석
             </h3>
             <div className="space-y-3">
               {result.ingredientAnatomy.functionalBoosters.map((booster, i) => (
@@ -209,9 +257,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   <p className="text-xs font-medium mt-1">{booster.description}</p>
                 </div>
               ))}
-              {result.ingredientAnatomy.functionalBoosters.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-6">발견된 기능성 성분이 없습니다.</p>
-              )}
             </div>
           </Card>
 
@@ -228,6 +273,11 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 <CheckCircle2 size={16} className={result.ingredientAnatomy.safetyFilter.noArtificialColors ? "text-success" : "text-muted-foreground"} />
                 <span>인공 착색료 무첨가</span>
               </div>
+              {result.ingredientAnatomy.safetyFilter.hiddenAdditives.length > 0 && (
+                <div className="p-3 bg-muted/20 rounded-xl text-[10px] font-medium text-muted-foreground">
+                  검출된 첨가물: {result.ingredientAnatomy.safetyFilter.hiddenAdditives.join(', ')}
+                </div>
+              )}
               {result.ingredientAnatomy.safetyFilter.allergyWarning && (
                 <div className="mt-4 p-4 bg-destructive/5 border border-destructive/10 rounded-2xl flex gap-3">
                   <AlertTriangle className="text-destructive shrink-0" size={16} />
@@ -241,11 +291,11 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       </div>
 
-      {/* 5. Nutritional Density (DM Basis) */}
+      {/* 4. Nutritional Density (Common) */}
       <Card className="border-none shadow-xl rounded-[3rem] bg-white p-10 space-y-8">
         <div className="space-y-1">
           <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            📊 수분 제외 영양 밀도 (DM 기준)
+            📊 [수분 제외 영양 밀도 (DM)]
           </CardTitle>
           <p className="text-[10px] text-muted-foreground font-bold">* 수분 함량을 제외한 실제 영양 농도 분석값입니다.</p>
         </div>
@@ -264,9 +314,9 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                <div className="h-4 bg-muted rounded-full relative overflow-hidden">
                   <div className={cn("h-full transition-all duration-1000", stat.color)} style={{ width: `${Math.min(stat.value, 100)}%` }} />
                </div>
-               {stat.isWarning && isObese && (
+               {stat.isWarning && (
                  <p className="text-[10px] font-black text-destructive leading-tight animate-pulse">
-                   ⚠️ 탄수화물 함량이 매우 높습니다. 비만 관리에 치명적일 수 있습니다!
+                   ⚠️ 탄수화물 함량이 매우 높습니다.
                  </p>
                )}
              </div>
@@ -274,18 +324,17 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       </Card>
 
-      {/* 6. Veterinary Advice */}
+      {/* 5. Comprehensive Advice */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-primary text-white p-10">
         <div className="flex items-center gap-4 mb-6">
-          <Stethoscope size={32} />
-          <h3 className="text-2xl font-black">수의학적 종합 조언</h3>
+          {isCustomMode ? <Stethoscope size={32} /> : <FileText size={32} />}
+          <h3 className="text-2xl font-black">{isCustomMode ? '수의학적 종합 조언' : '전문 심사관 종합 평가'}</h3>
         </div>
         <p className="text-lg font-medium leading-relaxed opacity-90 break-keep">
           {result.veterinaryAdvice}
         </p>
       </Card>
 
-      {/* Bottom Actions */}
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-xl border-t z-50 flex justify-center">
         <div className="w-full max-w-4xl flex gap-4">
           <Button onClick={onReset} variant="outline" className="flex-1 h-14 rounded-2xl border-2 font-black">
@@ -302,3 +351,4 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     </div>
   );
 }
+
