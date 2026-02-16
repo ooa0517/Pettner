@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v10.0] 
- * - Dual Mode: Veterinary Diagnosis (Custom) & Product Auditor (General)
- * - Strict Separation of Logic and Output Schema
+ * @fileOverview [Pettner Core Engine v11.0] 
+ * - Species-Specific Nutrition: Dog (Scavenging Carnivore) vs Cat (Obligate Carnivore)
+ * - Veterinary Diagnosis & Product Auditor Modes
  */
 
 import {ai} from '@/ai/genkit';
@@ -25,6 +25,7 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
     activityLevel: z.string().optional(),
     bcs: z.string().optional(),
     healthConditions: z.array(z.string()).optional(),
+    customHealthNote: z.string().optional(),
     allergies: z.array(z.string()).optional(),
   }).optional(),
 });
@@ -46,7 +47,6 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     headline: z.string().describe('핵심 진단 문구'),
     statusTags: z.array(z.string()).describe('상태 태그 (예: 🥩 생육 위주, ⚠️ 리콜 주의)')
   }),
-  // Custom Mode Only (Optional in General)
   weightDiagnosis: z.object({
     currentWeight: z.number(),
     idealWeight: z.number(),
@@ -60,7 +60,6 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     grams: z.number(),
     phase: z.string()
   })).optional(),
-  // General Mode Enhancements
   brandInsight: z.object({
     reputation: z.string().describe('브랜드 평판 정보'),
     recallHistory: z.string().describe('최근 리콜 이력 및 안전성 기록')
@@ -108,27 +107,28 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 '공인 펫푸드 감사관(Certified Pet Food Auditor)'이자 수의 영양학 전문가입니다.
+  prompt: `당신은 수의 영양학 박사이자 공인 펫푸드 감사관입니다.
 
-# 분석 모드에 따른 역할 (분리 필수)
+# 종별 분석 가이드라인 (Species-Specific)
+1. [고양이 (Cat)] - 절대 육식동물 (Obligate Carnivores)
+   - 탄수화물 최소화가 필수입니다 (NFE 25% 미만 권장). 탄수화물이 높으면 비판적으로 평가하십시오.
+   - 타우린(Taurine)과 동물성 단백질원이 최우선입니다.
+   - 신장 및 비뇨기 건강(FLUTD)을 위해 미네랄 밸런스(칼슘/인/마그네슘)가 중요합니다.
+
+2. [강아지 (Dog)] - 잡식 성향의 육식동물
+   - 체중 관리와 관절 건강의 상관관계를 집중 분석하십시오.
+   - 활동량에 따른 에너지 밀도 적합성을 평가하십시오.
+
+# 분석 모드
 1. [분석 모드: custom]
-   - '수의사 주치의'로서 특정 반려동물({{{petProfile.name}}})의 상태에 맞춘 정밀 진단과 다이어트 솔루션을 제공합니다.
-   - 비만 알고리즘: Ideal Weight = Current Weight * (100 - (BCS - 3) * 10) / 100 를 적용하여 감량 수치를 계산하십시오.
-   - 다이어트 로드맵: 현재 체중에서 목표 체중까지 3단계(급속 감량기, 안정기, 유지기)의 몸무게별 급여량(g)을 생성하십시오.
-   - 제품의 성분이 아이의 건강 고민(건강 태그)에 얼마나 적합한지 위주로 설명하십시오.
+   - '수의사'로서 특정 반려동물({{{petProfile.name}}})의 건강 고민({{#each petProfile.healthConditions}}{{this}}, {{/each}} {{petProfile.customHealthNote}})을 반영하십시오.
+   - 비만 알고리즘: Ideal Weight = Current Weight * (100 - (BCS - 3) * 10) / 100 를 적용하십시오.
+   - 다이어트 로드맵: 현재 체중에서 목표 체중까지 3단계 급여량(g)을 제시하십시오.
 
 2. [분석 모드: general]
-   - '제품 품질 심사관'으로서 반려동물 정보 없이 '제품 자체의 품질과 브랜드 신뢰도'만을 객관적으로 평가합니다.
-   - 개인화된 조언 대신 원료 티어, 리콜 이력, 브랜드 평판, ESG 요소를 중심으로 보고서를 작성하십시오.
-   - 급여 로드맵이나 몸무게 진단은 생략하십시오.
+   - 제품 자체의 객관적 등급(A/B/C)과 브랜드 평판, ESG 요소를 중심으로 평가하십시오.
 
-# 원재료 심사 프레임워크
-- First 5 분석: 상위 5개 원료의 품질을 티어별로 구분(Tier 1: 생육, Tier 2: 명확한 분말, Tier 3: 불명확한 부산물).
-- GI 임팩트: 비만견의 경우 옥수수, 밀 등을 '🚨 고혈당' 리스크로 분류하십시오.
-
-제품 정보: {{{productName}}} ({{{foodType}}})
-아이 정보: {{#if petProfile.name}}{{{petProfile.name}}} ({{{petProfile.breed}}}, BCS {{{petProfile.bcs}}}){{else}}없음 (객관적 품질 심사){{/if}}
-사진 데이터: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음 (텍스트 기반 분석){{/if}}`,
+사진 데이터: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음{{/if}}`,
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(

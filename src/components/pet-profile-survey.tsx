@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -19,14 +18,13 @@ const petProfileSchema = z.object({
   petType: z.enum(['dog', 'cat']),
   name: z.string().min(1, '이름을 입력해주세요'),
   breed: z.string().min(1, '품종을 입력해주세요'),
-  birthDate: z.string().optional(),
-  dontKnowBirth: z.boolean().default(false),
   age: z.number().min(0, '나이를 입력해주세요'),
   weight: z.number().min(0.1, '몸무게를 입력해주세요'),
   neutered: z.enum(['yes', 'no']),
   bcs: z.string().default('5'),
   activityLevel: z.enum(['LOW', 'NORMAL', 'HIGH']),
   healthConditions: z.array(z.string()).default([]),
+  customHealthNote: z.string().optional(),
   allergies: z.array(z.string()).default([]),
 });
 
@@ -45,35 +43,24 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
       allergies: [],
       activityLevel: 'NORMAL',
       bcs: '5',
-      dontKnowBirth: false,
+      customHealthNote: '',
     }
   });
 
   const selectedConditions = watch('healthConditions');
   const selectedAllergies = watch('allergies');
-  const dontKnowBirth = watch('dontKnowBirth');
 
-  const commonConditions = [
-    '피부 알러지', '눈물 자국', '신장 질환', '심장 질환', '관절염', '당뇨', '비만', '소화 불량'
-  ];
+  const commonConditions = ['피부 알러지', '눈물 자국', '소화 불량', '비만/체중 관리'];
+  const dogSpecific = ['슬개골 탈구', '관절염', '심장 질환'];
+  const catSpecific = ['방광염/요로결석', '신장 질환', '헤어볼'];
+
+  const conditions = petType === 'dog' 
+    ? [...commonConditions, ...dogSpecific] 
+    : [...commonConditions, ...catSpecific];
 
   const allergyList = ['닭고기', '소고기', '연어', '양고기', '곡물', '달걀'];
 
-  const dogSpecificConditions = ['슬개골 탈구', '고관절 질환'];
-  const catSpecificConditions = ['헤어볼', '방광염', '치은염'];
-
-  const conditions = petType === 'dog' 
-    ? [...commonConditions, ...dogSpecificConditions] 
-    : [...commonConditions, ...catSpecificConditions];
-
   const onSubmit = (data: PetProfileValues) => {
-    // If birthDate is selected, calculate age for the result
-    if (!data.dontKnowBirth && data.birthDate) {
-      const birth = new Date(data.birthDate);
-      const today = new Date();
-      let age = (today.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-      data.age = Math.round(age * 10) / 10;
-    }
     onComplete(data);
   };
 
@@ -106,9 +93,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
           {step === 1 && (
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
               <div className="space-y-4">
-                <Label className="text-lg font-black flex items-center gap-2">
-                  1. 어떤 아이인가요?
-                </Label>
+                <Label className="text-lg font-black flex items-center gap-2">1. 어떤 아이인가요?</Label>
                 <RadioGroup 
                   defaultValue="dog" 
                   onValueChange={(val) => {
@@ -141,38 +126,15 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <Label className="font-bold ml-1">나이 정보 <span className="text-destructive font-bold">*</span></Label>
-                {!dontKnowBirth ? (
-                  <div className="relative">
-                    <Input type="date" className="h-12 rounded-xl pl-10" {...register('birthDate')} />
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <Input 
-                      type="number" 
-                      step="0.1" 
-                      placeholder="예: 4.5" 
-                      className="h-12 rounded-xl pr-10" 
-                      {...register('age', { valueAsNumber: true })} 
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground text-sm">살</span>
-                  </div>
-                )}
-                <div className="flex items-center space-x-2 ml-1">
-                  <Checkbox 
-                    id="dont-know-birth-survey" 
-                    checked={dontKnowBirth}
-                    onCheckedChange={(val) => setValue('dontKnowBirth', !!val)}
-                  />
-                  <Label htmlFor="dont-know-birth-survey" className="text-xs font-bold text-muted-foreground cursor-pointer">생일을 몰라요 (나이 직접 입력)</Label>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label className="font-bold ml-1">나이 (살)</Label>
+                  <Input type="number" step="0.1" className="h-12 rounded-xl" {...register('age', { valueAsNumber: true })} />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="font-bold ml-1 flex items-center gap-1">몸무게 (kg) <span className="text-destructive font-bold">*</span></Label>
-                <Input type="number" step="0.1" placeholder="0.0" className="h-12 rounded-xl" {...register('weight', { valueAsNumber: true })} />
+                <div className="space-y-2">
+                  <Label className="font-bold ml-1">몸무게 (kg)</Label>
+                  <Input type="number" step="0.1" className="h-12 rounded-xl" {...register('weight', { valueAsNumber: true })} />
+                </div>
               </div>
             </div>
           )}
@@ -180,43 +142,35 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
           {step === 2 && (
             <div className="space-y-8 animate-in fade-in slide-in-from-right-4">
               <div className="space-y-4">
-                <Label className="text-lg font-black flex items-center gap-2">2. 건강 상태 & 중성화</Label>
+                <Label className="text-lg font-black flex items-center gap-2">2. 건강 고민 ({petType === 'dog' ? '강아지' : '고양이'} 맞춤)</Label>
                 
-                <div className="p-6 bg-muted/20 rounded-3xl space-y-4 border border-muted">
-                   <Label className="font-bold text-sm">중성화 여부</Label>
-                   <RadioGroup defaultValue="yes" onValueChange={(val) => setValue('neutered', val as 'yes' | 'no')} className="flex gap-4">
-                      <Label htmlFor="n-yes" className={cn("flex-1 p-3 border rounded-xl text-center cursor-pointer font-bold transition-all", watch('neutered') === 'yes' ? "bg-primary text-white border-primary" : "bg-white border-muted")}>
-                        <RadioGroupItem value="yes" id="n-yes" className="sr-only" />
-                        완료 (Yes)
-                      </Label>
-                      <Label htmlFor="n-no" className={cn("flex-1 p-3 border rounded-xl text-center cursor-pointer font-bold transition-all", watch('neutered') === 'no' ? "bg-primary text-white border-primary" : "bg-white border-muted")}>
-                        <RadioGroupItem value="no" id="n-no" className="sr-only" />
-                        미완료 (No)
-                      </Label>
-                   </RadioGroup>
+                <div className="grid grid-cols-2 gap-3">
+                   {conditions.map((condition) => (
+                     <div key={condition} className="flex items-center space-x-2 p-3 bg-white border rounded-xl hover:bg-muted/30 transition-colors">
+                       <Checkbox 
+                         id={condition} 
+                         checked={selectedConditions.includes(condition)}
+                         onCheckedChange={(checked) => {
+                           const current = selectedConditions;
+                           if (checked) {
+                             setValue('healthConditions', [...current, condition]);
+                           } else {
+                             setValue('healthConditions', current.filter(c => c !== condition));
+                           }
+                         }}
+                       />
+                       <Label htmlFor={condition} className="text-xs font-bold cursor-pointer flex-1">{condition}</Label>
+                     </div>
+                   ))}
                 </div>
 
-                <div className="space-y-4 pt-2">
-                   <Label className="font-bold text-sm ml-1">건강 고민 (중복 선택)</Label>
-                   <div className="grid grid-cols-2 gap-3">
-                     {conditions.map((condition) => (
-                       <div key={condition} className="flex items-center space-x-2 p-3 bg-white border rounded-xl hover:bg-muted/30 transition-colors">
-                         <Checkbox 
-                           id={condition} 
-                           checked={selectedConditions.includes(condition)}
-                           onCheckedChange={(checked) => {
-                             const current = selectedConditions;
-                             if (checked) {
-                               setValue('healthConditions', [...current, condition]);
-                             } else {
-                               setValue('healthConditions', current.filter(c => c !== condition));
-                             }
-                           }}
-                         />
-                         <Label htmlFor={condition} className="text-xs font-bold cursor-pointer flex-1">{condition}</Label>
-                       </div>
-                     ))}
-                   </div>
+                <div className="space-y-2 pt-4">
+                   <Label className="font-bold text-sm ml-1">기타 고민 직접 입력</Label>
+                   <Input 
+                     placeholder="예: 최근 사료를 잘 안 먹어요, 특정 성분 눈물이 심해요 등" 
+                     className="h-12 rounded-xl"
+                     {...register('customHealthNote')}
+                   />
                 </div>
               </div>
             </div>
@@ -228,7 +182,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
                 <Label className="text-lg font-black">3. 식습관 & 활동량</Label>
                 
                 <div className="space-y-3">
-                   <Label className="font-bold text-sm ml-1">알러지 유발 원료</Label>
+                   <Label className="font-bold text-sm ml-1">피해야 하는 성분 (알러지)</Label>
                    <div className="flex flex-wrap gap-2">
                       {allergyList.map(allergy => (
                         <Badge 
@@ -251,7 +205,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
                 </div>
 
                 <div className="space-y-3 pt-4">
-                   <Label className="font-bold text-sm ml-1 flex items-center gap-1">활동 수준 <Tooltip><TooltipTrigger><Info className="w-3 h-3 text-muted-foreground"/></TooltipTrigger><TooltipContent>급여량 계산에 매우 중요한 정보입니다.</TooltipContent></Tooltip></Label>
+                   <Label className="font-bold text-sm ml-1">활동 수준</Label>
                    <RadioGroup defaultValue="NORMAL" onValueChange={(val) => setValue('activityLevel', val as any)} className="space-y-2">
                       {[
                         { id: 'LOW', title: '낮음', desc: '거의 움직이지 않거나 노령견/묘' },
@@ -260,9 +214,6 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
                       ].map((level) => (
                         <Label key={level.id} htmlFor={level.id} className={cn("flex items-center gap-4 p-4 border-2 rounded-2xl cursor-pointer transition-all", watch('activityLevel') === level.id ? "border-primary bg-primary/5 shadow-sm" : "border-muted opacity-70")}>
                            <RadioGroupItem value={level.id} id={level.id} className="sr-only" />
-                           <div className={cn("p-2 rounded-full", watch('activityLevel') === level.id ? "bg-primary text-white" : "bg-muted")}>
-                              <Activity className="w-4 h-4" />
-                           </div>
                            <div className="flex-1 text-left">
                               <p className="font-black text-sm">{level.title}</p>
                               <p className="text-[10px] text-muted-foreground font-medium">{level.desc}</p>
