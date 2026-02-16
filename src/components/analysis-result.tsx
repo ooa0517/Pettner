@@ -11,7 +11,7 @@ import {
   TrendingDown,
   CheckCircle2, AlertTriangle,
   Stethoscope, FlaskConical, ShieldCheck, Dna, Activity,
-  Award, BarChart3, Info, Flame, Bone, ShieldAlert
+  Award, BarChart3, Flame, Bone, ShieldAlert
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
@@ -39,7 +39,6 @@ const chartConfig = {
 
 export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
   const { t } = useLanguage();
-  const [productName] = useState(result.productIdentity.name);
 
   if (result.status === 'error' || !result.scoreCard) {
      return (
@@ -58,7 +57,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   const nutritionMetrics = [
     { label: "단백질 (Protein)", data: result.advancedNutrition.protein },
     { label: "지방 (Fat)", data: result.advancedNutrition.fat },
-    { label: "탄수화물 (Carbs/NFE)", data: result.advancedNutrition.carbs, isCritical: result.advancedNutrition.isHighCarb || (isObese && result.advancedNutrition.carbs.value > 40) },
+    { label: "탄수화물 (Carbs/NFE)", data: result.advancedNutrition.carbs, isCritical: result.advancedNutrition.isHighCarb },
     { label: "조섬유 (Fiber)", data: result.advancedNutrition.fiber },
     { label: "조회분 (Ash)", data: result.advancedNutrition.ash }
   ];
@@ -72,11 +71,11 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           <div className="flex justify-between items-start">
             <div className="space-y-1">
               <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary font-black px-4 py-1.5 rounded-full text-[10px] tracking-widest uppercase">
-                {isCustomMode ? 'Veterinary Medical Diagnosis' : 'Product Quality Audit'}
+                {isCustomMode ? 'Veterinary Medical Report' : 'Product Quality Audit'}
               </Badge>
               <h1 className="text-3xl font-black tracking-tighter pt-2">
                 {isCustomMode 
-                  ? `${input.petProfile?.name}(${input.petProfile?.breed}) 맞춤 진단 리포트` 
+                  ? `${input.petProfile?.name}(${input.petProfile?.breed}) 진단 리포트` 
                   : `${result.productIdentity.name} 품질 감사 보고서`}
               </h1>
             </div>
@@ -102,7 +101,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                </p>
                <div className="flex flex-wrap gap-2">
                  {result.scoreCard.statusTags.map((tag, i) => (
-                   <Badge key={i} variant="secondary" className={cn("bg-white font-bold px-3 py-1", tag.includes('주의') || tag.includes('리콜') || tag.includes('비만') ? "text-destructive" : "text-primary")}>
+                   <Badge key={i} variant="secondary" className={cn("bg-white font-bold px-3 py-1", tag.includes('주의') || tag.includes('비만') ? "text-destructive" : "text-primary")}>
                      {tag}
                    </Badge>
                  ))}
@@ -112,17 +111,17 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </CardContent>
       </Card>
 
-      {/* 2. Weight Diagnosis & Diet Roadmap (Only for Custom Mode) */}
+      {/* 2. Weight Diagnosis & Diet Roadmap (Custom Mode Only) */}
       {isCustomMode && result.weightDiagnosis && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10 space-y-8">
               <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                <Scale size={18} className="text-primary"/> 🐕 품종 표준 체중 대비 분석
+                <Scale size={18} className="text-primary"/> 🐕 품종 표준 체중 비교
               </CardTitle>
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <div className="flex justify-between text-xs font-black mb-1">
+                  <div className="flex justify-between text-[10px] font-black mb-1">
                     <span className="text-success">표준 ({result.weightDiagnosis.breedStandardRange})</span>
                     <span className="text-destructive">우리 아이 ({result.weightDiagnosis.currentWeight}kg)</span>
                   </div>
@@ -132,9 +131,9 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                           style={{ width: `${Math.min(50 + result.weightDiagnosis.overweightPercentage, 100)}%` }} />
                   </div>
                 </div>
-                <div className={cn("p-5 rounded-2xl border", result.weightDiagnosis.overweightPercentage > 0 ? "bg-destructive/5 border-destructive/10" : "bg-success/5 border-success/10")}>
-                   <div className={cn("font-black text-xl", result.weightDiagnosis.overweightPercentage > 0 ? "text-destructive" : "text-success")}>
-                     {result.weightDiagnosis.overweightPercentage > 0 ? `표준 대비 +${result.weightDiagnosis.overweightPercentage.toFixed(1)}kg 초과` : '표준 범위 내 유지 중'}
+                <div className={cn("p-5 rounded-2xl border", result.weightDiagnosis.weightGap > 0 ? "bg-destructive/5 border-destructive/10" : "bg-success/5 border-success/10")}>
+                   <div className={cn("font-black text-xl", result.weightDiagnosis.weightGap > 0 ? "text-destructive" : "text-success")}>
+                     {result.weightDiagnosis.weightGap > 0 ? `감량 목표: -${result.weightDiagnosis.weightGap.toFixed(1)}kg` : '정상 체중 유지 중'}
                    </div>
                    <p className="text-xs font-bold text-muted-foreground mt-1 leading-relaxed">
                      {result.weightDiagnosis.verdict}
@@ -146,19 +145,12 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <Card className="border-none shadow-xl rounded-[2.5rem] bg-primary text-white p-10 flex flex-col justify-between relative overflow-hidden">
               <TrendingDown className="absolute right-[-10px] bottom-[-10px] w-32 h-32 opacity-10" />
               <div className="space-y-2">
-                <p className="text-xs font-black opacity-70 uppercase tracking-widest">Dietary Goal</p>
-                <h3 className="text-4xl font-black">{isObese ? `감량 목표: -${result.weightDiagnosis.weightGap.toFixed(1)}kg` : '건강 유지 목표'}</h3>
+                <p className="text-xs font-black opacity-70 uppercase tracking-widest">Target Weight</p>
+                <h3 className="text-4xl font-black">{result.weightDiagnosis.idealWeight.toFixed(1)}kg</h3>
               </div>
-              <div className="space-y-4">
-                 <div className="flex justify-between items-end border-b border-white/20 pb-2">
-                    <span className="text-sm opacity-70">현재 체중</span>
-                    <span className="text-xl font-bold">{result.weightDiagnosis.currentWeight}kg</span>
-                 </div>
-                 <div className="flex justify-between items-end border-b border-white/20 pb-2">
-                    <span className="text-sm opacity-70">목표 체중</span>
-                    <span className="text-xl font-bold text-success-foreground">{result.weightDiagnosis.idealWeight.toFixed(1)}kg</span>
-                 </div>
-              </div>
+              <p className="text-sm font-bold opacity-80 leading-relaxed">
+                현재 {result.weightDiagnosis.currentWeight}kg에서 목표 {result.weightDiagnosis.idealWeight.toFixed(1)}kg까지 안전하게 도달하기 위한 플랜입니다.
+              </p>
             </Card>
           </div>
 
@@ -175,13 +167,13 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                       <XAxis dataKey="weight" tick={{ fontSize: 10, fontWeight: 'bold' }} label={{ value: '몸무게 (kg)', position: 'insideBottom', offset: -10, fontSize: 10 }} />
                       <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} label={{ value: '급여량 (g)', angle: -90, position: 'insideLeft', fontSize: 10, offset: 10 }} />
                       <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                      <ReferenceLine x={result.weightDiagnosis.idealWeight} stroke="green" strokeDasharray="3 3" label={{ value: 'Ideal', position: 'top', fontSize: 10, fill: 'green' }} />
+                      <ReferenceLine x={result.weightDiagnosis.idealWeight} stroke="green" strokeDasharray="3 3" label={{ value: '목표', position: 'top', fontSize: 10, fill: 'green' }} />
                       <Line type="monotone" dataKey="grams" stroke="hsl(var(--primary))" strokeWidth={4} dot={{ r: 6, fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "#fff" }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartContainer>
               </div>
-              <p className="text-[11px] text-center font-bold text-muted-foreground">감량 중에는 칼로리를 제한하고, 목표 체중 도달 후 유지량을 급여하십시오.</p>
+              <p className="text-[11px] text-center font-bold text-muted-foreground italic">체중이 줄어듦에 따라 권장 급여량도 미세하게 조정됩니다.</p>
             </Card>
           )}
         </>
@@ -197,7 +189,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <div className="bg-muted/30 p-8 border-b">
             <h3 className="font-black flex items-center gap-2 text-muted-foreground">
-              <FlaskConical size={18} /> 제1~5원료 퀄리티 심사 (Volume 80%)
+              <FlaskConical size={18} /> 제1~5원료 품질 심사
             </h3>
           </div>
           <CardContent className="p-8 space-y-4">
@@ -265,18 +257,21 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       </div>
 
-      {/* 4. Nutritional Density (DM) - Enhanced with Standards */}
+      {/* 4. Nutritional Density (DM) */}
       <Card className="border-none shadow-xl rounded-[3rem] bg-white p-10 space-y-8">
         <div className="space-y-1">
           <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            <BarChart3 className="text-primary" size={20}/> 📊 [수분 제외 영양 밀도 (DM) vs 권장 범위]
+            <BarChart3 className="text-primary" size={20}/> 📊 [수분 제외 영양 밀도 (DM)]
           </CardTitle>
-          <p className="text-[11px] text-muted-foreground font-black">* 종별/생애주기별 최적 범위와 비교한 결과입니다.</p>
+          <p className="text-[11px] text-muted-foreground font-black">* AAFCO/NRC 가이드라인 및 종별 권장 범위와 대조한 결과입니다.</p>
         </div>
 
         <div className="space-y-10">
            {nutritionMetrics.map((metric, i) => {
-             const { value, minStd, maxStd, status, verdict } = metric.data;
+             const metricData = metric.data;
+             if (!metricData) return null;
+
+             const { value, minStd, maxStd, status, verdict } = metricData;
              const range = 100;
              const idealStart = (minStd / range) * 100;
              const idealWidth = ((maxStd - minStd) / range) * 100;
@@ -337,7 +332,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <Repeat size={18} className="mr-2" /> 다시 분석
           </Button>
           <Button 
-            onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(productName)}`, '_blank')}
+            onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(result.productIdentity.name)}`, '_blank')}
             className="flex-[2] h-14 rounded-2xl text-lg font-black shadow-lg"
           >
             <ShoppingBag size={20} className="mr-2" /> 최저가 검색

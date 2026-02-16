@@ -1,10 +1,10 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v15.0] 
- * - Ultra-Precision Nutrition: Dog & Cat
- * - Strict Breed Standard & Obesity Algorithm
- * - Deep Ingredient Anatomy & GI Impact Analysis
+ * @fileOverview [Pettner Core Engine v15.5] 
+ * - Ultra-Precision Nutrition Algorithm
+ * - Strict Breed Standard & Obesity Calculation
+ * - Deep Ingredient Anatomy (Tier 1-3 Classification)
  */
 
 import {ai} from '@/ai/genkit';
@@ -61,7 +61,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
   }),
   scoreCard: z.object({
     totalScore: z.number().min(0).max(100).describe('적합성/품질 점수'),
-    grade: z.string().describe('점수 기반 등급'),
+    grade: z.string().describe('점수 기반 등급 (예: A, B+, C)'),
     headline: z.string().describe('핵심 진단 문구'),
     statusTags: z.array(z.string()).describe('상태 태그')
   }),
@@ -123,8 +123,8 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 세계적인 수의 영양학 전문의이자 펫푸드 감사관입니다. 
-아래 데이터를 바탕으로 제품 품질 감사 또는 환자 맞춤형 진단 리포트를 생성하십시오.
+  prompt: `당신은 세계적인 수의 영양학 전문의이자 공인 펫푸드 감사관입니다. 
+아래 데이터를 바탕으로 초정밀 영양 진단 리포트를 생성하십시오.
 
 # 환자(반려동물) 프로필 (맞춤 진단 시에만 사용)
 - 이름/종/무게: {{{petProfile.name}}} ({{{petType}}}, {{{petProfile.breed}}}, {{{petProfile.weight}}}kg)
@@ -132,18 +132,19 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
 - 체중변화: {{{petProfile.weightChange}}}, 산책/라이프스타일: {{{petProfile.lifestyle}}}, 행동패턴: {{{petProfile.behaviorPattern}}}
 - 변상태: {{{petProfile.stoolCondition}}}, 음수량: {{{petProfile.waterIntake}}}
 
-# 분석 알고리즘 가이드라인
-1. [품종 표준 데이터]: {{{petProfile.breed}}}의 성견 표준 체중 범위를 반드시 검색하여 적용하십시오. (예: 말티푸 3~8kg)
-2. [비만 진단]: BCS 4 이상인 경우 다음 공식을 엄격히 적용하십시오.
+# 분석 알고리즘 가이드라인 (엄격 준수)
+1. [품종 표준 대조]: {{{petProfile.breed}}}의 성견 표준 체중 범위를 반드시 검색하여 적용하십시오.
+2. [비만 공식]: BCS 4 이상인 경우 다음 공식을 엄격히 적용하십시오.
    - Ideal_Weight = Current_Weight * (100 - (BCS - 3) * 10) / 100
-   - overweightPercentage = ((Current_Weight - 표준범위상단) / 표준범위상단) * 100
-   - 비만견의 경우 감량 로드맵(dietRoadmap)을 반드시 3단계(급속감량, 안정기, 유지기)로 생성하십시오.
-3. [원재료 심층 해부]: 
-   - 제1~5원료 분석: Tier 1(생육/통생선), Tier 2(명칭된 분말), Tier 3(부산물/익명원료)로 분류.
-   - GI Impact: 비만견의 경우 옥수수, 밀, 쌀 등을 '고혈당(High GI)' 유발 원료로 명시하십시오.
-   - 기능성 매칭: 글루코사민, L-카르니틴, 오메가-3 등을 아이의 건강 태그와 매칭하십시오.
-4. [영양 표준]: AAFCO/NRC 기준에 따른 DM(건물 기준) 분석을 수행하십시오. 
-   - 비만견인 경우 탄수화물(NFE) DM 40% 초과 시 강력 경고하십시오.
+   - weightGap = Current_Weight - Ideal_Weight
+   - 비만견의 경우 Target_Kcal = (70 * (Ideal_Weight ^ 0.75)) * 1.0 (감량 계수 적용)
+3. [영양 밀도(DM)]: 수분을 제외한 건물 기준(DM)으로 분석하십시오.
+   - 비만견인 경우 탄수화물(NFE) DM 40% 초과 시 'isHighCarb'를 true로 설정하고 강력 경고하십시오.
+4. [원재료 해부]:
+   - Tier 1: 생육/통생선 (신선함, 높은 소화율)
+   - Tier 2: 명칭된 분말 (Chicken Meal 등)
+   - Tier 3: 부산물/익명원료 (Meat Meal 등)
+   - 고혈당(High GI): 옥수수, 밀, 쌀 등은 비만견에게 부정적 요인으로 서술하십시오.
 
 사진 데이터: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음{{/if}}`,
 });
