@@ -1,4 +1,3 @@
-
 'use client';
 
 import AnalysisResult from '@/components/analysis-result';
@@ -8,58 +7,55 @@ import { ArrowLeft, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SampleReportPage() {
-  // 나무(말티푸, 12.6kg, 발핥음)를 위한 초고도화 가상 분석 데이터
+  // 나무(말티푸, 12.6kg, BCS 5)를 위한 초정밀 분석 데이터
   const mockResult: AnalyzePetFoodIngredientsOutput = {
     status: 'success',
-    productInfo: {
+    productIdentity: {
       name: "인스팅트 오리지널 그레인프리 치킨",
       brand: "인스팅트 (Instinct)",
-      type: "건식 사료"
+      category: "건식 사료"
     },
-    matchingScore: {
-      score: 82,
-      clinicalReason: "AAFCO 2024 영양 가이드라인 기준, 성견에게 필요한 필수 아미노산 프로필을 완벽히 충족합니다. 다만, 나무가 보이는 '발핥음' 증상은 전형적인 식이 알러지 반응일 가능성이 높으며, 본 제품의 주 단백질원인 닭고기는 알러지 유발 빈도가 높은 원료입니다. 임상적으로 알러지 배제 식이(Elimination Diet)가 필요한 시점입니다.",
-      geneticInsight: "말티푸(Maltipoo)는 유전적으로 슬개골 탈구와 심장 건강 관리에 취약합니다. 나무의 현재 체중(12.6kg)은 과체중 상태로 보이며, 이는 관절에 무리를 줄 수 있습니다. 본 제품은 관절 보조 성분(글루코사민)을 함유하고 있어 긍정적이나, 높은 칼로리 밀도 때문에 정밀한 급여량 조절이 필수적입니다.",
-      complexConditionAdvice: "발핥음(알러지)과 과체중(12.6kg)이 공존하는 복합 상태입니다. 알러지 반응을 줄이기 위해 2주간 간식을 완전히 중단하고 본 사료만 급여하며 발핥음 횟수를 체크하십시오. 또한, 현재 체중 감량을 위해 RER(휴지기 에너지 요구량) 기준의 0.9배로 급여량을 조절할 것을 권장합니다."
+    scoreCard: {
+      totalScore: 58,
+      grade: "C+ (다이어트 필요)",
+      headline: "나무의 건강을 위해 탄수화물 함량이 더 낮은 식단으로 교체하는 것을 권장합니다.",
+      statusTags: ["🔴 비만 경고", "📉 다이어트 시급", "🦴 관절 보호 필요"]
     },
-    summary: {
-      headlines: [
-        "고단백 육류 위주의 프리미엄 그레인프리 식단",
-        "알러지 유발 가능성이 있는 닭고기 베이스 주의 필요",
-        "관절 및 연골 건강을 위한 콘드로이친 함유"
-      ],
-      hashtags: ["#고단백", "#그레인프리", "#생식코팅", "#말티푸맞춤관리", "#관절케어"]
+    weightDiagnosis: {
+      currentWeight: 12.6,
+      idealWeight: 10.08,
+      weightGap: 2.52,
+      breedStandardRange: "3~8kg",
+      overweightPercentage: 57.5,
+      verdict: "말티푸 평균 몸무게 상단(8kg) 대비 약 57% 초과된 상태로, 관절 및 심혈관 질환 위험이 매우 높습니다."
     },
-    ingredientsAnalysis: {
-      positive: [
-        { name: "생닭고기", effect: "제1원료로서 생체 이용률이 매우 높은 양질의 동물성 단백질 공급" },
-        { name: "닭고기 밀", effect: "농축된 단백질원으로 근육 유지 및 필수 아미노산 밸런스 유지" },
-        { name: "동결건조 닭고기", effect: "영양소 파괴를 최소화한 생식 코팅으로 기호성 및 소화율 극대화" }
-      ],
-      cautionary: [
-        { name: "닭고기 지방", effect: "에너지원은 좋으나 닭고기 알러지가 있는 경우 교차 반응 위험" },
-        { name: "타피오카 전분", effect: "곡물은 없으나 탄수화물 밀도가 높아 비만 관리 시 급여량 주의" }
-      ],
-      hiddenInsights: "본 제품은 'Grain-Free'를 표방하지만, 타피오카와 완두콩을 통해 탄수화물을 보충합니다. 이는 당지수(GI)를 고려해야 하는 나무와 같은 과체중 아이에게는 정량 급여가 무엇보다 중요함을 시사합니다."
-    },
-    radarChart: [
-      { attribute: "소화기 건강", score: 5 },
-      { attribute: "피부/모질", score: 2 },
-      { attribute: "체중 관리", score: 3 },
-      { attribute: "관절 강화", score: 4 },
-      { attribute: "활동 에너지", score: 5 }
+    dietRoadmap: [
+      { weight: 12.6, grams: 85, phase: "급속 감량기" },
+      { weight: 11.3, grams: 95, phase: "안정기" },
+      { weight: 10.1, grams: 110, phase: "유지기 도달" }
     ],
-    feedingGuide: {
-      dailyCalories: "12.6kg 나무 기준: 약 680kcal (체중 감량 모드)",
-      recommendation: "일 2회 급여, 1회당 약 80g(종이컵 약 3/4컵 미만)씩 급여하십시오. 발핥음이 심해질 경우 육류 단백질원을 변경(연어, 토끼 등)하는 것을 고려하십시오."
+    advancedNutrition: {
+      carbs_nfe_dm: 42.5,
+      protein_dm: 35.0,
+      fat_dm: 18.0,
+      isHighCarb: true,
+      caloriesPerGram: 3.8
     },
-    expertInsight: {
-      proTip: "나무의 발핥음은 식이 알러지일 확률이 80% 이상입니다. 사료 변경 시 반드시 7~10일에 걸쳐 천천히 섞어서 교체하시고, 이 기간 동안 단 하나의 간식도 주지 않는 것이 핵심입니다.",
-      scientificReferences: [
-        "AAFCO Dog Food Nutrient Profiles for Maintenance (2024)",
-        "Journal of Veterinary Internal Medicine: Food Allergy in Dogs",
-        "NRC Nutrient Requirements of Dogs and Cats"
-      ]
+    veterinaryDiagnosis: {
+      criticalMismatch: "본 제품의 탄수화물 함량은 42.5%로, 비만 관리가 필요한 나무에게는 다소 높습니다. 특히 고혈당을 유발하는 타피오카 성분이 포함되어 있어 체지방 감량 속도가 더딜 수 있습니다.",
+      positivePoints: [
+        "글루코사민과 콘드로이친이 함유되어 과체중으로 인한 나무의 슬개골 및 관절 부담을 완화해줍니다.",
+        "오메가-3 지방산이 풍부하여 비만으로 인한 만성 염증 억제에 도움을 줍니다."
+      ],
+      cautionaryPoints: [
+        "타피오카 전분: 높은 당지수로 인해 인슐린 분비를 자극, 지방 축적을 촉진할 수 있습니다.",
+        "닭고기 지방: 칼로리 밀도가 높아 정해진 급여량을 엄격히 준수해야 합니다."
+      ],
+      vetAdvice: "현재 나무는 심각한 과체중 상태입니다. 사료를 즉시 변경하기 어렵다면 현재 급여량에서 15%를 줄여서 시작하시고, 간식은 일체 중단하십시오. 2주 뒤 체중 변화를 보고 급여량을 미세 조정해야 합니다."
+    },
+    feedingSummary: {
+      lossAmountGrams: 85,
+      cupGuide: "종이컵 약 0.8컵"
     }
   };
 
@@ -71,6 +67,7 @@ export default function SampleReportPage() {
       breed: '말티푸',
       age: 4,
       weight: 12.6,
+      bcs: '5',
       healthConditions: ['발핥음'],
       activityLevel: 'HIGH'
     }
@@ -87,17 +84,17 @@ export default function SampleReportPage() {
             </Button>
             <div className="flex items-center gap-2 text-primary font-bold">
                 <Sparkles className="w-5 h-5" />
-                <span>ULTRA-PREMIUM REPORT</span>
+                <span>VETERINARY MEDICAL REPORT</span>
             </div>
         </div>
 
         <div className="bg-primary text-white p-6 rounded-3xl shadow-xl shadow-primary/20 flex flex-col md:flex-row items-center gap-6">
           <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-md">
-            <span className="text-4xl">🐕</span>
+            <span className="text-4xl">🔬</span>
           </div>
           <div>
-            <h2 className="text-2xl font-black">나무를 위한 초정밀 분석 예시</h2>
-            <p className="text-primary-foreground/80 font-medium">실제 데이터(말티푸, 12.6kg, 발핥음)를 기반으로 생성된 결과화면입니다.</p>
+            <h2 className="text-2xl font-black">초정밀 수의학 진단 리포트 (예시)</h2>
+            <p className="text-primary-foreground/80 font-medium">말티푸 나무(12.6kg, 비만)를 위한 맞춤형 분석 결과입니다.</p>
           </div>
         </div>
 

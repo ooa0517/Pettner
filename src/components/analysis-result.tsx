@@ -19,8 +19,9 @@ import {
   ChartContainer, 
   ChartTooltip, 
   ChartTooltipContent,
+  type ChartConfig
 } from '@/components/ui/chart';
-import { Line, LineChart, XAxis, YAxis, ResponsiveContainer, CartesianGrid, ReferenceLine } from 'recharts';
+import { Line, LineChart, XAxis, YAxis, CartesianGrid, ReferenceLine } from 'recharts';
 import { Progress } from '@/components/ui/progress';
 
 type AnalysisResultProps = {
@@ -29,6 +30,13 @@ type AnalysisResultProps = {
   onReset: () => void;
   resetButtonText?: string;
 };
+
+const chartConfig = {
+  grams: {
+    label: "권장 급여량 (g)",
+    color: "hsl(var(--primary))",
+  },
+} satisfies ChartConfig;
 
 export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
   const { t } = useLanguage();
@@ -158,7 +166,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
 
         <div className="h-[300px] w-full">
-           <ResponsiveContainer width="100%" height="100%">
+           <ChartContainer config={chartConfig} className="h-full w-full">
               <LineChart data={result.dietRoadmap} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis 
@@ -182,7 +190,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   name="권장 급여량 (g)"
                 />
               </LineChart>
-           </ResponsiveContainer>
+           </ChartContainer>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t">
