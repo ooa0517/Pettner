@@ -1,11 +1,10 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v25.0 - Ultra Precision]
- * - Dual Analysis Persona: Veterinary Physician vs Food Safety Auditor
- * - Advanced Obesity Logic: BCS-based Ideal Weight & 5-Point Diet Roadmap
- * - Ingredient Tiering & Genetic Breed Insights
- * - ESG & Brand Integrity Audit
+ * @fileOverview [Pettner Core Engine v5.0 - Professional Auditor & Veterinarian]
+ * - Dual Mode: Veterinary Diagnostic vs Product Quality Audit
+ * - Deep Dive Logic: Ingredient Tiering (1-3), Nutritional Engineering (Ca:P, Omega), ESG Audit
+ * - Strict 5-Point Diet Roadmap for Obese Pets
  */
 
 import {ai} from '@/ai/genkit';
@@ -67,49 +66,56 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     idealWeight: z.number(),
     weightGap: z.number(),
     breedStandardRange: z.string().describe('해당 품종의 표준 체중 범위'),
-    breedGeneticInsight: z.string().describe('품종 유전적 취약점 및 비만 위험성 수의학 조언'),
-    overweightPercentage: z.number().describe('표준 범위 상단 대비 초과 비율 (%)'),
-    verdict: z.string().describe('비만 및 체중 상태 진단 총평')
+    breedGeneticInsight: z.string().describe('품종 유전적 취약점 조언'),
+    overweightPercentage: z.number(),
+    verdict: z.string()
   }).optional(),
   dietRoadmap: z.array(z.object({
     weight: z.number(),
     grams: z.number(),
     phase: z.string()
-  })).min(5).max(5).optional().describe('5단계 체중 조절 로드맵'),
-  advancedNutrition: z.object({
-    protein: NutritionalMetricSchema,
-    fat: NutritionalMetricSchema,
-    carbs: NutritionalMetricSchema,
-    fiber: NutritionalMetricSchema,
-    ash: NutritionalMetricSchema,
-    isHighCarb: z.boolean(),
-    caloriesPerGram: z.number()
-  }),
-  ingredientAnatomy: z.object({
-    firstFive: z.array(z.object({
-      name: z.string(),
-      tier: z.enum(['Tier 1', 'Tier 2', 'Tier 3']),
-      tierLabel: z.string(),
-      description: z.string()
-    })),
-    functionalBoosters: z.array(z.object({
-      name: z.string(),
-      benefit: z.string(),
-      description: z.string()
-    })),
-    safetyFilter: z.object({
-      noArtificialPreservatives: z.boolean(),
-      noArtificialColors: z.boolean(),
-      allergyWarning: z.string().optional(),
-      hiddenAdditives: z.array(z.string())
+  })).optional(),
+  deepDive: z.object({
+    ingredientAudit: z.object({
+      tiers: z.array(z.object({
+        level: z.enum(['Tier 1', 'Tier 2', 'Tier 3']),
+        ingredients: z.array(z.string()),
+        comment: z.string()
+      })),
+      giIndex: z.enum(['Low', 'Moderate', 'High']),
+      giComment: z.string()
+    }),
+    nutritionalEngineering: z.object({
+      metrics: z.object({
+        protein: NutritionalMetricSchema,
+        fat: NutritionalMetricSchema,
+        carbs: NutritionalMetricSchema,
+        fiber: NutritionalMetricSchema,
+        ash: NutritionalMetricSchema
+      }),
+      ratios: z.object({
+        caPRatio: z.string().describe('칼슘:인 비율 (예: 1.2:1)'),
+        omega63Ratio: z.string().describe('오메가 6:3 비율'),
+        balanceVerdict: z.string()
+      })
+    }),
+    safetyToxicology: z.object({
+      checks: z.array(z.object({
+        label: z.string(),
+        status: z.boolean(),
+        comment: z.string()
+      })),
+      riskAlert: z.string().optional(),
+      recallHistory: z.string()
+    }),
+    brandESG: z.object({
+      facility: z.string().describe('제조 시설 인증 현황'),
+      rdLevel: z.string().describe('R&D 투자 수준'),
+      sustainability: z.string().describe('친환경/패키징 평가'),
+      animalWelfare: z.string().describe('동물 복지 및 윤리 평가')
     })
   }),
-  brandInsight: z.object({
-    reputation: z.string().describe('브랜드 평판'),
-    recallHistory: z.string().describe('리콜 이력 요약 (최신 데이터 기반)'),
-    esgScore: z.string().describe('환경 및 윤리성 점수/평가')
-  }),
-  veterinaryAdvice: z.string().describe('종합 심사 의견')
+  veterinaryAdvice: z.string()
 });
 
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
@@ -119,30 +125,21 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
   prompt: `당신은 세계적인 수의 영양학 전문의이자 공인 펫푸드 감사관입니다. 
-입력된 데이터를 바탕으로 초정밀 분석 리포트를 생성하십시오.
+입력된 데이터를 바탕으로 [Pettner V5.0 Deep-Dive] 아키텍처에 따른 초정밀 리포트를 생성하십시오.
 
 분석 모드: {{{analysisMode}}}
 
-# [MODE: 수의사 정밀 진단 (Custom Mode)]
-반드시 다음 로직을 적용하십시오:
-1. Ideal_Weight 계산: Current_Weight * (100 - (BCS - 3) * 10) / 100
-2. dietRoadmap 생성 (반드시 5개 지점):
-   - 지점 1(현재): 감량 칼로리 (RER * 1.0) 기준 급여량(g)
-   - 지점 5(목표): 유지 칼로리 (RER * 1.4) 기준 급여량(g)
-   - 중간(2,3,4): 칼로리를 점진적으로 상향 조정. **목표에 가까워질수록 급여량은 늘어납니다.**
-3. Breed Genetic Insight: {{{petProfile.breed}}}의 유전적 취약점과 비만의 상관관계를 인터넷 서칭급 지식으로 설명하십시오.
+# [분석 대원칙]
+1. 원재료 심층 해부: 상위 10개 원료를 Tier 1(생육/슈퍼푸드), Tier 2(농축분), Tier 3(부산물/필러)로 강제 분류하십시오.
+2. 영양 엔지니어링: AAFCO/FEDIAF 기준을 바탕으로 칼슘:인 비율과 오메가 6:3 비율을 추론/계산하십시오.
+3. 브랜드 감사: 최신 지식 베이스를 활용하여 해당 브랜드의 리콜 이력과 ESG 경영(친환경, 동물복지)을 심사하십시오.
+4. 개인화 매칭 (Custom Mode 시): 
+   - Ideal_Weight = Current_Weight * (100 - (BCS - 3) * 10) / 100
+   - dietRoadmap: 현재에서 목표까지 5개 지점 생성. 목표에 가까워질수록 유지 칼로리(RER*1.4)를 반영하여 급여량이 늘어납니다.
 
-# [MODE: 공인 감사관 제품 심사 (General Mode)]
-반드시 다음 로직을 적용하십시오:
-1. 제품의 객관적 품질, 브랜드 신뢰도, 원료 등급만 심사하십시오.
-2. 브랜드 평판 및 최신 리콜 이력을 포함하십시오.
-3. ESG 평가: 환경 보호, 윤리적 원료(Non-GMO, 유기농) 사용 여부를 심사하십시오.
-
-# 원재료 심사 기준 (엄격)
-- Tier 1: Fresh Meat / Whole Fish (가공되지 않은 신선육)
-- Tier 2: Named Meals (Chicken Meal 등 단백질 농축분)
-- Tier 3: By-products / Unspecified Fats (Vegetable Oil 등 부산물 및 불분명한 유지)
-- 비만견에게는 옥수수(Corn), 밀(Wheat), 쌀(Rice)을 고혈당 유발 인자(High GI)로 플래그하십시오.
+# 출력 구조 (Hierarchical Disclosure)
+- 상단 Summary: 결론, 점수, 한 줄 평, 급여 가이드.
+- 하단 Deep-Dive: 아코디언 메뉴에 들어갈 상세 데이터 (ingredientAudit, nutritionalEngineering, safetyToxicology, brandESG).
 
 사진 데이터: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음{{/if}}`,
 });
@@ -155,7 +152,7 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await analyzePetFoodIngredientsPrompt(input);
-    if (!output) throw new Error('AI 분석 실패: 출력물이 생성되지 않았습니다.');
+    if (!output) throw new Error('AI 분석 실패: 데이터가 생성되지 않았습니다.');
     return {
       ...output,
       status: 'success'
