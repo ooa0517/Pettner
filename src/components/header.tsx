@@ -37,6 +37,7 @@ export default function Header() {
 
   const handleLogoClick = (e: React.MouseEvent) => {
     if (pathname === '/') {
+      e.preventDefault();
       window.location.href = '/?reset=true';
     }
   };
