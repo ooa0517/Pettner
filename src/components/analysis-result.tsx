@@ -21,7 +21,6 @@ import {
   type ChartConfig
 } from '@/components/ui/chart';
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ReferenceLine } from 'recharts';
-import { Progress } from '@/components/ui/progress';
 
 type AnalysisResultProps = {
   result: AnalyzePetFoodIngredientsOutput;
@@ -51,6 +50,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
      );
   }
 
+  const isCustomMode = input.analysisMode === 'custom';
   const isObese = (input.petProfile?.bcs && parseInt(input.petProfile.bcs) >= 4) || false;
 
   return (
@@ -65,7 +65,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 Veterinary Nutrition Report v8.0
               </Badge>
               <h1 className="text-3xl font-black tracking-tighter pt-2">
-                {input.petProfile?.name}({input.petProfile?.breed}) 진단 리포트
+                {isCustomMode ? `${input.petProfile?.name}(${input.petProfile?.breed}) 진단 리포트` : '제품 성분 분석 리포트'}
               </h1>
             </div>
             <div className="text-right">
@@ -84,7 +84,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
              <div className="relative z-10 space-y-4">
                <h3 className="text-xl font-black flex items-center gap-2">
                  <Info className="text-primary" size={20}/> 
-                 상태 진단 요약
+                 분석 요약
                </h3>
                <p className="text-lg font-bold leading-relaxed break-keep">
                  {result.scoreCard.headline}
@@ -101,71 +101,77 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </CardContent>
       </Card>
 
-      {/* 2. Weight Diagnosis & Roadmap */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10 space-y-8">
-          <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            <Scale size={18} className="text-primary"/> 품종 대비 체중 분석
-          </CardTitle>
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <div className="flex justify-between text-xs font-black">
-                <span className="text-success">표준 ({result.weightDiagnosis.breedStandardRange})</span>
-                <span className="text-destructive">우리 아이 ({result.weightDiagnosis.currentWeight}kg)</span>
+      {/* 2. Weight Diagnosis & Roadmap - Only for Custom Mode */}
+      {isCustomMode && result.weightDiagnosis && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10 space-y-8">
+              <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Scale size={18} className="text-primary"/> 품종 대비 체중 분석
+              </CardTitle>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <div className="flex justify-between text-xs font-black">
+                    <span className="text-success">표준 ({result.weightDiagnosis.breedStandardRange})</span>
+                    <span className="text-destructive">우리 아이 ({result.weightDiagnosis.currentWeight}kg)</span>
+                  </div>
+                  <div className="h-6 bg-muted rounded-full relative overflow-hidden">
+                     <div className="absolute inset-0 bg-success/20 w-[40%]" />
+                     <div className="h-full bg-destructive animate-in slide-in-from-left duration-1000" style={{ width: `${Math.min(result.weightDiagnosis.overweightPercentage, 100)}%` }} />
+                  </div>
+                </div>
+                <div className="p-5 bg-destructive/5 rounded-2xl border border-destructive/10">
+                   <div className="text-destructive font-black text-xl">표준 대비 +{result.weightDiagnosis.overweightPercentage}% 초과</div>
+                   <p className="text-xs font-bold text-muted-foreground mt-1 leading-relaxed">
+                     {result.weightDiagnosis.verdict}
+                   </p>
+                </div>
               </div>
-              <div className="h-6 bg-muted rounded-full relative overflow-hidden">
-                 <div className="absolute inset-0 bg-success/20 w-[40%]" />
-                 <div className="h-full bg-destructive animate-in slide-in-from-left duration-1000" style={{ width: `${Math.min(result.weightDiagnosis.overweightPercentage, 100)}%` }} />
+            </Card>
+
+            <Card className="border-none shadow-xl rounded-[2.5rem] bg-primary text-white p-10 flex flex-col justify-between relative overflow-hidden">
+              <TrendingDown className="absolute right-[-10px] bottom-[-10px] w-32 h-32 opacity-10" />
+              <div className="space-y-2">
+                <p className="text-xs font-black opacity-70 uppercase tracking-widest">Target Weight</p>
+                <h3 className="text-4xl font-black">{isObese ? `감량 목표: -${result.weightDiagnosis.weightGap.toFixed(1)}kg` : '정상 체중 유지'}</h3>
               </div>
-            </div>
-            <div className="p-5 bg-destructive/5 rounded-2xl border border-destructive/10">
-               <div className="text-destructive font-black text-xl">표준 대비 +{result.weightDiagnosis.overweightPercentage}% 초과</div>
-               <p className="text-xs font-bold text-muted-foreground mt-1 leading-relaxed">
-                 {result.weightDiagnosis.verdict}
-               </p>
-            </div>
+              <div className="space-y-4">
+                 <div className="flex justify-between items-end border-b border-white/20 pb-2">
+                    <span className="text-sm opacity-70">현재 체중</span>
+                    <span className="text-xl font-bold">{result.weightDiagnosis.currentWeight}kg</span>
+                 </div>
+                 <div className="flex justify-between items-end border-b border-white/20 pb-2">
+                    <span className="text-sm opacity-70">목표 체중</span>
+                    <span className="text-xl font-bold text-success-foreground">{result.weightDiagnosis.idealWeight}kg</span>
+                 </div>
+              </div>
+            </Card>
           </div>
-        </Card>
 
-        <Card className="border-none shadow-xl rounded-[2.5rem] bg-primary text-white p-10 flex flex-col justify-between relative overflow-hidden">
-          <TrendingDown className="absolute right-[-10px] bottom-[-10px] w-32 h-32 opacity-10" />
-          <div className="space-y-2">
-            <p className="text-xs font-black opacity-70 uppercase tracking-widest">Weight Loss Target</p>
-            <h3 className="text-4xl font-black">감량 목표: -{result.weightDiagnosis.weightGap.toFixed(1)}kg</h3>
-          </div>
-          <div className="space-y-4">
-             <div className="flex justify-between items-end border-b border-white/20 pb-2">
-                <span className="text-sm opacity-70">현재 체중</span>
-                <span className="text-xl font-bold">{result.weightDiagnosis.currentWeight}kg</span>
-             </div>
-             <div className="flex justify-between items-end border-b border-white/20 pb-2">
-                <span className="text-sm opacity-70">목표 체중</span>
-                <span className="text-xl font-bold text-success-foreground">{result.weightDiagnosis.idealWeight}kg</span>
-             </div>
-          </div>
-        </Card>
-      </div>
+          {/* 3. Diet Roadmap Graph */}
+          {result.dietRoadmap && result.dietRoadmap.length > 0 && (
+            <Card className="border-none shadow-xl rounded-[3rem] bg-white p-10 space-y-8">
+              <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                📉 [단계별 체중 조절 플랜]
+              </CardTitle>
+              <div className="h-[250px] w-full">
+                <ChartContainer config={chartConfig} className="h-full w-full">
+                  <LineChart data={result.dietRoadmap} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis dataKey="weight" tick={{ fontSize: 10, fontWeight: 'bold' }} label={{ value: '몸무게 (kg)', position: 'insideBottom', offset: -10, fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} label={{ value: '급여량 (g)', angle: -90, position: 'insideLeft', fontSize: 10 }} />
+                    <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+                    <ReferenceLine x={result.weightDiagnosis.idealWeight} stroke="green" strokeDasharray="3 3" label={{ value: 'Ideal', position: 'top', fontSize: 10, fill: 'green' }} />
+                    <Line type="monotone" dataKey="grams" stroke="hsl(var(--primary))" strokeWidth={4} dot={{ r: 6, fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "#fff" }} />
+                  </LineChart>
+                </ChartContainer>
+              </div>
+            </Card>
+          )}
+        </>
+      )}
 
-      {/* 3. Diet Roadmap Graph */}
-      <Card className="border-none shadow-xl rounded-[3rem] bg-white p-10 space-y-8">
-        <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-          📉 [단계별 체중 조절 플랜]
-        </CardTitle>
-        <div className="h-[250px] w-full">
-           <ChartContainer config={chartConfig} className="h-full w-full">
-              <LineChart data={result.dietRoadmap} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="weight" tick={{ fontSize: 10, fontWeight: 'bold' }} label={{ value: '몸무게 (kg)', position: 'insideBottom', offset: -10, fontSize: 10 }} />
-                <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} label={{ value: '급여량 (g)', angle: -90, position: 'insideLeft', fontSize: 10 }} />
-                <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                <ReferenceLine x={result.weightDiagnosis.idealWeight} stroke="green" strokeDasharray="3 3" label={{ value: 'Ideal', position: 'top', fontSize: 10, fill: 'green' }} />
-                <Line type="monotone" dataKey="grams" stroke="hsl(var(--primary))" strokeWidth={4} dot={{ r: 6, fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "#fff" }} />
-              </LineChart>
-           </ChartContainer>
-        </div>
-      </Card>
-
-      {/* 4. Deep Ingredient Anatomy (★NEW★) */}
+      {/* 4. Deep Ingredient Anatomy */}
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <Dna className="text-primary w-6 h-6" />
@@ -194,7 +200,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8 space-y-6">
             <h3 className="font-black flex items-center gap-2 text-primary">
-              <Activity size={18} /> 기능성 성분 매칭
+              <Activity size={18} /> {isCustomMode ? '맞춤 기능성 성분' : '주요 기능성 성분'}
             </h3>
             <div className="space-y-3">
               {result.ingredientAnatomy.functionalBoosters.map((booster, i) => (
@@ -204,7 +210,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 </div>
               ))}
               {result.ingredientAnatomy.functionalBoosters.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-6">해당되는 기능성 성분이 발견되지 않았습니다.</p>
+                <p className="text-sm text-muted-foreground text-center py-6">발견된 기능성 성분이 없습니다.</p>
               )}
             </div>
           </Card>
@@ -226,7 +232,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 <div className="mt-4 p-4 bg-destructive/5 border border-destructive/10 rounded-2xl flex gap-3">
                   <AlertTriangle className="text-destructive shrink-0" size={16} />
                   <p className="text-xs font-bold text-destructive leading-relaxed">
-                    알러지 주의: {result.ingredientAnatomy.safetyFilter.allergyWarning}
+                    주의: {result.ingredientAnatomy.safetyFilter.allergyWarning}
                   </p>
                 </div>
               )}

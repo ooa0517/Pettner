@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { 
   Camera, Sparkles, Dog, Cat, ShieldCheck, 
   CheckCircle2, Database, Activity,
-  Zap, ChevronRight,
+  Zap,
   HeartPulse, Scale,
   Dna, AlertCircle, Trash2
 } from 'lucide-react';
@@ -21,8 +21,8 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
 
-// 제공된 이미지의 스타일을 반영한 BCS 옵션
 const bcsOptions = [
   { value: '1', label: '1. 매우 마름', emoji: '😰', color: 'bg-[#E3F2FD]', activeBorder: 'border-blue-400' },
   { value: '2', label: '2. 마름', emoji: '😟', color: 'bg-[#E0F7FA]', activeBorder: 'border-cyan-400' },
@@ -60,15 +60,18 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
     foodType: z.enum(['dry', 'wet', 'treat', 'supplement']),
     image: z.any().optional(),
     petProfile: z.object({
-      name: z.string().min(1, '이름을 입력해주세요'),
-      breed: z.string().min(1, '품종을 입력해주세요'),
-      age: z.string().min(1, '나이를 입력해주세요'),
-      genderStatus: z.string().default('neutered_male'),
-      weight: z.string().min(1, '몸무게를 입력해주세요'),
-      bcs: z.string().default('3'),
-      activityLevel: z.string().default('NORMAL'),
-      healthConditions: z.array(z.string()).default([]),
-      allergies: z.array(z.string()).default([]),
+      name: z.string().optional(),
+      breed: z.string().optional(),
+      age: z.string().optional(),
+      genderStatus: z.string().optional(),
+      weight: z.string().optional(),
+      bcs: z.string().optional(),
+      activityLevel: z.string().optional(),
+      healthConditions: z.array(z.string()).optional(),
+      allergies: z.array(z.string()).optional(),
+    }).superRefine((data, ctx) => {
+      // analysisMode가 'custom'일 때만 필수값 체크
+      // form.getValues를 직접 쓰지 않고 refine으로 처리
     })
   }), []);
 
@@ -93,6 +96,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
     },
   });
 
+  const selectedMode = form.watch('analysisMode');
   const selectedPet = form.watch('petType');
   const imageFile = form.watch('image');
   const selectedBcs = form.watch('petProfile.bcs');
@@ -120,11 +124,33 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
     form.setValue('petProfile.allergies', current);
   };
 
+  const validateAndSubmit = (data: AnalysisFormValues) => {
+    if (data.analysisMode === 'custom') {
+      if (!data.petProfile.name) {
+        form.setError('petProfile.name', { message: '이름을 입력해주세요' });
+        return;
+      }
+      if (!data.petProfile.breed) {
+        form.setError('petProfile.breed', { message: '품종을 입력해주세요' });
+        return;
+      }
+      if (!data.petProfile.age) {
+        form.setError('petProfile.age', { message: '나이를 입력해주세요' });
+        return;
+      }
+      if (!data.petProfile.weight) {
+        form.setError('petProfile.weight', { message: '몸무게를 입력해주세요' });
+        return;
+      }
+    }
+    onAnalyze(data);
+  };
+
   return (
     <div className="space-y-12 max-w-2xl mx-auto pb-48 animate-in fade-in duration-700">
       <div className="text-center space-y-4 pt-10">
         <Badge className="bg-primary/10 text-primary border-none px-4 py-2 rounded-full font-black text-[10px] tracking-widest uppercase">
-          Veterinary Analysis Engine v5.2
+          Veterinary Analysis Engine v8.0
         </Badge>
         <h1 className="text-5xl md:text-7xl font-black font-headline tracking-tighter text-foreground leading-tight">
           Pettner Scan
@@ -143,7 +169,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
         </TabsList>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onAnalyze)} className="space-y-10">
+          <form onSubmit={form.handleSubmit(validateAndSubmit)} className="space-y-10">
             <TabsContent value="custom" className="space-y-10 mt-0">
               {/* 1. Identity Section */}
               <Card className="border-none shadow-2xl rounded-[3.5rem] overflow-hidden bg-white">
@@ -418,7 +444,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
             </Card>
 
             <Button type="submit" size="lg" disabled={!imageFile?.length} className="w-full h-28 text-3xl font-black rounded-[3.5rem] shadow-2xl shadow-primary/30 bg-primary hover:scale-[1.02] active:scale-95 transition-all">
-              <Sparkles className="mr-4 h-10 w-10" /> 정밀 분석 시작하기
+              <Sparkles className="mr-4 h-10 w-10" /> 분석 시작하기
             </Button>
 
             <div className="flex items-center justify-center gap-2 text-muted-foreground/40 pb-10">
