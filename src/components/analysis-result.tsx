@@ -6,16 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Repeat, ShoppingBag, Pencil, Sparkles, 
-  ThumbsUp, ThumbsDown, Info, Zap, 
-  UtensilsCrossed, Flame, CupSoda,
-  AlertCircle, Heart, User, Activity, Weight,
-  Scale
+  Repeat, ShoppingBag, Pencil, 
+  Info, AlertCircle, Scale,
+  ChevronRight, ArrowRight
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { 
+  ChartContainer, 
+  ChartTooltip, 
+  ChartTooltipContent,
+  ChartStyle 
+} from '@/components/ui/chart';
+import { Bar, BarChart, XAxis, YAxis, ResponsiveContainer, Cell } from 'recharts';
+import { Progress } from '@/components/ui/progress';
 
 type AnalysisResultProps = {
   result: AnalyzePetFoodIngredientsOutput;
@@ -34,221 +38,198 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl mx-auto py-20 text-center">
           <AlertCircle className="w-20 h-20 text-destructive mx-auto opacity-30"/>
           <h1 className="text-3xl font-black">분석 중 오류 발생</h1>
-          <p className="text-muted-foreground">사진이 너무 흐릿하거나 데이터가 부족합니다. 다시 촬영해 주세요.</p>
+          <p className="text-muted-foreground">데이터가 부족하거나 사진이 불명확합니다.</p>
           <Button onClick={onReset} variant="outline" size="lg" className="rounded-full">다시 시도하기</Button>
         </div>
      );
   }
 
-  const getGradeStyles = (grade: string) => {
-    switch(grade) {
-      case 'S': return 'bg-yellow-400 text-yellow-900 border-yellow-500';
-      case 'A': return 'bg-success text-success-foreground border-success';
-      case 'B': return 'bg-primary text-primary-foreground border-primary';
-      case 'C': return 'bg-orange-400 text-white border-orange-500';
-      case 'D': return 'bg-destructive text-destructive-foreground border-destructive';
-      default: return 'bg-muted text-muted-foreground';
-    }
-  };
+  const feedingData = [
+    { name: '감량 식단 (추천)', value: result.feedingGuide.weightLossGrams, fill: 'var(--primary)' },
+    { name: '유지 식단', value: result.feedingGuide.maintenanceGrams, fill: 'hsl(var(--muted-foreground))' }
+  ];
 
-  const BenchmarkBar = ({ label, position, value }: { label: string, position: number, value: string }) => (
+  const NutrientBar = ({ label, value, pct, isWarning }: { label: string, value: string, pct: number, isWarning?: boolean }) => (
     <div className="space-y-2">
-      <div className="flex justify-between items-end px-1">
-        <span className="text-[10px] font-black text-muted-foreground uppercase">{label}</span>
-        <span className="text-xs font-black text-primary">{value}</span>
+      <div className="flex justify-between items-end">
+        <span className="text-sm font-bold text-muted-foreground">{label}</span>
+        <span className={cn("text-sm font-black", isWarning ? "text-destructive" : "text-primary")}>{value}</span>
       </div>
-      <div className="relative h-2 bg-muted/50 rounded-full overflow-hidden">
-        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/50 z-10" />
-        <div 
-          className="absolute h-full bg-primary transition-all duration-1000"
-          style={{ width: `${position}%` }}
-        />
-      </div>
+      <Progress value={pct} className={cn("h-2", isWarning ? "bg-destructive/10" : "bg-muted")} />
     </div>
   );
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-1000 pb-40 max-w-4xl mx-auto px-4">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-40 max-w-4xl mx-auto px-4">
       
-      {/* 1. Header & Identity Verification */}
-      <div className="flex flex-col md:flex-row items-center gap-8 bg-white p-8 rounded-[3rem] shadow-xl ring-1 ring-black/5">
-        <div className="relative w-32 h-32 shrink-0">
-          <div className="absolute inset-0 bg-primary/10 rounded-[2rem] animate-pulse" />
-          <div className="absolute inset-0 flex items-center justify-center text-4xl">🥘</div>
-        </div>
-        <div className="flex-1 space-y-2 text-center md:text-left">
-          <div className="flex items-center justify-center md:justify-start gap-2">
-            <Badge variant="outline" className="font-bold text-primary border-primary/20 bg-primary/5">{result.productIdentity.brand}</Badge>
-            <Button variant="ghost" size="icon" className="h-6 w-6 opacity-30 hover:opacity-100" onClick={() => setIsEditing(!isEditing)}>
-              <Pencil className="w-3 h-3" />
-            </Button>
-          </div>
-          {isEditing ? (
-            <input 
-              value={productName} 
-              onChange={(e) => setProductName(e.target.value)}
-              onBlur={() => setIsEditing(false)}
-              className="text-2xl md:text-3xl font-black bg-muted/50 rounded-lg px-2 w-full outline-primary"
-              autoFocus
-            />
-          ) : (
-            <h1 className="text-2xl md:text-4xl font-black tracking-tighter leading-tight">{productName}</h1>
-          )}
-          <p className="text-sm font-bold text-muted-foreground">{input.petProfile?.name || '우리 아이'}를 위한 분석 리포트</p>
-        </div>
-        <div className={cn("h-24 w-24 rounded-[2rem] flex flex-col items-center justify-center shadow-2xl border-b-8 transition-transform hover:scale-110", getGradeStyles(result.scoreCard.grade))}>
-          <span className="text-[10px] font-black uppercase tracking-widest opacity-70">Grade</span>
-          <span className="text-5xl font-black">{result.scoreCard.grade}</span>
-        </div>
-      </div>
-
-      {/* 2. Pet Status Summary (Pet-First) */}
-      <Card className="border-none shadow-xl rounded-[3rem] bg-muted/20 overflow-hidden">
-        <CardHeader className="bg-white/50 p-6 border-b">
-          <CardTitle className="text-sm font-black flex items-center gap-2 text-muted-foreground uppercase tracking-widest">
-            <User size={16} className="text-primary"/> 아이 상태 분석 요약
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-8 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          <div className="space-y-1">
-            <p className="text-[10px] font-black text-muted-foreground uppercase">나이</p>
-            <p className="text-lg font-bold">{input.petProfile?.age || '-'}살</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-[10px] font-black text-muted-foreground uppercase">현재 체중</p>
-            <p className="text-lg font-bold">{input.petProfile?.weight || '-'}kg</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-[10px] font-black text-muted-foreground uppercase">중성화</p>
-            <p className="text-lg font-bold">{input.petProfile?.neutered ? '완료' : '미완료'}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-[10px] font-black text-muted-foreground uppercase">활동량</p>
-            <p className="text-lg font-bold">{input.petProfile?.activityLevel === 'HIGH' ? '에너자이저' : '보통'}</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* 3. The Verdict Hero */}
-      <div className="p-10 bg-primary text-white rounded-[3.5rem] shadow-2xl shadow-primary/30 relative overflow-hidden group">
-        <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000" />
-        <div className="flex items-center gap-3 mb-4">
-          <Sparkles className="w-6 h-6 animate-spin-slow" />
-          <span className="text-sm font-black uppercase tracking-widest">Pettner Verdict</span>
-        </div>
-        <p className="text-2xl md:text-4xl font-black leading-snug break-keep">{result.scoreCard.headline}</p>
-      </div>
-
-      {/* 4. Feeding Guide Dashboard */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { icon: Flame, label: '하루 필요 열량', value: result.feedingGuide.dailyKcal, color: 'text-orange-500' },
-          { icon: UtensilsCrossed, label: '하루 권장 급여량', value: result.feedingGuide.dailyAmount, color: 'text-primary' },
-          { icon: CupSoda, label: '시각적 가이드', value: result.feedingGuide.visualGuide, color: 'text-success' }
-        ].map((item, i) => (
-          <Card key={i} className="border-none shadow-lg rounded-[2.5rem] bg-white text-center hover:translate-y-[-5px] transition-all">
-            <CardContent className="p-8 space-y-2">
-              <div className={cn("p-4 bg-muted/50 rounded-2xl w-fit mx-auto mb-2", item.color)}>
-                <item.icon size={24} />
-              </div>
-              <p className="text-[10px] font-black text-muted-foreground uppercase">{item.label}</p>
-              <p className="text-xl font-black">{item.value}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* 5. Insight Cards (Pros/Cons) */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card className="border-none shadow-xl rounded-[3rem] bg-success/5 ring-1 ring-success/10">
-          <CardHeader className="p-8 pb-4">
-            <CardTitle className="text-success flex items-center gap-2 font-black"><ThumbsUp size={20}/> 추천 성분</CardTitle>
-          </CardHeader>
-          <CardContent className="p-8 pt-0 space-y-4">
-            {result.ingredientCheck.positive.map((item, i) => (
-              <div key={i} className="p-4 bg-white rounded-2xl shadow-sm">
-                <p className="font-bold text-sm">✅ {item.name}</p>
-                <p className="text-xs text-muted-foreground mt-1">{item.effect}</p>
-              </div>
+      {/* 1. Header: The Verdict */}
+      <Card className="border-none shadow-lg rounded-3xl bg-white overflow-hidden">
+        <CardContent className="p-8 space-y-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary font-bold px-3 py-1 rounded-full">
+              {result.productIdentity.brand}
+            </Badge>
+            {result.scoreCard.statusTags.map((tag, i) => (
+              <Badge key={i} className={cn("font-bold px-3 py-1 rounded-full border-none", 
+                tag.includes('경고') || tag.includes('주의') ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"
+              )}>
+                {tag}
+              </Badge>
             ))}
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-xl rounded-[3rem] bg-destructive/5 ring-1 ring-destructive/10">
-          <CardHeader className="p-8 pb-4">
-            <CardTitle className="text-destructive flex items-center gap-2 font-black"><ThumbsDown size={20}/> 주의 성분</CardTitle>
-          </CardHeader>
-          <CardContent className="p-8 pt-0 space-y-4">
-            {result.ingredientCheck.cautionary.map((item, i) => (
-              <div key={i} className="p-4 bg-white rounded-2xl shadow-sm">
-                <p className="font-bold text-sm">⚠️ {item.name}</p>
-                <p className="text-xs text-muted-foreground mt-1">{item.risk}</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 6. Expert Verdict Details */}
-      <Card className="border-none shadow-2xl bg-white rounded-[3.5rem] overflow-hidden">
-        <CardHeader className="p-10 pb-4 bg-muted/20 border-b">
-          <CardTitle className="text-sm font-black text-primary uppercase tracking-widest">AI 수의사 분석 소견</CardTitle>
-        </CardHeader>
-        <CardContent className="p-10 space-y-10">
-          <div className="space-y-4">
-            <h5 className="text-lg font-black flex items-center gap-2"><Info className="text-primary" size={18}/> 왜 우리 아이에게 맞을까요?</h5>
-            <p className="text-base font-medium leading-relaxed text-muted-foreground">{result.expertVerdict.whyMatch}</p>
           </div>
-          <div className="p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10">
-            <h5 className="text-xs font-black text-primary uppercase tracking-widest mb-4">Vet's Professional Tips</h5>
-            <div className="text-sm font-bold text-foreground leading-relaxed whitespace-pre-line">
-              {result.expertVerdict.proTip}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* 7. Detail Accordions */}
-      <Accordion type="single" collapsible className="space-y-4">
-        <AccordionItem value="nutrition" className="border-none shadow-lg bg-white rounded-[2rem] px-8">
-          <AccordionTrigger className="hover:no-underline font-black text-lg py-6">
-            <div className="flex items-center gap-3">
-              <Zap className="text-primary"/> 영양 농도 상세 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="w-4 h-4 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs">
-                    <p className="font-bold mb-1 text-xs">DM(Dry Matter)이란?</p>
-                    <p className="text-[10px]">수분을 제외한 실제 영양 농도를 의미합니다. 제품 간 정확한 비교를 위한 수의 영양학 표준 기준입니다.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent className="pb-10 space-y-8">
-             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <BenchmarkBar label="단백질 (DM)" position={result.advancedNutrition.benchmarks.protein.position} value={result.advancedNutrition.dm_protein} />
-                <BenchmarkBar label="지방 (DM)" position={result.advancedNutrition.benchmarks.fat.position} value={result.advancedNutrition.dm_fat} />
-                <BenchmarkBar label="탄수화물 (DM)" position={result.advancedNutrition.benchmarks.carbs.position} value={result.advancedNutrition.dm_carbs} />
+          <div className="space-y-2">
+             <div className="flex items-center gap-2">
+               {isEditing ? (
+                 <input 
+                   value={productName} 
+                   onChange={(e) => setProductName(e.target.value)}
+                   onBlur={() => setIsEditing(false)}
+                   className="text-2xl font-black bg-muted/30 rounded-lg px-2 w-full"
+                   autoFocus
+                 />
+               ) : (
+                 <h1 className="text-2xl md:text-3xl font-black tracking-tight flex items-center gap-2">
+                   {productName}
+                   <Button variant="ghost" size="icon" className="h-6 w-6 opacity-30" onClick={() => setIsEditing(true)}>
+                     <Pencil size={12} />
+                   </Button>
+                 </h1>
+               )}
              </div>
-             <p className="text-[10px] text-center text-muted-foreground">AAFCO 2024 가이드라인 및 NRC 권장량을 기준으로 산출되었습니다.</p>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+             <p className="text-lg font-bold text-muted-foreground leading-tight">
+               {input.petProfile?.name}({input.petProfile?.breed}, {input.petProfile?.weight}kg)를 위한 맞춤 솔루션
+             </p>
+          </div>
 
-      {/* 8. Sticky Bottom Actions */}
+          <div className="p-6 bg-muted/10 rounded-2xl border-l-4 border-primary">
+            <div className="flex items-center gap-2 mb-2">
+               <span className="text-xl font-black">Grade: {result.scoreCard.grade}</span>
+               <div className="h-px flex-1 bg-border" />
+            </div>
+            <p className="text-base font-medium leading-relaxed break-keep">{result.scoreCard.headline}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 2. Feeding Guide: Obese Algorithm Visualization */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="border-none shadow-lg rounded-3xl bg-white p-8">
+          <CardHeader className="p-0 mb-6">
+            <CardTitle className="text-sm font-black text-muted-foreground uppercase flex items-center gap-2">
+              <Scale size={16} className="text-primary"/> 일일 권장 급여량 비교
+            </CardTitle>
+          </CardHeader>
+          <div className="h-48 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={feedingData} layout="vertical" margin={{ left: -20, right: 20 }}>
+                <XAxis type="number" hide />
+                <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 10, fontWeight: 'bold' }} />
+                <Bar dataKey="value" radius={[0, 10, 10, 0]} barSize={32}>
+                  {feedingData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="text-xs text-muted-foreground text-center mt-2 font-medium">
+            {result.feedingGuide.isObese ? 
+              `목표 체중(${result.feedingGuide.idealWeight}kg) 달성을 위해 감량 식단을 권장합니다.` : 
+              "현재 체중 유지를 위한 권장 급여량입니다."}
+          </p>
+        </Card>
+
+        <Card className="border-none shadow-lg rounded-3xl bg-primary text-white p-8 flex flex-col justify-center">
+          <div className="space-y-1 mb-6">
+             <p className="text-xs font-black opacity-70 uppercase">Daily Feeding Guide</p>
+             <h3 className="text-3xl font-black">하루 {result.feedingGuide.weightLossGrams}g</h3>
+          </div>
+          <div className="space-y-4">
+             <div className="flex items-center justify-between text-sm border-b border-white/20 pb-2">
+               <span className="opacity-70">종이컵 기준</span>
+               <span className="font-bold">{result.feedingGuide.visualGuide}</span>
+             </div>
+             <div className="flex items-center justify-between text-sm border-b border-white/20 pb-2">
+               <span className="opacity-70">목표 칼로리</span>
+               <span className="font-bold">{result.feedingGuide.targetKcal} kcal</span>
+             </div>
+             <div className="flex items-center justify-between text-sm">
+               <span className="opacity-70">목표 체중</span>
+               <span className="font-bold">{result.feedingGuide.idealWeight} kg</span>
+             </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* 3. Nutrient Analysis & Ingredient Tags */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="border-none shadow-lg rounded-3xl bg-white p-8 space-y-6">
+          <CardTitle className="text-sm font-black text-muted-foreground uppercase flex items-center gap-2">
+            영양 농도 분석 (DM 기준)
+          </CardTitle>
+          <div className="space-y-6">
+            <NutrientBar label="단백질" value={result.advancedNutrition.dm_protein} pct={result.advancedNutrition.protein_pct} />
+            <NutrientBar label="지방" value={result.advancedNutrition.dm_fat} pct={result.advancedNutrition.fat_pct} />
+            <NutrientBar 
+              label="탄수화물 (NFE)" 
+              value={result.advancedNutrition.dm_carbs} 
+              pct={result.advancedNutrition.carbs_pct} 
+              isWarning={result.advancedNutrition.carbs_warning}
+            />
+          </div>
+          {result.advancedNutrition.carbs_warning && (
+            <div className="p-4 bg-destructive/5 rounded-2xl border border-destructive/10 flex gap-3">
+              <AlertCircle size={16} className="text-destructive shrink-0 mt-0.5" />
+              <p className="text-xs font-bold text-destructive leading-relaxed">
+                탄수화물 함량이 {result.advancedNutrition.dm_carbs}로 높습니다. 비만인 아이의 체중 관리에 불리할 수 있으니 주의가 필요합니다.
+              </p>
+            </div>
+          )}
+        </Card>
+
+        <Card className="border-none shadow-lg rounded-3xl bg-white p-8 space-y-6">
+          <CardTitle className="text-sm font-black text-muted-foreground uppercase flex items-center gap-2">
+            사용 원료 분석
+          </CardTitle>
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {result.ingredientAnalysis.positive.map((ing, i) => (
+                <div key={i} className="group relative">
+                  <Badge variant="secondary" className="bg-success/10 text-success border-none font-bold py-1.5 px-3">
+                    {ing.tag}
+                  </Badge>
+                </div>
+              ))}
+              {result.ingredientAnalysis.cautionary.map((ing, i) => (
+                <div key={i} className="group relative">
+                  <Badge variant="secondary" className="bg-destructive/10 text-destructive border-none font-bold py-1.5 px-3">
+                    {ing.tag}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+            <div className="pt-4 border-t">
+               <p className="text-xs font-black text-primary mb-2 uppercase">Vet's Insight</p>
+               <p className="text-sm font-medium text-muted-foreground leading-relaxed whitespace-pre-line">
+                 {result.ingredientAnalysis.proTip}
+               </p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* 4. Bottom Actions */}
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-xl border-t z-50 flex justify-center">
         <div className="w-full max-w-4xl flex gap-4">
-          <Button onClick={onReset} variant="outline" className="flex-1 h-16 rounded-2xl border-2 font-black">
-            <Repeat className="mr-2 w-5 h-5" /> {resetButtonText || '다시 분석'}
+          <Button onClick={onReset} variant="outline" className="flex-1 h-14 rounded-2xl border-2 font-black">
+            <Repeat size={18} className="mr-2" /> {resetButtonText || '다시 분석'}
           </Button>
           <Button 
             onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(productName)}`, '_blank')}
-            className="flex-[2] h-16 rounded-2xl text-xl font-black shadow-2xl shadow-primary/30"
+            className="flex-[2] h-14 rounded-2xl text-lg font-black shadow-lg"
           >
-            <ShoppingBag className="mr-2 w-6 h-6" /> 최저가 검색
+            <ShoppingBag size={20} className="mr-2" /> 최저가 검색
           </Button>
         </div>
       </div>
