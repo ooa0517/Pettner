@@ -1,11 +1,9 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v9.0] 
+ * @fileOverview [Pettner Core Engine v10.0] 
  * - Dual Mode: Veterinary Diagnosis (Custom) & Product Auditor (General)
- * - Tiered Ingredient Classification (Tier 1-3)
- * - Brand Reputation & Recall History Tracking
- * - ESG & Ethical Value Evaluation
+ * - Strict Separation of Logic and Output Schema
  */
 
 import {ai} from '@/ai/genkit';
@@ -48,7 +46,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     headline: z.string().describe('핵심 진단 문구'),
     statusTags: z.array(z.string()).describe('상태 태그 (예: 🥩 생육 위주, ⚠️ 리콜 주의)')
   }),
-  // Custom Mode Only
+  // Custom Mode Only (Optional in General)
   weightDiagnosis: z.object({
     currentWeight: z.number(),
     idealWeight: z.number(),
@@ -68,7 +66,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     recallHistory: z.string().describe('최근 리콜 이력 및 안전성 기록')
   }),
   esgAudit: z.object({
-    score: z.string().describe('ESG 점수 및 윤리적 요인 (Organic, Non-GMO 등)'),
+    score: z.string().describe('ESG 점수 및 윤리적 요인'),
     details: z.array(z.string())
   }),
   advancedNutrition: z.object({
@@ -82,7 +80,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     firstFive: z.array(z.object({
       name: z.string(),
       tier: z.enum(['Tier 1', 'Tier 2', 'Tier 3']),
-      tierLabel: z.string().describe('품질 등급 라벨 (예: 🥩 생육, 🚨 부산물)'),
+      tierLabel: z.string().describe('품질 등급 라벨 (예: 🥩 생육, 🚨 고혈당)'),
       description: z.string().describe('원료 품질 심사 의견')
     })).describe('상위 5개 원료 정밀 분석'),
     functionalBoosters: z.array(z.object({
@@ -94,7 +92,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       noArtificialPreservatives: z.boolean(),
       noArtificialColors: z.boolean(),
       allergyWarning: z.string().optional(),
-      hiddenAdditives: z.array(z.string()).describe('숨겨진 첨가물 (소금, 설탕 등)')
+      hiddenAdditives: z.array(z.string()).describe('숨겨진 첨가물')
     })
   }),
   veterinaryAdvice: z.string().describe('종합 심사 의견')
@@ -112,35 +110,25 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
   prompt: `당신은 '공인 펫푸드 감사관(Certified Pet Food Auditor)'이자 수의 영양학 전문가입니다.
 
-# 분석 모드에 따른 역할
+# 분석 모드에 따른 역할 (분리 필수)
 1. [분석 모드: custom]
    - '수의사 주치의'로서 특정 반려동물({{{petProfile.name}}})의 상태에 맞춘 정밀 진단과 다이어트 솔루션을 제공합니다.
-   - 비만 알고리즘: Ideal Weight = Current Weight * (100 - (BCS - 3) * 10) / 100 를 적용하여 급여 로드맵을 작성합니다.
+   - 비만 알고리즘: Ideal Weight = Current Weight * (100 - (BCS - 3) * 10) / 100 를 적용하여 감량 수치를 계산하십시오.
+   - 다이어트 로드맵: 현재 체중에서 목표 체중까지 3단계(급속 감량기, 안정기, 유지기)의 몸무게별 급여량(g)을 생성하십시오.
+   - 제품의 성분이 아이의 건강 고민(건강 태그)에 얼마나 적합한지 위주로 설명하십시오.
 
 2. [분석 모드: general]
    - '제품 품질 심사관'으로서 반려동물 정보 없이 '제품 자체의 품질과 브랜드 신뢰도'만을 객관적으로 평가합니다.
-   - 개인화된 조언 대신 원료 티어, 리콜 이력, 브랜드 평판, ESG 요소를 중심으로 보고서를 작성합니다.
-   - 급여 로드맵이나 몸무게 진단은 생략합니다.
+   - 개인화된 조언 대신 원료 티어, 리콜 이력, 브랜드 평판, ESG 요소를 중심으로 보고서를 작성하십시오.
+   - 급여 로드맵이나 몸무게 진단은 생략하십시오.
 
-# 원재료 심사 프레임워크 (Ingredient Anatomy)
-- 제1~5원료(First 5) 분석: 용량의 80%를 차지하는 상위 원료의 품질을 티어별로 구분합니다.
-  - Tier 1: 🥩 생육/통생선 (신선한 단백질원)
-  - Tier 2: 명확한 건조 단백질 (예: 닭고기 분말)
-  - Tier 3: 불명확한 단백질/부산물/찌꺼기 (예: 육분, 가금류 부산물)
-- GI 임팩트: 옥수수, 밀, 쌀 등의 함량과 혈당에 미치는 영향을 분석합니다.
-- 숨겨진 첨가물: 소금, 설탕, 프로필렌 글리콜, BHA/BHT 등 유해 가능 성분을 찾아냅니다.
-
-# 브랜드 인사이트 (Brand Insight)
-- 브랜드의 글로벌 평판, 제조 표준(HACCP, ISO), 최근 리콜 이력을 조사하여 반영합니다.
-- ESG 평가: 유기농(Organic), Non-GMO, 지속 가능한 어업(MSC), 친환경 포장재 사용 여부 등을 확인합니다.
-
-# 영양 밀도 (DM Basis)
-- 수분 제외(DM) 기준 단백질/지방/탄수화물을 계산합니다.
-- 탄수화물(NFE)이 40%를 초과하면 강력한 주의를 표기합니다.
+# 원재료 심사 프레임워크
+- First 5 분석: 상위 5개 원료의 품질을 티어별로 구분(Tier 1: 생육, Tier 2: 명확한 분말, Tier 3: 불명확한 부산물).
+- GI 임팩트: 비만견의 경우 옥수수, 밀 등을 '🚨 고혈당' 리스크로 분류하십시오.
 
 제품 정보: {{{productName}}} ({{{foodType}}})
-아이 정보: {{#if petProfile.name}}{{{petProfile.name}}} ({{{petProfile.breed}}}){{else}}없음 (객관적 품질 심사){{/if}}
-사진 데이터: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음{{/if}}`,
+아이 정보: {{#if petProfile.name}}{{{petProfile.name}}} ({{{petProfile.breed}}}, BCS {{{petProfile.bcs}}}){{else}}없음 (객관적 품질 심사){{/if}}
+사진 데이터: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음 (텍스트 기반 분석){{/if}}`,
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(

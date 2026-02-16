@@ -21,7 +21,7 @@ import {
   ChartTooltipContent,
   type ChartConfig
 } from '@/components/ui/chart';
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, ReferenceLine } from 'recharts';
+import { Line, LineChart, XAxis, YAxis, CartesianGrid, ReferenceLine, ResponsiveContainer } from 'recharts';
 
 type AnalysisResultProps = {
   result: AnalyzePetFoodIngredientsOutput;
@@ -57,18 +57,18 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-40 max-w-4xl mx-auto px-4">
       
-      {/* 1. Header Section (Medical vs Auditor) */}
+      {/* 1. Header Section */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
         <CardContent className="p-10 space-y-8">
           <div className="flex justify-between items-start">
             <div className="space-y-1">
               <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary font-black px-4 py-1.5 rounded-full text-[10px] tracking-widest uppercase">
-                {isCustomMode ? 'Veterinary Diagnosis v9.0' : 'Product Quality Audit v9.0'}
+                {isCustomMode ? 'Veterinary Diagnosis v10.0' : 'Product Quality Audit v10.0'}
               </Badge>
               <h1 className="text-3xl font-black tracking-tighter pt-2">
                 {isCustomMode 
-                  ? `${input.petProfile?.name}(${input.petProfile?.breed}) 진단 리포트` 
-                  : `${result.productIdentity.name} 품질 심사 리포트`}
+                  ? `${input.petProfile?.name}(${input.petProfile?.breed}) 맞춤 진단서` 
+                  : `${result.productIdentity.name} 품질 감사 보고서`}
               </h1>
             </div>
             <div className="text-right">
@@ -87,14 +87,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
              <div className="relative z-10 space-y-4">
                <h3 className="text-xl font-black flex items-center gap-2">
                  <Info className="text-primary" size={20}/> 
-                 {isCustomMode ? '수의학적 진단 요약' : '전문 감사관 심사 평'}
+                 {isCustomMode ? '수의학적 진단 요약' : '전문 심사관 총평'}
                </h3>
                <p className="text-lg font-bold leading-relaxed break-keep">
                  {result.scoreCard.headline}
                </p>
                <div className="flex flex-wrap gap-2">
                  {result.scoreCard.statusTags.map((tag, i) => (
-                   <Badge key={i} variant="secondary" className={cn("bg-white font-bold px-3 py-1", tag.includes('주의') || tag.includes('리콜') ? "text-destructive" : "text-primary")}>
+                   <Badge key={i} variant="secondary" className={cn("bg-white font-bold px-3 py-1", tag.includes('주의') || tag.includes('리콜') || tag.includes('비만') ? "text-destructive" : "text-primary")}>
                      {tag}
                    </Badge>
                  ))}
@@ -104,18 +104,18 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </CardContent>
       </Card>
 
-      {/* 2. Custom Mode Only: Weight Diagnosis & Roadmap */}
+      {/* 2. Custom Mode: Weight Diagnosis & Roadmap */}
       {isCustomMode && result.weightDiagnosis && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10 space-y-8">
               <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                <Scale size={18} className="text-primary"/> 품종 대비 체중 분석
+                <Scale size={18} className="text-primary"/> 표준 체중 대비 분석
               </CardTitle>
               <div className="space-y-6">
                 <div className="space-y-3">
                   <div className="flex justify-between text-xs font-black">
-                    <span className="text-success">표준 ({result.weightDiagnosis.breedStandardRange})</span>
+                    <span className="text-success">품종 표준 ({result.weightDiagnosis.breedStandardRange})</span>
                     <span className="text-destructive">우리 아이 ({result.weightDiagnosis.currentWeight}kg)</span>
                   </div>
                   <div className="h-6 bg-muted rounded-full relative overflow-hidden">
@@ -136,7 +136,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               <TrendingDown className="absolute right-[-10px] bottom-[-10px] w-32 h-32 opacity-10" />
               <div className="space-y-2">
                 <p className="text-xs font-black opacity-70 uppercase tracking-widest">Target Weight</p>
-                <h3 className="text-4xl font-black">{isObese ? `감량 목표: -${result.weightDiagnosis.weightGap.toFixed(1)}kg` : '정상 체중 유지'}</h3>
+                <h3 className="text-4xl font-black">{isObese ? `감량 목표: -${result.weightDiagnosis.weightGap.toFixed(1)}kg` : '유지 목표'}</h3>
               </div>
               <div className="space-y-4">
                  <div className="flex justify-between items-end border-b border-white/20 pb-2">
@@ -154,35 +154,36 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           {result.dietRoadmap && result.dietRoadmap.length > 0 && (
             <Card className="border-none shadow-xl rounded-[3rem] bg-white p-10 space-y-8">
               <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                📉 [단계별 체중 조절 플랜]
+                📉 [단계별 체중 조절 로드맵]
               </CardTitle>
               <div className="h-[250px] w-full">
                 <ChartContainer config={chartConfig} className="h-full w-full">
-                  <LineChart data={result.dietRoadmap} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+                  <LineChart data={result.dietRoadmap} margin={{ top: 20, right: 30, left: 30, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                     <XAxis dataKey="weight" tick={{ fontSize: 10, fontWeight: 'bold' }} label={{ value: '몸무게 (kg)', position: 'insideBottom', offset: -10, fontSize: 10 }} />
-                    <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} label={{ value: '급여량 (g)', angle: -90, position: 'insideLeft', fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10, fontWeight: 'bold' }} label={{ value: '급여량 (g)', angle: -90, position: 'insideLeft', fontSize: 10, offset: 10 }} />
                     <ChartTooltip content={<ChartTooltipContent hideLabel />} />
                     <ReferenceLine x={result.weightDiagnosis.idealWeight} stroke="green" strokeDasharray="3 3" label={{ value: 'Ideal', position: 'top', fontSize: 10, fill: 'green' }} />
                     <Line type="monotone" dataKey="grams" stroke="hsl(var(--primary))" strokeWidth={4} dot={{ r: 6, fill: "hsl(var(--primary))", strokeWidth: 2, stroke: "#fff" }} />
                   </LineChart>
                 </ChartContainer>
               </div>
+              <p className="text-[11px] text-center font-bold text-muted-foreground">감량기에는 적게 급여하고, 목표 체중 도달 후(유지기)에는 권장량까지 서서히 늘립니다.</p>
             </Card>
           )}
         </>
       )}
 
-      {/* 2. General Mode Only: Brand & ESG Insights */}
+      {/* 2. General Mode: Brand & ESG Insights */}
       {!isCustomMode && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10 space-y-6">
             <h3 className="font-black flex items-center gap-2 text-primary">
-              <Award size={18} /> 브랜드 신뢰도 및 이력
+              <Award size={18} /> 브랜드 신뢰도 & 안전성
             </h3>
             <div className="space-y-4">
               <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
-                <p className="text-xs font-black text-primary uppercase">Reputation</p>
+                <p className="text-xs font-black text-primary uppercase">Market Reputation</p>
                 <p className="text-sm font-bold mt-1">{result.brandInsight.reputation}</p>
               </div>
               <div className="p-4 rounded-2xl bg-destructive/5 border border-destructive/10">
@@ -194,7 +195,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
 
           <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10 space-y-6">
             <h3 className="font-black flex items-center gap-2 text-success">
-              <Globe size={18} /> ESG 및 윤리적 심사
+              <Globe size={18} /> ESG 및 윤리적 가치
             </h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -214,31 +215,31 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      {/* 3. Deep Ingredient Anatomy (Common) */}
+      {/* 3. Ingredient Anatomy */}
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <Dna className="text-primary w-6 h-6" />
-          <h2 className="text-2xl font-black font-headline">🧬 [원재료 정밀 분석]</h2>
+          <h2 className="text-2xl font-black font-headline tracking-tight">🧬 [원재료 정밀 분석]</h2>
         </div>
         
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <div className="bg-muted/30 p-8 border-b">
             <h3 className="font-black flex items-center gap-2 text-muted-foreground">
-              <FlaskConical size={18} /> 제1~5원료 퀄리티 체크
+              <FlaskConical size={18} /> 제1~5원료 퀄리티 체크 (품질 등급)
             </h3>
           </div>
           <CardContent className="p-8 space-y-4">
              {result.ingredientAnatomy.firstFive.map((ing, i) => (
-               <div key={i} className="flex gap-4 p-4 rounded-2xl bg-muted/10 items-start hover:bg-muted/20 transition-colors">
-                  <div className={cn("px-3 py-1 rounded-full text-[10px] font-black shadow-sm shrink-0", 
+               <div key={i} className="flex gap-4 p-5 rounded-3xl bg-muted/10 items-start hover:bg-muted/20 transition-all">
+                  <div className={cn("px-4 py-1.5 rounded-full text-[10px] font-black shadow-sm shrink-0 uppercase tracking-widest", 
                     ing.tier === 'Tier 1' ? "bg-success text-white" : 
                     ing.tier === 'Tier 2' ? "bg-primary text-white" : "bg-destructive text-white"
                   )}>
                     {ing.tierLabel}
                   </div>
                   <div className="space-y-1">
-                    <p className="font-bold">{ing.name}</p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{ing.description}</p>
+                    <p className="font-black text-lg">{ing.name}</p>
+                    <p className="text-xs text-muted-foreground font-bold leading-relaxed">{ing.description}</p>
                   </div>
                </div>
              ))}
@@ -248,13 +249,13 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8 space-y-6">
             <h3 className="font-black flex items-center gap-2 text-primary">
-              <Activity size={18} /> 기능성 성분 분석
+              <Activity size={18} /> 기능성 성분 탐색
             </h3>
             <div className="space-y-3">
               {result.ingredientAnatomy.functionalBoosters.map((booster, i) => (
-                <div key={i} className="p-4 rounded-2xl bg-primary/5 border border-primary/10">
+                <div key={i} className="p-5 rounded-3xl bg-primary/5 border border-primary/10">
                   <p className="font-black text-primary text-sm">🔥 [{booster.benefit}] {booster.name}</p>
-                  <p className="text-xs font-medium mt-1">{booster.description}</p>
+                  <p className="text-xs font-bold mt-1 text-muted-foreground">{booster.description}</p>
                 </div>
               ))}
             </div>
@@ -262,27 +263,27 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
 
           <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8 space-y-6">
             <h3 className="font-black flex items-center gap-2 text-success">
-              <ShieldCheck size={18} /> 세이프티 & 리스크 필터
+              <ShieldCheck size={18} /> 세이프티 필터링
             </h3>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-sm font-bold">
-                <CheckCircle2 size={16} className={result.ingredientAnatomy.safetyFilter.noArtificialPreservatives ? "text-success" : "text-muted-foreground"} />
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-black">
+                <CheckCircle2 size={18} className={result.ingredientAnatomy.safetyFilter.noArtificialPreservatives ? "text-success" : "text-muted-foreground"} />
                 <span>합성 보존료 무첨가 (BHA/BHT Free)</span>
               </div>
-              <div className="flex items-center gap-2 text-sm font-bold">
-                <CheckCircle2 size={16} className={result.ingredientAnatomy.safetyFilter.noArtificialColors ? "text-success" : "text-muted-foreground"} />
+              <div className="flex items-center gap-2 text-sm font-black">
+                <CheckCircle2 size={18} className={result.ingredientAnatomy.safetyFilter.noArtificialColors ? "text-success" : "text-muted-foreground"} />
                 <span>인공 착색료 무첨가</span>
               </div>
               {result.ingredientAnatomy.safetyFilter.hiddenAdditives.length > 0 && (
-                <div className="p-3 bg-muted/20 rounded-xl text-[10px] font-medium text-muted-foreground">
+                <div className="p-4 bg-muted/20 rounded-2xl text-[10px] font-bold text-muted-foreground">
                   검출된 첨가물: {result.ingredientAnatomy.safetyFilter.hiddenAdditives.join(', ')}
                 </div>
               )}
               {result.ingredientAnatomy.safetyFilter.allergyWarning && (
-                <div className="mt-4 p-4 bg-destructive/5 border border-destructive/10 rounded-2xl flex gap-3">
-                  <AlertTriangle className="text-destructive shrink-0" size={16} />
-                  <p className="text-xs font-bold text-destructive leading-relaxed">
-                    주의: {result.ingredientAnatomy.safetyFilter.allergyWarning}
+                <div className="mt-4 p-5 bg-destructive/5 border border-destructive/10 rounded-3xl flex gap-3">
+                  <AlertTriangle className="text-destructive shrink-0" size={20} />
+                  <p className="text-xs font-black text-destructive leading-relaxed">
+                    [주의] {result.ingredientAnatomy.safetyFilter.allergyWarning}
                   </p>
                 </div>
               )}
@@ -291,13 +292,13 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       </div>
 
-      {/* 4. Nutritional Density (Common) */}
+      {/* 4. Nutritional Density (DM) */}
       <Card className="border-none shadow-xl rounded-[3rem] bg-white p-10 space-y-8">
         <div className="space-y-1">
           <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
             📊 [수분 제외 영양 밀도 (DM)]
           </CardTitle>
-          <p className="text-[10px] text-muted-foreground font-bold">* 수분 함량을 제외한 실제 영양 농도 분석값입니다.</p>
+          <p className="text-[11px] text-muted-foreground font-black">* 실제 농도 기반 분석값입니다. 비만견은 탄수화물 함량이 매우 중요합니다.</p>
         </div>
 
         <div className="space-y-8">
@@ -308,15 +309,15 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
            ].map((stat, i) => (
              <div key={i} className="space-y-3">
                <div className="flex justify-between items-end">
-                 <span className="text-sm font-bold">{stat.label}</span>
-                 <span className={cn("text-lg font-black", stat.isWarning ? "text-destructive" : "text-primary")}>{stat.value}%</span>
+                 <span className="text-sm font-black">{stat.label}</span>
+                 <span className={cn("text-xl font-black", stat.isWarning ? "text-destructive" : "text-primary")}>{stat.value}%</span>
                </div>
-               <div className="h-4 bg-muted rounded-full relative overflow-hidden">
+               <div className="h-5 bg-muted rounded-full relative overflow-hidden">
                   <div className={cn("h-full transition-all duration-1000", stat.color)} style={{ width: `${Math.min(stat.value, 100)}%` }} />
                </div>
                {stat.isWarning && (
-                 <p className="text-[10px] font-black text-destructive leading-tight animate-pulse">
-                   ⚠️ 탄수화물 함량이 매우 높습니다.
+                 <p className="text-[11px] font-black text-destructive leading-tight animate-pulse">
+                   ⚠️ 탄수화물 함량이 매우 높습니다. 체중 감량에 불리할 수 있습니다.
                  </p>
                )}
              </div>
@@ -327,10 +328,10 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
       {/* 5. Comprehensive Advice */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-primary text-white p-10">
         <div className="flex items-center gap-4 mb-6">
-          {isCustomMode ? <Stethoscope size={32} /> : <FileText size={32} />}
-          <h3 className="text-2xl font-black">{isCustomMode ? '수의학적 종합 조언' : '전문 심사관 종합 평가'}</h3>
+          {isCustomMode ? <Stethoscope size={36} /> : <Award size={36} />}
+          <h3 className="text-2xl font-black">{isCustomMode ? '수의학적 종합 조언' : '전문 심사관 최종 심사'}</h3>
         </div>
-        <p className="text-lg font-medium leading-relaxed opacity-90 break-keep">
+        <p className="text-lg font-bold leading-relaxed opacity-95 break-keep">
           {result.veterinaryAdvice}
         </p>
       </Card>
@@ -351,4 +352,3 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     </div>
   );
 }
-
