@@ -10,11 +10,10 @@ import {
   Dog, Cat, ThumbsUp, ThumbsDown, 
   Sparkles, HeartPulse, 
   AlertCircle, Zap, Activity,
-  Smile, Frown, 
   UtensilsCrossed, Weight, InfoIcon as InfoLucide
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
-import React, { useState } from 'react';
+import React from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
@@ -27,8 +26,6 @@ type AnalysisResultProps = {
 
 export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
   const { t, language } = useLanguage();
-  const [productName] = useState(result?.productIdentity?.name || '분석된 제품');
-  const [palatability, setPalatability] = useState<'good' | 'normal' | 'bad' | null>(null);
 
   if (!result || result.status === 'error') {
      return (
@@ -54,7 +51,8 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     expertVerdict, 
     protocol_used, 
     petSummary,
-    feedingGuide
+    feedingGuide,
+    productIdentity
   } = result;
   
   const PetIcon = protocol_used === 'Cat' ? Cat : Dog;
@@ -141,9 +139,12 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
       {/* 2. Product Header */}
       <div className="space-y-6">
         <div className="flex justify-between items-center px-2">
-          <h1 className="text-3xl md:text-4xl font-black font-headline tracking-tighter text-foreground leading-tight">
-            {productName}
-          </h1>
+          <div className="space-y-1">
+            <p className="text-sm font-bold text-primary">{productIdentity?.brand}</p>
+            <h1 className="text-3xl md:text-4xl font-black font-headline tracking-tighter text-foreground leading-tight">
+              {productIdentity?.name}
+            </h1>
+          </div>
           <div className={cn("shrink-0 h-20 w-20 rounded-2xl flex flex-col items-center justify-center shadow-lg", getGradeColor(scoreCard?.grade || ''))}>
              <span className="text-[10px] font-black uppercase tracking-widest opacity-70">Grade</span>
              <span className="text-4xl font-black">{scoreCard?.grade}</span>
@@ -286,7 +287,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <Repeat className="h-5 w-5 text-primary" />
           </Button>
           <Button 
-            onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(productName)}`, '_blank')} 
+            onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(productIdentity?.name || '')}`, '_blank')} 
             className="flex-[3] h-14 text-lg font-black rounded-2xl bg-primary text-white"
           >
             <ShoppingBag className="h-5 w-5 mr-2"/> 최저가 검색
