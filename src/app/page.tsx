@@ -47,14 +47,16 @@ function HomeContent() {
   const handleAnalysis = async (formData: any) => {
     setStep('loading');
     
-    // Calculate Age if not provided directly
+    // Calculate Age precisely
     let finalAge: number | undefined;
-    if (formData.petProfile.birthDate) {
+    if (formData.petProfile.dontKnowBirth) {
+      finalAge = parseFloat(formData.petProfile.ageYears) || undefined;
+    } else if (formData.petProfile.birthDate) {
       const birth = new Date(formData.petProfile.birthDate);
       const today = new Date();
-      finalAge = today.getFullYear() - birth.getFullYear();
-    } else if (formData.petProfile.ageYears) {
-      finalAge = Number(formData.petProfile.ageYears);
+      // Age in decimal years
+      finalAge = (today.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+      finalAge = Math.round(finalAge * 10) / 10; // Round to 1 decimal place
     }
 
     const analysisInput: AnalyzePetFoodIngredientsInput = {
@@ -67,7 +69,7 @@ function HomeContent() {
           name: formData.petProfile.name,
           breed: formData.petProfile.breed,
           age: finalAge,
-          weight: Number(formData.petProfile.weight) || undefined,
+          weight: parseFloat(formData.petProfile.weight) || undefined,
           neutered: formData.petProfile.genderStatus.includes('neutered'),
           activityLevel: formData.petProfile.activityLevel,
           bcs: formData.petProfile.bcs,
@@ -82,7 +84,7 @@ function HomeContent() {
         let finalResult: AnalyzePetFoodIngredientsOutput | null = null;
         let isCached = false;
 
-        // Cache Check
+        // Cache Check (Simple client-side cache for speed if needed, but here we check DB)
         if (db && productId && productId.length > 5 && input.analysisMode === 'general') {
           const productRef = doc(db, 'products', productId);
           const productSnap = await getDoc(productRef);

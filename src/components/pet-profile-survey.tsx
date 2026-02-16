@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Activity, HeartPulse, ClipboardCheck, ArrowRight, ArrowLeft, Dog, Cat, Info } from 'lucide-react';
+import { Activity, HeartPulse, ClipboardCheck, ArrowRight, ArrowLeft, Dog, Cat, Info, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -19,6 +19,8 @@ const petProfileSchema = z.object({
   petType: z.enum(['dog', 'cat']),
   name: z.string().min(1, '이름을 입력해주세요'),
   breed: z.string().min(1, '품종을 입력해주세요'),
+  birthDate: z.string().optional(),
+  dontKnowBirth: z.boolean().default(false),
   age: z.number().min(0, '나이를 입력해주세요'),
   weight: z.number().min(0.1, '몸무게를 입력해주세요'),
   neutered: z.enum(['yes', 'no']),
@@ -26,8 +28,6 @@ const petProfileSchema = z.object({
   activityLevel: z.enum(['LOW', 'NORMAL', 'HIGH']),
   healthConditions: z.array(z.string()).default([]),
   allergies: z.array(z.string()).default([]),
-  stoolCondition: z.string().optional(),
-  eatingHabit: z.string().optional(),
 });
 
 type PetProfileValues = z.infer<typeof petProfileSchema>;
@@ -45,11 +45,13 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
       allergies: [],
       activityLevel: 'NORMAL',
       bcs: '5',
+      dontKnowBirth: false,
     }
   });
 
   const selectedConditions = watch('healthConditions');
   const selectedAllergies = watch('allergies');
+  const dontKnowBirth = watch('dontKnowBirth');
 
   const commonConditions = [
     '피부 알러지', '눈물 자국', '신장 질환', '심장 질환', '관절염', '당뇨', '비만', '소화 불량'
@@ -65,6 +67,13 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
     : [...commonConditions, ...catSpecificConditions];
 
   const onSubmit = (data: PetProfileValues) => {
+    // If birthDate is selected, calculate age for the result
+    if (!data.dontKnowBirth && data.birthDate) {
+      const birth = new Date(data.birthDate);
+      const today = new Date();
+      let age = (today.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
+      data.age = Math.round(age * 10) / 10;
+    }
     onComplete(data);
   };
 
@@ -132,15 +141,38 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="font-bold ml-1 flex items-center gap-1">나이 (살) <span className="text-destructive font-bold">*</span></Label>
-                  <Input type="number" placeholder="0" className="h-12 rounded-xl" {...register('age', { valueAsNumber: true })} />
+              <div className="space-y-4">
+                <Label className="font-bold ml-1">나이 정보 <span className="text-destructive font-bold">*</span></Label>
+                {!dontKnowBirth ? (
+                  <div className="relative">
+                    <Input type="date" className="h-12 rounded-xl pl-10" {...register('birthDate')} />
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Input 
+                      type="number" 
+                      step="0.1" 
+                      placeholder="예: 4.5" 
+                      className="h-12 rounded-xl pr-10" 
+                      {...register('age', { valueAsNumber: true })} 
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground text-sm">살</span>
+                  </div>
+                )}
+                <div className="flex items-center space-x-2 ml-1">
+                  <Checkbox 
+                    id="dont-know-birth-survey" 
+                    checked={dontKnowBirth}
+                    onCheckedChange={(val) => setValue('dontKnowBirth', !!val)}
+                  />
+                  <Label htmlFor="dont-know-birth-survey" className="text-xs font-bold text-muted-foreground cursor-pointer">생일을 몰라요 (나이 직접 입력)</Label>
                 </div>
-                <div className="space-y-2">
-                  <Label className="font-bold ml-1 flex items-center gap-1">몸무게 (kg) <span className="text-destructive font-bold">*</span></Label>
-                  <Input type="number" step="0.1" placeholder="0.0" className="h-12 rounded-xl" {...register('weight', { valueAsNumber: true })} />
-                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="font-bold ml-1 flex items-center gap-1">몸무게 (kg) <span className="text-destructive font-bold">*</span></Label>
+                <Input type="number" step="0.1" placeholder="0.0" className="h-12 rounded-xl" {...register('weight', { valueAsNumber: true })} />
               </div>
             </div>
           )}

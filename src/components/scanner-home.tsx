@@ -54,7 +54,6 @@ type AnalysisFormValues = {
     birthDate: string;
     dontKnowBirth: boolean;
     ageYears: string;
-    ageMonths: string;
     genderStatus: 'male' | 'female' | 'neutered_male' | 'neutered_female';
     weight: string;
     bcs: string;
@@ -90,7 +89,6 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
         birthDate: z.string().optional().default(''),
         dontKnowBirth: z.boolean().default(false),
         ageYears: z.string().optional().default(''),
-        ageMonths: z.string().optional().default(''),
         genderStatus: z.enum(['male', 'female', 'neutered_male', 'neutered_female']),
         weight: z.string().optional().default(''),
         bcs: z.string().optional().default('3'),
@@ -116,7 +114,6 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
         birthDate: '',
         dontKnowBirth: false,
         ageYears: '',
-        ageMonths: '',
         genderStatus: 'neutered_male',
         weight: '',
         bcs: '3',
@@ -128,7 +125,6 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
   });
 
   const selectedPet = form.watch('petType');
-  const analysisMode = form.watch('analysisMode');
   const imageFile = form.watch('image');
   const isMix = form.watch('petProfile.isMix');
   const dontKnowBirth = form.watch('petProfile.dontKnowBirth');
@@ -296,26 +292,25 @@ export default function ScannerHome({ onAnalyze }: ScannerHomeProps) {
                           )}
                         />
                       ) : (
-                        <div className="grid grid-cols-2 gap-4 animate-in fade-in">
+                        <div className="animate-in fade-in">
                           <FormField
                             control={form.control}
                             name="petProfile.ageYears"
                             render={({ field }) => (
                               <FormItem>
                                 <FormControl>
-                                  <Input placeholder="몇 년생" className="h-14 rounded-2xl border-2" {...field} />
+                                  <div className="relative">
+                                    <Input 
+                                      type="number" 
+                                      step="0.1" 
+                                      placeholder="예: 4.5" 
+                                      className="h-14 rounded-2xl border-2 pr-12" 
+                                      {...field} 
+                                    />
+                                    <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-muted-foreground text-sm">살</span>
+                                  </div>
                                 </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="petProfile.ageMonths"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormControl>
-                                  <Input placeholder="몇 개월" className="h-14 rounded-2xl border-2" {...field} />
-                                </FormControl>
+                                <FormDescription className="text-[10px] ml-1">나이를 소수점(예: 4.5)으로 입력할 수 있습니다.</FormDescription>
                               </FormItem>
                             )}
                           />
