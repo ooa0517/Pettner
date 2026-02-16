@@ -70,7 +70,7 @@ function HomeContent() {
           breed: formData.petProfile.breed,
           age: finalAge,
           weight: parseFloat(formData.petProfile.weight) || undefined,
-          neutered: formData.petProfile.genderStatus.includes('neutered'),
+          neutered: (formData.petProfile.genderStatus || '').includes('neutered'),
           activityLevel: formData.petProfile.activityLevel,
           bcs: formData.petProfile.bcs,
           healthConditions: formData.petProfile.healthConditions,

@@ -4,7 +4,7 @@
 import { useMemo } from 'react';
 import { 
   Camera, Sparkles, Dog, Cat, ShieldCheck, 
-  CheckCircle2, Database, Activity, Calendar,
+  CheckCircle2, Database, Activity,
   User, Weight, Ruler, Zap, Info, ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,13 +14,12 @@ import { useLanguage } from '@/contexts/language-context';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const bcsOptions = [
@@ -43,7 +42,7 @@ type AnalysisFormValues = {
     birthDate: string;
     dontKnowBirth: boolean;
     ageYears: string;
-    neutered: boolean;
+    genderStatus: string;
     weight: string;
     bcs: string;
     activityLevel: string;
@@ -67,7 +66,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
       birthDate: z.string().default(''),
       dontKnowBirth: z.boolean().default(false),
       ageYears: z.string().default(''),
-      neutered: z.boolean().default(true),
+      genderStatus: z.string().default('neutered_male'),
       weight: z.string().default(''),
       bcs: z.string().default('3'),
       activityLevel: z.string().default('NORMAL'),
@@ -89,7 +88,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
         birthDate: '',
         dontKnowBirth: false,
         ageYears: '',
-        neutered: true,
+        genderStatus: 'neutered_male',
         weight: '',
         bcs: '3',
         activityLevel: 'NORMAL',
@@ -133,7 +132,6 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onAnalyze)} className="space-y-10">
             <TabsContent value="custom" className="space-y-10 mt-0">
-              {/* Step 1: Identity */}
               <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white ring-1 ring-black/5">
                 <CardHeader className="bg-muted/30 p-8 border-b">
                   <CardTitle className="flex items-center gap-3 text-lg font-black"><User className="text-primary" size={20}/> 1. 아이 기본 정보</CardTitle>
@@ -179,23 +177,26 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                 </CardContent>
               </Card>
 
-              {/* Step 2: Physical Stats */}
               <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white ring-1 ring-black/5">
                 <CardHeader className="bg-muted/30 p-8 border-b">
                   <CardTitle className="flex items-center gap-3 text-lg font-black"><Weight className="text-primary" size={20}/> 2. 신체 상태 (급여량 계산)</CardTitle>
                 </CardHeader>
                 <CardContent className="p-8 space-y-10">
-                  <FormField control={form.control} name="petProfile.neutered" render={({ field }) => (
+                  <FormField control={form.control} name="petProfile.genderStatus" render={({ field }) => (
                     <FormItem className="space-y-4">
-                      <FormLabel className="font-bold">중성화 여부 *</FormLabel>
+                      <FormLabel className="font-bold">성별 및 중성화 여부 *</FormLabel>
                       <FormControl>
-                        <RadioGroup onValueChange={(v) => field.onChange(v === 'yes')} defaultValue={field.value ? 'yes' : 'no'} className="grid grid-cols-2 gap-4">
-                          <Label htmlFor="n-y" className={cn("p-4 border-2 rounded-2xl text-center font-bold cursor-pointer", field.value ? "border-primary bg-primary/5" : "border-muted opacity-50")}>
-                            <RadioGroupItem value="yes" id="n-y" className="sr-only"/>완료
-                          </Label>
-                          <Label htmlFor="n-n" className={cn("p-4 border-2 rounded-2xl text-center font-bold cursor-pointer", !field.value ? "border-primary bg-primary/5" : "border-muted opacity-50")}>
-                            <RadioGroupItem value="no" id="n-n" className="sr-only"/>미완료
-                          </Label>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-4">
+                          {[
+                            { v: 'male', l: '수컷' },
+                            { v: 'female', l: '암컷' },
+                            { v: 'neutered_male', l: '중성화 수컷' },
+                            { v: 'neutered_female', l: '중성화 암컷' }
+                          ].map(opt => (
+                            <Label key={opt.v} htmlFor={opt.v} className={cn("p-4 border-2 rounded-2xl text-center font-bold cursor-pointer transition-all", field.value === opt.v ? "border-primary bg-primary/5 ring-2 ring-primary/10" : "border-muted opacity-50")}>
+                              <RadioGroupItem value={opt.v} id={opt.v} className="sr-only"/>{opt.l}
+                            </Label>
+                          ))}
                         </RadioGroup>
                       </FormControl>
                     </FormItem>
@@ -204,28 +205,29 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                   <FormField control={form.control} name="petProfile.bcs" render={({ field }) => (
                     <FormItem className="space-y-4">
                       <FormLabel className="font-bold">체형 선택 (BCS) *</FormLabel>
-                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-5 gap-2">
-                        {bcsOptions.map(opt => (
-                          <TooltipProvider key={opt.value}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Label htmlFor={`bcs-${opt.value}`} className={cn("flex flex-col items-center p-3 border-2 rounded-2xl cursor-pointer transition-all", field.value === opt.value ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-muted opacity-40")}>
-                                  <RadioGroupItem value={opt.value} id={`bcs-${opt.value}`} className="sr-only" />
-                                  <span className="text-2xl mb-1">{opt.emoji}</span>
-                                  <span className="text-[10px] font-black">{opt.value}단계</span>
-                                </Label>
-                              </TooltipTrigger>
-                              <TooltipContent><p className="font-bold">{opt.label}</p><p className="text-[10px]">{opt.description}</p></TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        ))}
-                      </RadioGroup>
+                      <FormControl>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-5 gap-2">
+                          {bcsOptions.map(opt => (
+                            <TooltipProvider key={opt.value}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Label htmlFor={`bcs-${opt.value}`} className={cn("flex flex-col items-center p-3 border-2 rounded-2xl cursor-pointer transition-all", field.value === opt.value ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-muted opacity-40")}>
+                                    <RadioGroupItem value={opt.value} id={`bcs-${opt.value}`} className="sr-only" />
+                                    <span className="text-2xl mb-1">{opt.emoji}</span>
+                                    <span className="text-[10px] font-black">{opt.value}단계</span>
+                                  </Label>
+                                </TooltipTrigger>
+                                <TooltipContent><p className="font-bold">{opt.label}</p><p className="text-[10px]">{opt.description}</p></TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          ))}
+                        </RadioGroup>
+                      </FormControl>
                     </FormItem>
                   )}/>
                 </CardContent>
               </Card>
 
-              {/* Step 3: Lifestyle */}
               <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white ring-1 ring-black/5">
                 <CardHeader className="bg-muted/30 p-8 border-b">
                   <CardTitle className="flex items-center gap-3 text-lg font-black"><Activity className="text-primary" size={20}/> 3. 라이프스타일</CardTitle>
@@ -249,7 +251,6 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                 </CardContent>
               </Card>
 
-              {/* Step 4: Safety Net */}
               <Card className="border-none shadow-xl rounded-[2.5rem] overflow-hidden bg-white ring-1 ring-black/5">
                 <CardHeader className="bg-muted/30 p-8 border-b">
                   <CardTitle className="flex items-center gap-3 text-lg font-black"><ShieldCheck className="text-primary" size={20}/> 4. 건강 고민 & 알러지</CardTitle>
@@ -282,23 +283,30 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
               </Card>
             </TabsContent>
 
-            {/* Product Upload (Always Visible) */}
+            <TabsContent value="general" className="mt-0">
+               <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8 mb-10">
+                 <p className="text-center text-muted-foreground font-medium">제품의 성분 자체만 분석하고 싶을 때 이용하세요.</p>
+               </Card>
+            </TabsContent>
+
             <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white ring-1 ring-black/5">
               <CardHeader className="bg-primary/5 p-10 border-b">
                 <CardTitle className="flex items-center gap-4 text-2xl font-black"><Camera className="text-primary" size={28}/> 분석할 제품 촬영</CardTitle>
               </CardHeader>
               <CardContent className="p-10 space-y-10">
                 <FormField control={form.control} name="foodType" render={({ field }) => (
-                  <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {[
-                      { v: 'dry', l: '🍚 건식' }, { v: 'wet', l: '🍲 습식' },
-                      { v: 'treat', l: '🍖 간식' }, { v: 'supplement', l: '💊 영양제' }
-                    ].map(t => (
-                      <Label key={t.v} className={cn("flex items-center justify-center h-14 border-2 rounded-2xl cursor-pointer font-bold text-xs transition-all", field.value === t.v ? "border-primary bg-primary/5 ring-4 ring-primary/10" : "border-muted opacity-50")}>
-                        <RadioGroupItem value={t.v} className="sr-only" />{t.l}
-                      </Label>
-                    ))}
-                  </RadioGroup>
+                  <FormControl>
+                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {[
+                        { v: 'dry', l: '🍚 건식' }, { v: 'wet', l: '🍲 습식' },
+                        { v: 'treat', l: '🍖 간식' }, { v: 'supplement', l: '💊 영양제' }
+                      ].map(t => (
+                        <Label key={t.v} className={cn("flex items-center justify-center h-14 border-2 rounded-2xl cursor-pointer font-bold text-xs transition-all", field.value === t.v ? "border-primary bg-primary/5 ring-4 ring-primary/10" : "border-muted opacity-50")}>
+                          <RadioGroupItem value={t.v} className="sr-only" />{t.l}
+                        </Label>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
                 )}/>
 
                 <FormField control={form.control} name="image" render={({ field: { onChange } }) => (
