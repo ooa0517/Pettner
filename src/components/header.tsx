@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PawPrint, LogOut, LayoutDashboard, ChevronDown, History, Globe, MessageSquare } from 'lucide-react';
@@ -34,11 +35,9 @@ export default function Header() {
     return email ? email.substring(0, 2).toUpperCase() : '..';
   }
 
-  // 로고 클릭 시 메인 페이지라면 상태 초기화를 위해 새로고침 효과를 줄 수 있음
   const handleLogoClick = (e: React.MouseEvent) => {
     if (pathname === '/') {
-      // 현재 메인 페이지라면 페이지를 새로고침하여 상태 초기화
-      // 혹은 단순히 Link를 통해 이동 (Next.js Link는 기본적으로 동일 경로 시 아무것도 안함)
+      window.location.href = '/?reset=true';
     }
   };
 
@@ -89,13 +88,13 @@ export default function Header() {
                 <DropdownMenuLabel>{t('common.myAccount')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link href="/account">
+                  <Link href="/account" className="flex items-center w-full">
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>{t('header.accountManagement')}</span>
                   </Link>
                 </DropdownMenuItem>
                  <DropdownMenuItem asChild>
-                  <Link href="/history">
+                  <Link href="/history" className="flex items-center w-full">
                     <History className="mr-2 h-4 w-4" />
                     <span>{t('common.analysisHistory')}</span>
                   </Link>
