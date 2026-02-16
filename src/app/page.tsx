@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { AnalyzePetFoodIngredientsInput, AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { getAnalysis } from '@/app/actions';
 import AnalysisResult from '@/components/analysis-result';
@@ -13,6 +13,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { saveAnalysisToHistory } from '@/lib/history';
 import { useLanguage } from '@/contexts/language-context';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { useSearchParams } from 'next/navigation';
 
 /**
  * 제품 아이디(슬러그) 생성
@@ -26,11 +27,22 @@ export default function Home() {
   const { language, t } = useLanguage();
   const { user } = useUser();
   const db = useFirestore();
+  const searchParams = useSearchParams();
   
   const [step, setStep] = useState<'landing' | 'survey' | 'input' | 'loading' | 'result'>('landing');
   const [analysisResult, setAnalysisResult] = useState<AnalyzePetFoodIngredientsOutput | null>(null);
   const [resultInput, setResultInput] = useState<AnalyzePetFoodIngredientsInput | null>(null);
   const { toast } = useToast();
+
+  // URL 파라미터나 네비게이션 발생 시 상태 초기화 체크
+  useEffect(() => {
+    const reset = searchParams.get('reset');
+    if (reset === 'true') {
+      setStep('landing');
+      setAnalysisResult(null);
+      setResultInput(null);
+    }
+  }, [searchParams]);
 
   const handleAnalysis = async (formData: any) => {
     setStep('loading');

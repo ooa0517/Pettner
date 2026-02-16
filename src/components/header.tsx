@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useUser, useAuth } from '@/firebase';
 import { signOut } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +21,7 @@ export default function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const { setLanguage, t } = useLanguage();
 
   const handleLogout = async () => {
@@ -33,10 +34,18 @@ export default function Header() {
     return email ? email.substring(0, 2).toUpperCase() : '..';
   }
 
+  // 로고 클릭 시 메인 페이지라면 상태 초기화를 위해 새로고침 효과를 줄 수 있음
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (pathname === '/') {
+      // 현재 메인 페이지라면 페이지를 새로고침하여 상태 초기화
+      // 혹은 단순히 Link를 통해 이동 (Next.js Link는 기본적으로 동일 경로 시 아무것도 안함)
+    }
+  };
+
   return (
     <header className="py-4 px-4 sm:px-6 border-b bg-card/80 backdrop-blur-sm sticky top-0 z-40">
       <div className="flex items-center justify-between max-w-4xl mx-auto">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2" onClick={handleLogoClick}>
           <PawPrint className="text-primary h-8 w-8" />
           <h1 className="text-2xl font-bold text-foreground font-headline">
             {t('header.title')}
@@ -64,16 +73,16 @@ export default function Header() {
           </DropdownMenu>
 
           {isUserLoading ? (
-            <div className="h-9 w-32 bg-muted rounded-md animate-pulse" />
+            <div className="h-9 w-10 sm:w-32 bg-muted rounded-md animate-pulse" />
           ) : user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center gap-2">
+                <Button variant="ghost" className="flex items-center gap-2 px-2">
                    <Avatar className="h-8 w-8">
                      <AvatarImage src={user.photoURL || undefined} />
                      <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
                    </Avatar>
-                   <ChevronDown className="h-4 w-4 opacity-50" />
+                   <ChevronDown className="h-4 w-4 opacity-50 hidden sm:block" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
@@ -103,7 +112,7 @@ export default function Header() {
               <Button asChild variant="ghost" size="sm">
                 <Link href="/login">{t('common.login')}</Link>
               </Button>
-              <Button asChild size="sm" className="rounded-full px-4">
+              <Button asChild size="sm" className="rounded-full px-4 hidden sm:flex">
                 <Link href="/signup">{t('common.signup')}</Link>
               </Button>
             </div>
