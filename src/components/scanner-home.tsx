@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useMemo } from 'react';
@@ -203,7 +204,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                   <FormField control={form.control} name="petProfile.bcs" render={({ field }) => (
                     <FormItem className="space-y-4">
                       <FormLabel className="font-bold">체형 선택 (BCS) *</FormLabel>
-                      <div className="grid grid-cols-5 gap-2">
+                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-5 gap-2">
                         {bcsOptions.map(opt => (
                           <TooltipProvider key={opt.value}>
                             <Tooltip>
@@ -218,7 +219,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                             </Tooltip>
                           </TooltipProvider>
                         ))}
-                      </div>
+                      </RadioGroup>
                     </FormItem>
                   )}/>
                 </CardContent>
@@ -233,9 +234,9 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                   <FormField control={form.control} name="petProfile.activityLevel" render={({ field }) => (
                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="space-y-3">
                       {[
-                        { v: 'LOW', t: selectedPet === 'dog' ? '집순이 (<30분)' : '활동량 적음 (실내묘)', i: Ruler },
+                        { v: 'LOW', t: selectedPet === 'dog' ? '집순이 (&lt;30분)' : '활동량 적음 (실내묘)', i: Ruler },
                         { v: 'NORMAL', t: '적당함 (보통 활동)', i: Activity },
-                        { v: 'HIGH', t: selectedPet === 'dog' ? '에너자이저 (>1시간)' : '활동량 많음 (외출묘)', i: Zap }
+                        { v: 'HIGH', t: selectedPet === 'dog' ? '에너자이저 (&gt;1시간)' : '활동량 많음 (외출묘)', i: Zap }
                       ].map(lvl => (
                         <Label key={lvl.v} className={cn("flex items-center gap-4 p-5 border-2 rounded-2xl cursor-pointer transition-all", field.value === lvl.v ? "border-primary bg-primary/5 shadow-md" : "border-muted opacity-50")}>
                           <RadioGroupItem value={lvl.v} className="sr-only" />
@@ -288,7 +289,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
               </CardHeader>
               <CardContent className="p-10 space-y-10">
                 <FormField control={form.control} name="foodType" render={({ field }) => (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {[
                       { v: 'dry', l: '🍚 건식' }, { v: 'wet', l: '🍲 습식' },
                       { v: 'treat', l: '🍖 간식' }, { v: 'supplement', l: '💊 영양제' }
@@ -297,7 +298,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                         <RadioGroupItem value={t.v} className="sr-only" />{t.l}
                       </Label>
                     ))}
-                  </div>
+                  </RadioGroup>
                 )}/>
 
                 <FormField control={form.control} name="image" render={({ field: { onChange } }) => (
