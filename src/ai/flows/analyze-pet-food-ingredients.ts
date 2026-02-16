@@ -1,10 +1,11 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v6.0] 
- * - Obesity Algorithm (Ideal Weight based RER)
- * - Medical Grade Nutrition Analysis
- * - Dashboard-optimized output
+ * @fileOverview [Pettner Core Engine v7.0] 
+ * - Strict Obesity Algorithm (Ideal Weight based RER)
+ * - Breed Standard Weight Gap Analysis
+ * - Diet Roadmap Data Generation
+ * - Veterinary-grade Ingredient Matching
  */
 
 import {ai} from '@/ai/genkit';
@@ -40,33 +41,40 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     category: z.string().describe('제품 카테고리')
   }),
   scoreCard: z.object({
-    grade: z.enum(['S', 'A', 'B', 'C', 'D']),
-    headline: z.string().describe('아이 상태와 제품의 궁합을 한 줄로 요약'),
-    match_score: z.number().min(0).max(100),
-    statusTags: z.array(z.string()).describe('상태 태그 (예: 비만 경고, 다이어트 필요)')
+    totalScore: z.number().min(0).max(100).describe('현재 아이 상태 대비 적합성 점수'),
+    grade: z.string().describe('점수 기반 등급 (S~D)'),
+    headline: z.string().describe('아이 상태와 제품의 궁합 한 줄 요약'),
+    statusTags: z.array(z.string()).describe('상태 태그 (예: 비만 경고, 관절 케어 필요)')
   }),
-  feedingGuide: z.object({
-    isObese: z.boolean().describe('비만 여부 (BCS 4 이상)'),
-    idealWeight: z.number().describe('목표(이상적) 체중 (kg)'),
-    weightLossGrams: z.number().describe('감량 식단 일일 급여량 (g)'),
-    maintenanceGrams: z.number().describe('유지 식단 일일 급여량 (g)'),
-    targetKcal: z.number().describe('감량 목표 칼로리 (kcal)'),
-    maintenanceKcal: z.number().describe('유지 목표 칼로리 (kcal)'),
-    visualGuide: z.string().describe('종이컵 기준 가이드 (감량 기준)')
+  weightDiagnosis: z.object({
+    currentWeight: z.number(),
+    idealWeight: z.number().describe('공식에 의한 목표 체중'),
+    weightGap: z.number().describe('감량 필요한 킬로그램'),
+    breedStandardRange: z.string().describe('품종 표준 체중 범위 (예: 3~8kg)'),
+    overweightPercentage: z.number().describe('표준 대비 초과 비율 (%)'),
+    verdict: z.string().describe('체중 상태에 대한 수의학적 판단 문구')
   }),
+  dietRoadmap: z.array(z.object({
+    weight: z.number().describe('기준 몸무게'),
+    grams: z.number().describe('해당 몸무게 시점의 일일 권장 급여량'),
+    phase: z.string().describe('단계 명칭 (급속 감량기, 안정기, 유지기 등)')
+  })).describe('체중 변화에 따른 급여량 로드맵 데이터'),
   advancedNutrition: z.object({
-    dm_protein: z.string().describe('DM 단백질'),
-    dm_fat: z.string().describe('DM 지방'),
-    dm_carbs: z.string().describe('DM 탄수화물'),
-    protein_pct: z.number().describe('단백질 함량 (%)'),
-    fat_pct: z.number().describe('지방 함량 (%)'),
-    carbs_pct: z.number().describe('탄수화물 함량 (%)'),
-    carbs_warning: z.boolean().describe('탄수화물 과다 여부 (40% 초과)'),
+    carbs_nfe_dm: z.number().describe('DM 기준 탄수화물 함량 (%)'),
+    protein_dm: z.number().describe('DM 기준 단백질 함량 (%)'),
+    fat_dm: z.number().describe('DM 기준 지방 (%)'),
+    isHighCarb: z.boolean().describe('탄수화물 40% 초과 여부'),
+    caloriesPerGram: z.number().describe('제품의 g당 칼로리 (없으면 3.5kcal/g 적용)')
   }),
-  ingredientAnalysis: z.object({
-    positive: z.array(z.object({ tag: z.string(), reason: z.string() })),
-    cautionary: z.array(z.object({ tag: z.string(), reason: z.string() })),
-    proTip: z.string().describe('수의학적 조언 (불렛 포인트 활용)')
+  veterinaryDiagnosis: z.object({
+    criticalMismatch: z.string().optional().describe('비만 등 특정 상태에 부적합한 결정적 이유'),
+    positivePoints: z.array(z.string()).describe('아이 상태와 매칭되는 긍정 성분 및 이유'),
+    cautionaryPoints: z.array(z.string()).describe('주의가 필요한 성분 및 이유'),
+    vetAdvice: z.string().describe('수의학적 종합 조언')
+  }),
+  feedingSummary: z.object({
+    lossAmountGrams: z.number().describe('현재 시점 감량 권장 급여량'),
+    cupGuide: z.string().describe('종이컵 기준 가이드 (예: 약 0.8컵)')
   })
 });
 
@@ -80,28 +88,36 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 반려동물 영양학 전문가입니다. 제공된 정보와 사진을 바탕으로 정밀 리포트를 작성하십시오.
+  prompt: `당신은 세계적인 수의 영양학 전문가입니다. 제공된 정보와 사진을 바탕으로 '메디컬 진단서' 수준의 리포트를 작성하십시오.
 
-# 엄격한 식별 원칙 (Grounded Vision)
-1. {{#if photoDataUri}}제공된 사진({{media url=photoDataUri}})에서{{else}}입력된 정보에서{{/if}} 보이는 텍스트만 추출하십시오. 절대 브랜드를 지며내지 마십시오.
-
-# 비만 관리 알고리즘 (Obesity Algorithm)
-아이의 BCS(Body Condition Score)가 4단계 이상인 경우 다음 공식을 반드시 적용하십시오:
+# 엄격한 비만 알고리즘 (Strict Obesity Algorithm)
+아이의 BCS(Body Condition Score)가 4 이상인 경우 다음 공식을 반드시 적용하십시오:
 1. 목표 체중(Ideal Weight) = 현재 체중 * (100 - (BCS - 3) * 10) / 100
-2. 감량 목표 칼로리(Target Kcal) = (70 * (목표 체중^0.75)) * 1.0
-3. 유지 목표 칼로리(Maintenance Kcal) = (70 * (현재 체중^0.75)) * 활동계수
-   (중성화 완료: 1.6 | 미완료: 1.8 | BCS 4/5: 1.0~1.2)
-4. 급여량 계산 시 사료의 칼로리 정보가 없으면 표준 3.5kcal/g을 적용하십시오.
+   - 예: 12.6kg, BCS 5 -> 12.6 * (100 - 20) / 100 = 10.08kg
+2. 감량 필요한 킬로그램 = 현재 체중 - 목표 체중
+3. 감량 목표 칼로리(Target Kcal) = (70 * (목표 체중^0.75)) * 1.0 (비만인 경우 보존 계수 1.0 적용)
+4. 유지 칼로리(Maintenance Kcal) = (70 * (현재 체중^0.75)) * (중성화 완료: 1.6 | 미완료: 1.8 | 비만인 경우 1.2~1.4)
 
-# 영양 분석 (Nutrient Analysis)
-1. 탄수화물(NFE) 계산: 100 - (조단백 + 조지방 + 조섬유 + 조회분 + 수분)
-2. 탄수화물 함량이 40%를 초과(DM 기준)하고 아이가 비만인 경우, '탄수화물 과다 경고'를 활성화하고 빨간색 강조 지침을 내리십시오.
-3. 모든 영양소는 DM(건물 기준)으로 환산하여 수의학적 적합성을 판별하십시오.
+# 다이어트 로드맵 데이터 생성
+현재 체중에서 목표 체중까지의 여정을 3~4개 데이터 포인트로 생성하십시오.
+- Phase 1 (급속 감량기): 현재 체중 시점, 가장 낮은 급여량 (감량 목표 칼로리 기준)
+- Phase 2 (안정기): 목표 체중으로 가는 중간 시점, 급여량을 아주 조금씩 증량
+- Phase 3 (유지기): 목표 체중 도달 시점, 유지 칼로리(Maintenance)를 적용하여 다시 급여량이 올라가는 형태
+
+# 품종 표준 분석
+- {{{petProfile.breed}}}의 표준 체중 범위를 데이터베이스에서 확인하십시오.
+- 현재 체중이 표준 범위 상단 대비 몇 % 초과하는지 계산하십시오.
+
+# 영양 및 성분 매칭 (Deep Analysis)
+1. 탄수화물(NFE) DM 기준 계산: 100 - (조단백 + 조지방 + 조섬유 + 조회분 + 수분) / (100 - 수분) * 100
+2. 비만인 아이에게 탄수화물이 40%를 초과하면 'criticalMismatch'에 명시하고 점수를 대폭 감점하십시오.
+3. {{{petProfile.healthConditions}}} 및 {{{petProfile.allergies}}}를 원료 리스트와 대조하십시오.
+   - 예: 관절 고민이 있는데 글루코사민이 있으면 긍정 포인트.
+   - 예: 닭 알러지가 있는데 닭고기 지방이 있으면 주의 포인트.
 
 # 출력 스타일
-- 미니멀한 메디컬 대시보드 스타일로 작성하십시오.
-- 감정적인 아이콘 사용을 자제하고 전문적인 용어와 태그를 사용하십시오.
-- 비만인 경우 "체중 조절 솔루션" 중심의 헤드라인을 작성하십시오.
+- 냉철하고 전문적인 수의학적 어조를 유지하십시오.
+- 불필요한 미사여구를 빼고 데이터와 팩트 중심으로 작성하십시오.
 - 출력 언어: {{{language}}}`,
 });
 
