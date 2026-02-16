@@ -325,6 +325,69 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               </div>
             </AccordionContent>
           </AccordionItem>
+
+          <AccordionItem value="safety" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-2xl text-primary"><ShieldAlert /></div>
+                <div className="text-left">
+                  <h3 className="font-black text-lg">🛡️ 안전성 & 유해 성분 필터</h3>
+                  <p className="text-xs text-muted-foreground font-medium">리콜 이력 및 첨가물 심사</p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
+               <div className="space-y-3">
+                  {result.deepDive.safetyToxicology.checks.map((check, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 bg-muted/5 rounded-xl border">
+                       <div className="flex items-center gap-2">
+                          {check.status ? <CheckCircle className="text-success w-4 h-4" /> : <AlertCircle className="text-destructive w-4 h-4" />}
+                          <span className="text-xs font-bold">{check.label}</span>
+                       </div>
+                       <span className="text-[10px] text-muted-foreground">{check.comment}</span>
+                    </div>
+                  ))}
+               </div>
+               <div className="p-4 bg-destructive/5 rounded-2xl border border-destructive/10">
+                  <p className="text-xs font-black text-destructive flex items-center gap-2 uppercase mb-1">
+                    <History size={14} /> Recall History
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{result.deepDive.safetyToxicology.recallHistory}</p>
+               </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="brand" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Globe /></div>
+                <div className="text-left">
+                  <h3 className="font-black text-lg">🌍 브랜드 신뢰도 & ESG</h3>
+                  <p className="text-xs text-muted-foreground font-medium">제조사 R&D 및 윤리성 평가</p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8 pt-4 space-y-4">
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-muted/10 rounded-2xl">
+                    <p className="text-[10px] font-black opacity-50 uppercase">제조 시설</p>
+                    <p className="text-xs font-bold">{result.deepDive.brandESG.facility}</p>
+                  </div>
+                  <div className="p-4 bg-muted/10 rounded-2xl">
+                    <p className="text-[10px] font-black opacity-50 uppercase">R&D 수준</p>
+                    <p className="text-xs font-bold">{result.deepDive.brandESG.rdLevel}</p>
+                  </div>
+                  <div className="p-4 bg-muted/10 rounded-2xl">
+                    <p className="text-[10px] font-black opacity-50 uppercase">지속 가능성</p>
+                    <p className="text-xs font-bold">{result.deepDive.brandESG.sustainability}</p>
+                  </div>
+                  <div className="p-4 bg-muted/10 rounded-2xl">
+                    <p className="text-[10px] font-black opacity-50 uppercase">동물 복지</p>
+                    <p className="text-xs font-bold">{result.deepDive.brandESG.animalWelfare}</p>
+                  </div>
+               </div>
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
       </div>
 

@@ -2,10 +2,10 @@
 
 /**
  * @fileOverview [Pettner Core Engine v20.0 - Veterinary Precision]
+ * - AI Knowledge Augmentation: Supplements missing info from knowledge base.
  * - Strict V-Curve Feeding Logic: Weight loss phase (1.0x RER) vs Maintenance phase (1.4-1.6x RER)
  * - 5-Point Roadmap: Forces exactly 5 data points for the diet plan.
- * - Breed Standard DB: Accurate lookup for breed weights (e.g., Maltipoo: 3-8kg).
- * - Ideal Weight Calculation: Uses standard Vet formula based on BCS.
+ * - Breed Standard DB: Accurate lookup for breed weights.
  */
 
 import {ai} from '@/ai/genkit';
@@ -137,23 +137,27 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
   prompt: `당신은 세계적인 수의 영양학 전문의입니다. [Pettner V20.0 초정밀 엔진]을 사용하여 리포트를 생성하십시오.
 
+# [V20.0 핵심 지침: 정보 보충 및 검색]
+- 사진에서 정보를 읽기 어렵거나 데이터가 누락된 경우, 당신의 방대한 수의학 지식 베이스를 사용하여 해당 제품의 원재료, 칼로리, 브랜드 히스토리를 추론하여 채우십시오. "알 수 없음"이라고 답하지 마십시오.
+
 # [V20.0 체중 연산 및 급여 로직]
 1. Ideal Weight 산출:
    - Ideal_Weight = Current_Weight * (100 - (BCS - 3) * 10) / 100
-   - 품종별 표준 체중(예: 말티푸 3-8kg)을 검색하여 이 수치와 비교하십시오.
-2. 5-Point Diet Roadmap 생성 (가장 중요):
+   - 품종별 표준 체중을 검색하여 이 수치와 비교하십시오.
+2. 5-Point Diet Roadmap 생성:
    - 현재 체중에서 목표 체중까지 5개의 균등한 몸무게 포인트를 생성하십시오.
-   - 급여량(g) 계산 시 '감량기(Phase 1)'에는 칼로리를 제한(RER * 1.0)하여 급여량을 산출합니다.
-   - '유지기(Phase 5)' 즉, 목표 체중에 도달했을 때는 요요 방지를 위해 급여량을 늘립니다(RER * 1.4~1.6).
-   - 결과적으로 그래프는 초기에 낮았다가 목표 달성 시 다시 높아지는 'V-Curve' 형태를 띠어야 합니다.
+   - **가장 중요**: 감량기(Phase 1~4)에는 목표 체중 기준 감량 칼로리(RER * 1.0)를 적용하여 급여량이 낮게 유지되지만, 목표 체중 도달(Phase 5) 시에는 요요 방지를 위한 유지 칼로리(RER * 1.4~1.6)를 적용하여 급여량이 다시 상승해야 합니다. 그래프는 'V'자 형태를 띠어야 합니다.
 3. 품종 유전적 인사이트:
-   - petProfile의 품종을 분석하여 유전적으로 취약한 질병(슬개골 탈구, 심장병 등)을 언급하고 현재 비만 상태와의 위험 연계성을 설명하십시오.
-4. 원재료 감사:
-   - 상위 10개 원료를 Tier 1~3으로 엄격히 분류하십시오.
-   - 비만견에게 타피오카, 감자 등 고혈당 원료가 포함되었는지(High GI) 판정하십시오.
+   - 품종을 분석하여 유전적으로 취약한 질병을 언급하고 현재 상태와의 위험 연계성을 설명하십시오.
+
+# [Deep Dive 섹션 구성]
+- Ingredient Audit: 상위 10개 원료를 Tier 1~3으로 분류.
+- Nutritional Engineering: 칼슘:인 비율, 오메가 비율 산출.
+- Safety: 리콜 이력 및 첨가물 체크.
+- ESG: 제조사 신뢰도 심사.
 
 입력 데이터:
-- 사진: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}없음{{/if}}
+- 사진: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음 (지식 베이스 사용){{/if}}
 - 제품: {{{productName}}} ({{{foodType}}})
 - 반려동물: 이름:{{{petProfile.name}}}, 품종:{{{petProfile.breed}}}, 나이:{{{petProfile.age}}}, 체중:{{{petProfile.weight}}}kg, BCS:{{{petProfile.bcs}}}, 건강고민:{{{petProfile.healthConditions}}}`
 });
