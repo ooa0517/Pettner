@@ -22,6 +22,14 @@
     "accountManagement": "계정 관리",
     "feedback": "피드백 보내기"
   },
+  "landingPage": {
+    "description": "수의 영양학으로 더 건강해지는<br/>반려동물 먹거리 통합 분석 서비스",
+    "startButton": "분석 시작하기",
+    "loginNotice": "분석 기록 저장을 위해 로그인하기",
+    "googleLogin": "Google로 로그인",
+    "legalNotice": "Legal Notice",
+    "legalDescription": "Pettner는 AI 기술을 활용한 영양 정보 분석 도구이며, 전문 수의사의 진단을 대신할 수 없습니다. 반려동물의 건강 관리에 대한 모든 최종 결정은 반드시 전문 수의사의 상담을 거쳐야 합니다."
+  },
   "loginPage": {
     "title": "로그인",
     "description": "계정에 로그인하려면 이메일과 비밀번호를 입력하세요.",

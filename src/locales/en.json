@@ -18,7 +18,16 @@
     "title": "Pettner",
     "firebaseErrorTitle": "Firebase Configuration Error",
     "firebaseErrorDescription": "Firebase is not configured. Authentication will not work. Please ensure you have correctly entered your Firebase project information in the `.env` file.",
-    "accountManagement": "Account Management"
+    "accountManagement": "Account Management",
+    "feedback": "Send Feedback"
+  },
+  "landingPage": {
+    "description": "Better health through veterinary nutrition.<br/>Total pet food & treat analysis service.",
+    "startButton": "Start Analysis",
+    "loginNotice": "Login to save your analysis history",
+    "googleLogin": "Login with Google",
+    "legalNotice": "Legal Notice",
+    "legalDescription": "Pettner is an AI-powered nutritional analysis tool and is not a substitute for professional veterinary diagnosis. All final decisions regarding your pet's health must be made in consultation with a professional veterinarian."
   },
   "loginPage": {
     "title": "Login",
@@ -66,7 +75,7 @@
     "profileDescription": "This is my account information.",
     "user": "User",
     "myPets": "My Pets",
-    "myPetsDescription": "Register your pet and use personalized services. (Subscription feature coming soon)",
+    "myPetsDescription": "Register your pet and use personalized services. (Family sharing coming soon)",
     "noPets": "No pets registered yet.",
     "addPet": "Add Pet"
   },
@@ -93,7 +102,7 @@
     "aiInputError": "Please provide either the ingredient text or an image for analysis."
   },
   "scannerHome": {
-    "title": "Veterinary Nutrition Ingredient Analysis",
+    "title": "Integrated Analysis for Food, Treats, & Supplements",
     "descriptionV2": "Directly input product information or take a photo of the ingredients. <br /> Our veterinary nutrition science provides an analysis based on scientific evidence.",
     "petTypeLabel": "Whose food is it?",
     "petTypes": {
@@ -106,7 +115,7 @@
     "productNameRequired": "Product name is required.",
     "brandNameLabel": "Brand Name (Optional)",
     "brandNamePlaceholder": "e.g., Natural Core",
-    "foodTypeLabel": "Product Type (Optional)",
+    "foodTypeLabel": "Product Type",
     "foodTypePlaceholder": "Select a product type",
     "foodTypes": {
       "dry": "Dry Food",
@@ -131,16 +140,17 @@
     "inputRequired": "Please enter ingredient text or upload a photo.",
     "healthConditionsLabel": "Pet's Pre-existing Conditions (Optional)",
     "healthConditionsPlaceholder": "e.g., kidney disease, skin allergies. Enter multiple conditions separated by commas.",
-    "imageLabel": "Ingredient Photo",
+    "imageLabel": "Label Photo",
     "imageDescription": "* For more accurate analysis, please attach a clear photo of the ingredient list.",
-    "analyzeButton": "Start Ingredient Analysis",
+    "analyzeButton": "Start AI Nutrition Analysis",
     "instruction": "* Please take a clear picture of the 'Ingredients' and 'Guaranteed Analysis'.",
     "orUploadPhoto": "Or Upload a Photo",
     "imagePrompt": "Click or drag file to this area to upload.<br/>(Product name, ingredients, guaranteed analysis)",
-    "betaNotice": "Pettner is currently in <strong>Beta</strong>. <br/> We welcome your valuable feedback."
+    "betaNotice": "Pettner is currently in <strong>Beta</strong>. Analysis results are for reference only.",
+    "legalDisclaimer": "This service is not a substitute for professional veterinary diagnosis. If your pet has a condition, please consult a veterinarian."
   },
   "analysisLoading": {
-    "title": "Analyzing Ingredients...",
+    "title": "Analyzing ingredients...",
     "description": "We are carefully examining the food ingredients<br/>based on the latest scientific papers and nutritional guidelines.",
     "titleV2": "Your Personalized Report is Being Generated...",
     "descriptionV2": "Our AI vet is thoroughly examining the ingredients <br/> to create a detailed report just for your pet."
@@ -148,7 +158,7 @@
   "analysisResult": {
     "productAnalyzed": "Analyzed Product",
     "originalImage": "Analysis Source",
-    "disclaimer": "<strong>Disclaimer:</strong> This analysis is for informational purposes and cannot replace professional medical advice from a veterinarian. If your pet has any health issues, please consult a professional veterinarian.",
+    "disclaimer": "<strong>Disclaimer:</strong> Pettner's analysis results are based on AI technology and cannot replace direct diagnosis or prescription by a veterinarian. If your pet has a medical condition, please consult a professional veterinarian. In addition, the nutritional information provided in this service refers to guidelines from reputable organizations, but actual ingredients may differ depending on the manufacturer's production environment or latest updates.",
     "analyzeNewProduct": "Analyze a New Product",
     "buyNowSectionTitle": "Check Lowest Price",
     "searchOnCoupang": "Search on Coupang",
@@ -158,7 +168,7 @@
       "title": "Analysis Failed",
       "defaultMessage": "An error occurred during analysis."
     },
-    "expertReviewTitle": "Vet's Summary",
+    "expertReviewTitle": "AI Vet's Summary",
     "bestPoint": "What's great",
     "cautionPoint": "What to watch out for",
     "vetTip": "Vet's Pro Tip",
@@ -169,12 +179,12 @@
     "dmBasis": "DM basis",
     "protein": "Protein",
     "fat": "Fat",
-    "aafcoDisclaimer": "Compared to AAFCO minimum standards for adult {petType}.",
+    "aafcoDisclaimer": "Analysis compared against international nutritional guidelines.",
     "nutrientTooltips": {
-      "단백": "Essential for muscle, skin, and hair health. It's the building block of the body.",
-      "지방": "The main energy source. It helps absorb vitamins and maintain body temperature.",
-      "섬유": "Aids in digestion and helps with healthy bowel movements. Prevents constipation.",
-      "회분": "Represents the mineral content, like calcium and phosphorus, which are essential for bones and teeth."
+        "단백": "Essential for muscle, skin, and hair health. It's the building block of the body.",
+        "지방": "The main energy source. It helps absorb vitamins and maintain body temperature.",
+        "섬유": "Aids in digestion and helps with healthy bowel movements. Prevents constipation.",
+        "회분": "Represents the mineral content, like calcium and phosphorus, which are essential for bones and teeth."
     },
     "prosTitle": "Detailed Pros",
     "consTitle": "Detailed Cons",
@@ -184,12 +194,14 @@
     "feedingGuideTitle": "Daily Feeding Guide",
     "feedingGuideDescription": "Recommended daily amount based on your pet's life stage and weight.",
     "weightRange": "Weight",
-    "dailyAmount": "Amount"
+    "dailyAmount": "Amount",
+    "shareReport": "Share Report",
+    "shareSuccess": "Link copied to clipboard!"
   },
   "firebaseError": {
     "title": "Firebase Configuration Required",
     "description": "The application is not connected to a Firebase project.",
-    "instructions": "To connect to your Firebase project, you need to set up your environment variables. Please copy the web app configuration from your Firebase project settings in the Firebase Console and paste it into a <strong>.env</strong> file in the root of your project.",
+    "instructions": "To connect to your Firebase project, you need to set up your environment variables.",
     "restart": "After editing the file, you need to restart the development server for the changes to take effect."
   }
 }
