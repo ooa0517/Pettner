@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import type { AnalyzePetFoodIngredientsInput, AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { getAnalysis } from '@/app/actions';
 import AnalysisResult from '@/components/analysis-result';
@@ -23,7 +24,7 @@ function generateProductId(brandName: string = '', productName: string = ''): st
   return combined.replace(/[^a-z0-9가-힣]/g, '-').replace(/-+/g, '-');
 }
 
-export default function Home() {
+function HomeContent() {
   const { language, t } = useLanguage();
   const { user } = useUser();
   const db = useFirestore();
@@ -34,7 +35,6 @@ export default function Home() {
   const [resultInput, setResultInput] = useState<AnalyzePetFoodIngredientsInput | null>(null);
   const { toast } = useToast();
 
-  // URL 파라미터나 네비게이션 발생 시 상태 초기화 체크
   useEffect(() => {
     const reset = searchParams.get('reset');
     if (reset === 'true') {
@@ -46,28 +46,31 @@ export default function Home() {
 
   const handleAnalysis = async (formData: any) => {
     setStep('loading');
-    setAnalysisResult(null);
-    setResultInput(null);
-
-    const file = formData.image?.[0];
     
+    // Calculate Age if not provided directly
+    let finalAge: number | undefined;
+    if (formData.petProfile.birthDate) {
+      const birth = new Date(formData.petProfile.birthDate);
+      const today = new Date();
+      finalAge = today.getFullYear() - birth.getFullYear();
+    } else if (formData.petProfile.ageYears) {
+      finalAge = Number(formData.petProfile.ageYears);
+    }
+
     const analysisInput: AnalyzePetFoodIngredientsInput = {
         petType: formData.petType,
         analysisMode: formData.analysisMode,
         productName: formData.productName,
-        brandName: formData.brandName,
         foodType: formData.foodType,
-        ingredientsText: formData.ingredientsText,
         language: language,
         petProfile: formData.analysisMode === 'custom' ? {
           name: formData.petProfile.name,
           breed: formData.petProfile.breed,
-          age: Number(formData.petProfile.age) || undefined,
+          age: finalAge,
           weight: Number(formData.petProfile.weight) || undefined,
-          neutered: formData.petProfile.neutered === 'yes',
+          neutered: formData.petProfile.genderStatus.includes('neutered'),
           activityLevel: formData.petProfile.activityLevel,
           bcs: formData.petProfile.bcs,
-          environment: formData.petProfile.environment,
           healthConditions: formData.petProfile.healthConditions,
           allergies: formData.petProfile.allergies,
         } : undefined
@@ -75,11 +78,11 @@ export default function Home() {
 
     const processAndAnalyze = async (input: AnalyzePetFoodIngredientsInput) => {
       try {
-        const productId = generateProductId(input.brandName, input.productName);
+        const productId = generateProductId('', input.productName);
         let finalResult: AnalyzePetFoodIngredientsOutput | null = null;
         let isCached = false;
 
-        // 1. 클라이언트 측 캐시 확인 (제품 정보만 있는 경우에 주로 유용)
+        // Cache Check
         if (db && productId && productId.length > 5 && input.analysisMode === 'general') {
           const productRef = doc(db, 'products', productId);
           const productSnap = await getDoc(productRef);
@@ -89,16 +92,11 @@ export default function Home() {
           }
         }
 
-        // 2. 캐시가 없거나 맞춤 분석인 경우 서버 액션으로 AI 분석 실행
         if (!finalResult) {
           const actionResponse = await getAnalysis(input);
-          if (actionResponse.error) {
-            throw new Error(t(actionResponse.error));
-          }
+          if (actionResponse.error) throw new Error(t(actionResponse.error));
           if (actionResponse.data) {
             finalResult = actionResponse.data;
-            
-            // 글로벌 캐시에 저장 (비동기, 제품 중심 정보만 저장)
             if (db && productId && productId.length > 5 && finalResult.status === 'success' && input.analysisMode === 'general') {
               setDoc(doc(db, 'products', productId), finalResult).catch(e => console.error("Global cache save failed:", e));
             }
@@ -108,12 +106,9 @@ export default function Home() {
         if (finalResult) {
           setAnalysisResult(finalResult);
           setResultInput(input);
-          
-          // 사용자 히스토리에 저장
           if (user && db && finalResult.status === 'success') {
             saveAnalysisToHistory(db, user.uid, input, finalResult);
           }
-          
           setStep('result');
           toast({
             title: isCached ? "기존 분석 리포트 확인" : t('homePage.analysisCompleteTitle'),
@@ -131,34 +126,19 @@ export default function Home() {
       }
     };
     
+    const file = formData.image?.[0];
     if (file) {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = async () => {
-        const imageDataUri = reader.result as string;
-        analysisInput.photoDataUri = imageDataUri;
+        analysisInput.photoDataUri = reader.result as string;
         await processAndAnalyze(analysisInput);
-      };
-      reader.onerror = (error) => {
-        console.error("FileReader error: ", error);
-        toast({
-          variant: "destructive",
-          title: t('homePage.fileReadFailedTitle'),
-          description: t('homePage.fileReadFailedDescription'),
-        });
-        setStep('input');
       };
     } else {
         await processAndAnalyze(analysisInput);
     }
   };
   
-  const handleReset = () => {
-    setAnalysisResult(null);
-    setResultInput(null);
-    setStep('input');
-  };
-
   return (
     <div className="flex flex-col items-center justify-center flex-grow p-4 md:p-8">
       <div className="w-full max-w-4xl">
@@ -167,9 +147,17 @@ export default function Home() {
         {step === 'input' && <ScannerHome onAnalyze={handleAnalysis} />}
         {step === 'loading' && <AnalysisLoading />}
         {step === 'result' && analysisResult && resultInput && (
-          <AnalysisResult result={analysisResult} input={resultInput} onReset={handleReset} />
+          <AnalysisResult result={analysisResult} input={resultInput} onReset={() => setStep('input')} />
         )}
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
