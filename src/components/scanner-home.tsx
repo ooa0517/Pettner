@@ -4,9 +4,9 @@ import { useMemo } from 'react';
 import { 
   Camera, Sparkles, Dog, Cat, ShieldCheck, 
   CheckCircle2, Database, Activity,
-  User, Weight, Ruler, Zap, Info, ChevronRight,
-  Stethoscope, Heart, Calendar, Scale,
-  Dna, HeartPulse
+  Zap, ChevronRight,
+  HeartPulse, Scale,
+  Dna, Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,21 +15,20 @@ import { useLanguage } from '@/contexts/language-context';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const bcsOptions = [
-  { value: '1', label: '매우 마름', description: '뼈가 도드라짐', emoji: '🦴' },
-  { value: '2', label: '마름', description: '체지방 적음', emoji: '🐕' },
-  { value: '3', label: '이상적', description: '적당한 허리선', emoji: '✨' },
-  { value: '4', label: '과체중', description: '허리선 모호', emoji: '🍑' },
-  { value: '5', label: '비만', description: '지방층 두꺼움', emoji: '🍩' },
+  { value: '1', label: '매우 마름', description: '갈비뼈가 훤히 보임', emoji: '🦴' },
+  { value: '2', label: '마름', description: '지방층이 매우 얇음', emoji: '🐕' },
+  { value: '3', label: '이상적', description: '적당한 허리선 (Best)', emoji: '✨' },
+  { value: '4', label: '통통함', description: '허리선이 잘 안 보임', emoji: '🍑' },
+  { value: '5', label: '비만', description: '지방층이 두껍고 무거움', emoji: '🍩' },
 ];
 
 type AnalysisFormValues = {
@@ -59,17 +58,17 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
   const formSchema = useMemo(() => z.object({
     petType: z.enum(['dog', 'cat']),
     analysisMode: z.enum(['general', 'custom']),
-    productName: z.string().default(''),
+    productName: z.string().optional(),
     foodType: z.enum(['dry', 'wet', 'treat', 'supplement']),
     image: z.any().optional(),
     petProfile: z.object({
-      name: z.string().default(''),
-      breed: z.string().default(''),
-      birthDate: z.string().default(''),
+      name: z.string().min(1, '이름을 입력해주세요'),
+      breed: z.string().min(1, '품종을 입력해주세요'),
+      birthDate: z.string().optional(),
       dontKnowBirth: z.boolean().default(false),
-      ageYears: z.string().default(''),
+      ageYears: z.string().optional(),
       genderStatus: z.string().default('neutered_male'),
-      weight: z.string().default(''),
+      weight: z.string().min(1, '몸무게를 입력해주세요'),
       bcs: z.string().default('3'),
       activityLevel: z.string().default('NORMAL'),
       healthConditions: z.array(z.string()).default([]),
@@ -104,6 +103,8 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
   const imageFile = form.watch('image');
   const dontKnowBirth = form.watch('petProfile.dontKnowBirth');
   const selectedBcs = form.watch('petProfile.bcs');
+  const selectedGender = form.watch('petProfile.genderStatus');
+  const selectedActivity = form.watch('petProfile.activityLevel');
 
   const dogConditions = ['관절/슬개골', '피부/눈물', '소화기', '심장', '다이어트'];
   const catConditions = ['신장/비뇨기', '헤어볼', '구강/치아', '심장', '다이어트'];
@@ -118,16 +119,16 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
         <h1 className="text-4xl md:text-6xl font-black font-headline tracking-tighter text-foreground leading-tight">
           반려동물 정밀 분석
         </h1>
-        <p className="text-muted-foreground text-base font-medium">우리 아이의 건강을 위한 맞춤 영양 리포트 🐾</p>
+        <p className="text-muted-foreground text-base font-medium">우리 아이 건강을 위한 맞춤 영양 처방전 🐾</p>
       </div>
 
       <Tabs defaultValue="custom" onValueChange={(v) => form.setValue('analysisMode', v as any)} className="w-full">
         <TabsList className="grid w-full grid-cols-2 h-20 rounded-[2.5rem] bg-white shadow-xl p-2 mb-12">
           <TabsTrigger value="general" className="rounded-[2rem] text-sm font-bold data-[state=active]:bg-primary/5 data-[state=active]:text-primary transition-all">
-            <Database className="mr-2 h-4 w-4" /> 제품 성분만 분석
+            <Database className="mr-2 h-4 w-4" /> 단순 성분 분석
           </TabsTrigger>
-          <TabsTrigger value="custom" className="rounded-[2rem] text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-white transition-all relative">
-            <Sparkles className="mr-2 h-4 w-4" /> 우리 아이 맞춤 분석
+          <TabsTrigger value="custom" className="rounded-[2rem] text-sm font-bold data-[state=active]:bg-primary data-[state=active]:text-white transition-all">
+            <Sparkles className="mr-2 h-4 w-4" /> 맞춤 정밀 리포트
           </TabsTrigger>
         </TabsList>
 
@@ -142,12 +143,12 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                 <CardContent className="p-10 space-y-10">
                   <FormField control={form.control} name="petType" render={({ field }) => (
                     <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-6">
-                      <Label htmlFor="dog" className={cn("flex flex-col items-center p-8 border-4 rounded-[3rem] cursor-pointer transition-all active:scale-95", selectedPet === 'dog' ? "border-primary bg-primary/5" : "border-muted opacity-40")}>
+                      <Label htmlFor="dog" className={cn("flex flex-col items-center p-8 border-4 rounded-[3rem] cursor-pointer transition-all active:scale-95", selectedPet === 'dog' ? "border-primary bg-primary/5 shadow-inner" : "border-muted opacity-40")}>
                         <RadioGroupItem value="dog" id="dog" className="sr-only" />
                         <Dog size={48} className={cn("mb-3", selectedPet === 'dog' ? "text-primary" : "text-muted-foreground")} />
                         <span className="font-black text-xl">강아지</span>
                       </Label>
-                      <Label htmlFor="cat" className={cn("flex flex-col items-center p-8 border-4 rounded-[3rem] cursor-pointer transition-all active:scale-95", selectedPet === 'cat' ? "border-primary bg-primary/5" : "border-muted opacity-40")}>
+                      <Label htmlFor="cat" className={cn("flex flex-col items-center p-8 border-4 rounded-[3rem] cursor-pointer transition-all active:scale-95", selectedPet === 'cat' ? "border-primary bg-primary/5 shadow-inner" : "border-muted opacity-40")}>
                         <RadioGroupItem value="cat" id="cat" className="sr-only" />
                         <Cat size={48} className={cn("mb-3", selectedPet === 'cat' ? "text-primary" : "text-muted-foreground")} />
                         <span className="font-black text-xl">고양이</span>
@@ -160,32 +161,56 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                       <FormItem><FormLabel className="font-black ml-2 text-muted-foreground">이름</FormLabel><FormControl><Input placeholder="아이 이름" className="rounded-2xl h-14 bg-muted/20 border-none px-6" {...field} /></FormControl></FormItem>
                     )}/>
                     <FormField control={form.control} name="petProfile.breed" render={({ field }) => (
-                      <FormItem><FormLabel className="font-black ml-2 text-muted-foreground">품종</FormLabel><FormControl><Input placeholder="예: 말티즈" className="rounded-2xl h-14 bg-muted/20 border-none px-6" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="font-black ml-2 text-muted-foreground">품종</FormLabel><FormControl><Input placeholder="예: 말티즈, 코숏" className="rounded-2xl h-14 bg-muted/20 border-none px-6" {...field} /></FormControl></FormItem>
                     )}/>
                   </div>
 
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-3">
-                      <FormLabel className="font-black ml-2 text-muted-foreground">생년월일</FormLabel>
+                      <FormLabel className="font-black ml-2 text-muted-foreground">생년월일 / 나이</FormLabel>
                       {dontKnowBirth ? (
                         <div className="relative">
-                          <Input type="number" step="0.1" inputMode="decimal" placeholder="예: 4.5" className="rounded-2xl h-14 bg-muted/20 border-none px-6 pr-12" {...form.register('petProfile.ageYears')} />
+                          <Input 
+                            type="number" 
+                            step="0.1" 
+                            inputMode="decimal" 
+                            placeholder="예: 4.5" 
+                            className="rounded-2xl h-14 bg-muted/20 border-none px-6 pr-12" 
+                            {...form.register('petProfile.ageYears')} 
+                          />
                           <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-muted-foreground">살</span>
                         </div>
                       ) : (
-                        <Input type="date" className="rounded-2xl h-14 bg-muted/20 border-none px-6" {...form.register('petProfile.birthDate')} />
+                        <div className="relative">
+                          <Input 
+                            type="date" 
+                            className="rounded-2xl h-14 bg-muted/20 border-none px-6 block w-full" 
+                            {...form.register('petProfile.birthDate')} 
+                          />
+                        </div>
                       )}
-                      <div className="flex items-center gap-2 px-2">
-                        <Checkbox id="dontKnow" onCheckedChange={(v) => form.setValue('petProfile.dontKnowBirth', !!v)} />
+                      <div className="flex items-center gap-2 px-2 mt-1">
+                        <Checkbox 
+                          id="dontKnow" 
+                          checked={dontKnowBirth}
+                          onCheckedChange={(v) => form.setValue('petProfile.dontKnowBirth', !!v)} 
+                        />
                         <Label htmlFor="dontKnow" className="text-xs font-bold text-muted-foreground cursor-pointer">생일을 몰라요 (나이 직접 입력)</Label>
                       </div>
                     </div>
                     <FormField control={form.control} name="petProfile.weight" render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-black ml-2 text-muted-foreground">현재 몸무게 (kg)</FormLabel>
+                        <FormLabel className="font-black ml-2 text-muted-foreground">현재 체중 (kg)</FormLabel>
                         <FormControl>
                           <div className="relative">
-                            <Input type="number" step="0.1" inputMode="decimal" placeholder="0.0" className="rounded-2xl h-14 bg-muted/20 border-none px-6" {...field} />
+                            <Input 
+                              type="number" 
+                              step="0.1" 
+                              inputMode="decimal" 
+                              placeholder="0.0" 
+                              className="rounded-2xl h-14 bg-muted/20 border-none px-6 pr-12" 
+                              {...field} 
+                            />
                             <Scale className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground opacity-30" />
                           </div>
                         </FormControl>
@@ -205,12 +230,12 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                     <FormItem className="space-y-6">
                       <FormLabel className="font-black ml-2 text-muted-foreground">성별 및 중성화 여부</FormLabel>
                       <FormControl>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-4">
+                        <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-2 gap-4">
                           {[
-                            { v: 'male', l: '수컷' }, { v: 'female', l: '암컷' },
+                            { v: 'male', l: '미중성화 수컷' }, { v: 'female', l: '미중성화 암컷' },
                             { v: 'neutered_male', l: '중성화 수컷' }, { v: 'neutered_female', l: '중성화 암컷' }
                           ].map(opt => (
-                            <Label key={opt.v} htmlFor={opt.v} className={cn("p-5 rounded-2xl text-center font-bold cursor-pointer transition-all active:scale-95 border-4", field.value === opt.v ? "border-primary bg-primary/5" : "border-muted/30 opacity-60")}>
+                            <Label key={opt.v} htmlFor={opt.v} className={cn("p-5 rounded-2xl text-center font-bold cursor-pointer transition-all active:scale-95 border-4", selectedGender === opt.v ? "border-primary bg-primary/5" : "border-muted/30 opacity-60")}>
                               <RadioGroupItem value={opt.v} id={opt.v} className="sr-only"/>{opt.l}
                             </Label>
                           ))}
@@ -223,10 +248,10 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                     <FormItem className="space-y-6">
                       <div className="flex items-center justify-between ml-2">
                         <FormLabel className="font-black text-muted-foreground">아이의 체형 (BCS)</FormLabel>
-                        <Badge variant="outline" className="rounded-full border-primary/20 text-primary font-bold">5단계 척도</Badge>
+                        <Badge variant="outline" className="rounded-full border-primary/20 text-primary font-bold">전문의 권장 척도</Badge>
                       </div>
                       <FormControl>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-1 gap-3">
+                        <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-3">
                           {bcsOptions.map(opt => (
                             <Label key={opt.value} htmlFor={`bcs-${opt.value}`} className={cn("flex items-center gap-5 p-5 border-4 rounded-[2rem] cursor-pointer transition-all active:scale-[0.98]", selectedBcs === opt.value ? "border-primary bg-primary/5" : "border-muted/30 opacity-60")}>
                               <RadioGroupItem value={opt.value} id={`bcs-${opt.value}`} className="sr-only" />
@@ -254,16 +279,19 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                   <FormField control={form.control} name="petProfile.activityLevel" render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="space-y-4">
+                        <RadioGroup onValueChange={field.onChange} value={field.value} className="space-y-4">
                           {[
-                            { v: 'LOW', t: selectedPet === 'dog' ? '집순이/노령견 (<30분)' : '활동량 적음 (실내묘)', i: Ruler },
-                            { v: 'NORMAL', t: '적당함 (보통 활동)', i: Activity },
-                            { v: 'HIGH', t: selectedPet === 'dog' ? '에너자이저 (>1시간)' : '활동량 많음 (외출묘)', i: Zap }
+                            { v: 'LOW', t: selectedPet === 'dog' ? '집순이/노령견 (<30분)' : '활동량 적음 (실내묘)', d: '주로 잠을 자거나 움직임이 적음' },
+                            { v: 'NORMAL', t: '적당함 (일반적인 활동)', d: '매일 꾸준히 활동하거나 산책함' },
+                            { v: 'HIGH', t: selectedPet === 'dog' ? '에너자이저 (>1시간)' : '활동량 매우 많음', d: '매우 활동적이고 에너지가 넘침' }
                           ].map(lvl => (
-                            <Label key={lvl.v} className={cn("flex items-center gap-5 p-6 border-4 rounded-[2.5rem] cursor-pointer transition-all active:scale-95", field.value === lvl.v ? "border-primary bg-primary/5" : "border-muted/30 opacity-50")}>
+                            <Label key={lvl.v} className={cn("flex items-center gap-5 p-6 border-4 rounded-[2.5rem] cursor-pointer transition-all active:scale-95", selectedActivity === lvl.v ? "border-primary bg-primary/5 shadow-sm" : "border-muted/30 opacity-50")}>
                               <RadioGroupItem value={lvl.v} className="sr-only" />
-                              <div className={cn("p-3 rounded-2xl", field.value === lvl.v ? "bg-primary text-white" : "bg-muted")}><lvl.i size={24}/></div>
-                              <span className="font-black text-lg">{lvl.t}</span>
+                              <div className={cn("p-3 rounded-2xl", selectedActivity === lvl.v ? "bg-primary text-white" : "bg-muted")}><Zap size={24}/></div>
+                              <div className="text-left">
+                                <p className="font-black text-lg">{lvl.t}</p>
+                                <p className="text-[10px] text-muted-foreground font-medium">{lvl.d}</p>
+                              </div>
                             </Label>
                           ))}
                         </RadioGroup>
@@ -301,7 +329,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                   </div>
                   <div className="space-y-5">
                     <div className="flex items-center justify-between px-2">
-                      <Label className="font-black text-lg">알러지 유발 성분</Label>
+                      <Label className="font-black text-lg">피해야 할 성분 (알러지)</Label>
                       <Button 
                         type="button" 
                         variant="ghost" 
@@ -344,7 +372,6 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                </Card>
             </TabsContent>
 
-            {/* Always Visible: Product Image Upload */}
             <Card className="border-none shadow-2xl rounded-[3.5rem] overflow-hidden bg-white">
               <CardHeader className="bg-primary/5 p-12 border-b">
                 <CardTitle className="flex items-center gap-5 text-3xl font-black"><Camera className="text-primary" size={36}/> 분석할 제품 촬영</CardTitle>
@@ -352,9 +379,9 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
               <CardContent className="p-12 space-y-12">
                 <FormField control={form.control} name="foodType" render={({ field }) => (
                   <FormItem className="space-y-6">
-                    <FormLabel className="font-black text-lg ml-2 text-muted-foreground">분석할 제품의 종류</FormLabel>
+                    <FormLabel className="font-black text-lg ml-2 text-muted-foreground">제품 종류</FormLabel>
                     <FormControl>
-                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
                           { v: 'dry', l: '🍚 건식' }, { v: 'wet', l: '🍲 습식' },
                           { v: 'treat', l: '🍖 간식' }, { v: 'supplement', l: '💊 영양제' }
@@ -379,8 +406,8 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
 
                 <FormField control={form.control} name="productName" render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-black text-lg ml-2 text-muted-foreground">제품명 (선택사항)</FormLabel>
-                    <FormControl><Input placeholder="AI가 사진에서 찾지만, 입력하면 더 정확해요." className="h-16 rounded-[2rem] bg-muted/20 border-none px-8 font-bold" {...field} /></FormControl>
+                    <FormLabel className="font-black text-lg ml-2 text-muted-foreground">제품명 (직접 입력 시 더 정확해요)</FormLabel>
+                    <FormControl><Input placeholder="AI가 사진에서 찾지만, 입력해주시면 가장 정확해요." className="h-16 rounded-[2rem] bg-muted/20 border-none px-8 font-bold" {...field} /></FormControl>
                   </FormItem>
                 )}/>
               </CardContent>

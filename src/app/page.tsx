@@ -53,9 +53,8 @@ function HomeContent() {
     } else if (formData.petProfile.birthDate) {
       const birth = new Date(formData.petProfile.birthDate);
       const today = new Date();
-      // Age in decimal years
       finalAge = (today.getTime() - birth.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-      finalAge = Math.round(finalAge * 10) / 10; // Round to 1 decimal place
+      finalAge = Math.round(finalAge * 10) / 10;
     }
 
     const analysisInput: AnalyzePetFoodIngredientsInput = {
@@ -83,7 +82,6 @@ function HomeContent() {
         let finalResult: AnalyzePetFoodIngredientsOutput | null = null;
         let isCached = false;
 
-        // Cache Check (Simple client-side cache for speed if needed)
         if (db && productId && productId.length > 5 && input.analysisMode === 'general') {
           const productRef = doc(db, 'products', productId);
           const productSnap = await getDoc(productRef);
