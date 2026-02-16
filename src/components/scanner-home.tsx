@@ -1,11 +1,11 @@
-
 'use client';
 
 import { useMemo } from 'react';
 import { 
   Camera, Sparkles, Dog, Cat, ShieldCheck, 
   CheckCircle2, Database, Activity,
-  User, Weight, Ruler, Zap, Info, ChevronRight
+  User, Weight, Ruler, Zap, Info, ChevronRight,
+  Stethoscope, Heart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -114,9 +114,9 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
           Veterinary Analysis Engine v5.0
         </Badge>
         <h1 className="text-4xl md:text-5xl font-black font-headline tracking-tighter text-foreground leading-tight">
-          {t('scannerHome.title')}
+          반려동물 정밀 분석
         </h1>
-        <p className="text-muted-foreground text-sm font-medium">사료, 간식, 영양제의 성분을 분석하여 맞춤 리포트를 생성합니다.</p>
+        <p className="text-muted-foreground text-sm font-medium">사료, 간식, 영양제의 성분을 분석하고 맞춤 급여량을 계산합니다.</p>
       </div>
 
       <Tabs defaultValue="custom" onValueChange={(v) => form.setValue('analysisMode', v as any)} className="w-full">
@@ -235,19 +235,23 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                 </CardHeader>
                 <CardContent className="p-8">
                   <FormField control={form.control} name="petProfile.activityLevel" render={({ field }) => (
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="space-y-3">
-                      {[
-                        { v: 'LOW', t: selectedPet === 'dog' ? '집순이 (<30분)' : '활동량 적음 (실내묘)', i: Ruler },
-                        { v: 'NORMAL', t: '적당함 (보통 활동)', i: Activity },
-                        { v: 'HIGH', t: selectedPet === 'dog' ? '에너자이저 (>1시간)' : '활동량 많음 (외출묘)', i: Zap }
-                      ].map(lvl => (
-                        <Label key={lvl.v} className={cn("flex items-center gap-4 p-5 border-2 rounded-2xl cursor-pointer transition-all", field.value === lvl.v ? "border-primary bg-primary/5 shadow-md" : "border-muted opacity-50")}>
-                          <RadioGroupItem value={lvl.v} className="sr-only" />
-                          <div className={cn("p-2 rounded-xl", field.value === lvl.v ? "bg-primary text-white" : "bg-muted")}><lvl.i size={20}/></div>
-                          <span className="font-black text-sm">{lvl.t}</span>
-                        </Label>
-                      ))}
-                    </RadioGroup>
+                    <FormItem>
+                      <FormControl>
+                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="space-y-3">
+                          {[
+                            { v: 'LOW', t: selectedPet === 'dog' ? '집순이 (<30분)' : '활동량 적음 (실내묘)', i: Ruler },
+                            { v: 'NORMAL', t: '적당함 (보통 활동)', i: Activity },
+                            { v: 'HIGH', t: selectedPet === 'dog' ? '에너자이저 (>1시간)' : '활동량 많음 (외출묘)', i: Zap }
+                          ].map(lvl => (
+                            <Label key={lvl.v} className={cn("flex items-center gap-4 p-5 border-2 rounded-2xl cursor-pointer transition-all", field.value === lvl.v ? "border-primary bg-primary/5 shadow-md" : "border-muted opacity-50")}>
+                              <RadioGroupItem value={lvl.v} className="sr-only" />
+                              <div className={cn("p-2 rounded-xl", field.value === lvl.v ? "bg-primary text-white" : "bg-muted")}><lvl.i size={20}/></div>
+                              <span className="font-black text-sm">{lvl.t}</span>
+                            </Label>
+                          ))}
+                        </RadioGroup>
+                      </FormControl>
+                    </FormItem>
                   )}/>
                 </CardContent>
               </Card>
@@ -296,18 +300,20 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
               </CardHeader>
               <CardContent className="p-10 space-y-10">
                 <FormField control={form.control} name="foodType" render={({ field }) => (
-                  <FormControl>
-                    <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {[
-                        { v: 'dry', l: '🍚 건식' }, { v: 'wet', l: '🍲 습식' },
-                        { v: 'treat', l: '🍖 간식' }, { v: 'supplement', l: '💊 영양제' }
-                      ].map(t => (
-                        <Label key={t.v} className={cn("flex items-center justify-center h-14 border-2 rounded-2xl cursor-pointer font-bold text-xs transition-all", field.value === t.v ? "border-primary bg-primary/5 ring-4 ring-primary/10" : "border-muted opacity-50")}>
-                          <RadioGroupItem value={t.v} className="sr-only" />{t.l}
-                        </Label>
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
+                  <FormItem>
+                    <FormControl>
+                      <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {[
+                          { v: 'dry', l: '🍚 건식' }, { v: 'wet', l: '🍲 습식' },
+                          { v: 'treat', l: '🍖 간식' }, { v: 'supplement', l: '💊 영양제' }
+                        ].map(t => (
+                          <Label key={t.v} className={cn("flex items-center justify-center h-14 border-2 rounded-2xl cursor-pointer font-bold text-xs transition-all", field.value === t.v ? "border-primary bg-primary/5 ring-4 ring-primary/10" : "border-muted opacity-50")}>
+                            <RadioGroupItem value={t.v} className="sr-only" />{t.l}
+                          </Label>
+                        ))}
+                      </RadioGroup>
+                    </FormControl>
+                  </FormItem>
                 )}/>
 
                 <FormField control={form.control} name="image" render={({ field: { onChange } }) => (

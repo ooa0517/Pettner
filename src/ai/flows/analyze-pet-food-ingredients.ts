@@ -80,10 +80,10 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 반려동물 영양학 전문가입니다. 제공된 사진({{media url=photoDataUri}})과 입력 정보를 바탕으로 정밀 리포트를 작성하십시오.
+  prompt: `당신은 반려동물 영양학 전문가입니다. 제공된 정보와 사진을 바탕으로 정밀 리포트를 작성하십시오.
 
 # 엄격한 식별 원칙 (Grounded Vision)
-1. 사진에서 보이는 텍스트만 추출하십시오. 절대 브랜드를 추측하거나 지며내지 마십시오.
+1. {{#if photoDataUri}}제공된 사진({{media url=photoDataUri}})에서{{else}}입력된 정보에서{{/if}} 보이는 텍스트만 추출하십시오. 절대 브랜드를 추측하거나 지며내지 마십시오.
 2. 브랜드가 불분명하면 "정보 없음", 제품명이 불분명하면 "알 수 없는 제품"으로 표기하십시오.
 3. 분석할 타겟 제품 유형: {{{foodType}}}
 
@@ -97,7 +97,7 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
 
 # 출력 스타일
 - 모든 소견은 간결한 불렛 포인트와 적절한 이모지를 사용하십시오.
-- 영양 성분은 DM(건물 기준)으로 환산하여 수의학적 적합성을 판별하십시오.
+- 영양 성분은 DM(건물 기준, 수분을 제외한 실제 영양 밀도)으로 환산하여 수의학적 적합성을 판별하십시오.
 - 출력 언어: {{{language}}}`,
 });
 
