@@ -166,13 +166,13 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <Card className="border-none shadow-xl rounded-[3rem] bg-white p-10 space-y-8">
               <CardHeader className="p-0">
                 <CardTitle className="text-sm font-black text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                    📉 [단계별 체중 조절 플랜]
+                    📉 [5단계 체중 조절 로드맵]
                 </CardTitle>
                 <p className="text-xs text-muted-foreground font-bold mt-1 italic">
-                    * 감량 시기에는 칼로리를 엄격히 제한하고, 목표 체중 도달 후에는 건강 유지를 위해 급여량을 서서히 늘립니다.
+                    * 감량 시기에는 칼로리를 제한하고, 목표 체중 도달 후에는 유지 관리를 위해 급여량을 서서히 늘립니다.
                 </p>
               </CardHeader>
-              <div className="h-[250px] w-full">
+              <div className="h-[280px] w-full">
                 <ChartContainer config={chartConfig} className="h-full w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={result.dietRoadmap} margin={{ top: 20, right: 30, left: 30, bottom: 20 }}>
@@ -189,7 +189,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               <div className="flex justify-between items-center bg-muted/20 p-5 rounded-3xl">
                 <div className="flex items-center gap-2">
                     <Activity className="text-primary w-5 h-5" />
-                    <span className="text-sm font-black">감량 식단 권장량:</span>
+                    <span className="text-sm font-black">감량기 일일 권장량:</span>
                 </div>
                 <div className="text-right">
                     <span className="text-2xl font-black text-primary">{result.dietRoadmap[0]?.grams}g</span>
@@ -226,7 +226,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   <div className="space-y-1">
                     <p className="font-black text-lg flex items-center gap-2">
                       {ing.name}
-                      {ing.description.includes('혈당') && <ShieldAlert className="text-destructive w-4 h-4" />}
+                      {(ing.description.includes('혈당') || ing.description.includes('지방')) && <ShieldAlert className="text-destructive w-4 h-4" />}
                     </p>
                     <p className="text-xs text-muted-foreground font-bold leading-relaxed">{ing.description}</p>
                   </div>

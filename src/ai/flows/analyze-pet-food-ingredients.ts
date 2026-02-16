@@ -1,10 +1,10 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v16.0] 
+ * @fileOverview [Pettner Core Engine v18.0] 
  * - Ultra-Precision Nutrition Algorithm
- * - Corrected Diet Roadmap (Loss vs Maintenance Calorie Logic)
- * - Breed Genetic Insight Integration
+ * - Corrected Diet Roadmap (5-Point Step Logic)
+ * - Strict Ingredient Audit (Fats, Oils, and Proteins)
  */
 
 import {ai} from '@/ai/genkit';
@@ -78,7 +78,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     weight: z.number(),
     grams: z.number(),
     phase: z.string()
-  })).optional(),
+  })).min(5).max(5).optional().describe('5단계 체중 조절 로드맵 데이터 (반드시 5개 지점)'),
   advancedNutrition: z.object({
     protein: NutritionalMetricSchema,
     fat: NutritionalMetricSchema,
@@ -127,26 +127,26 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   prompt: `당신은 세계적인 수의 영양학 전문의이자 공인 펫푸드 감사관입니다. 
 아래 데이터를 바탕으로 초정밀 영양 진단 리포트를 생성하십시오.
 
-# 환자(반려동물) 프로필 (맞춤 진단 시에만 사용)
+# 환자(반려동물) 프로필
 - 이름/종/무게: {{{petProfile.name}}} ({{{petType}}}, {{{petProfile.breed}}}, {{{petProfile.weight}}}kg)
 - BCS: {{{petProfile.bcs}}} (3: 이상적, 4: 과체중, 5: 비만)
-- 체중변화: {{{petProfile.weightChange}}}, 산책/라이프스타일: {{{petProfile.lifestyle}}}, 행동패턴: {{{petProfile.behaviorPattern}}}
-- 변상태: {{{petProfile.stoolCondition}}}, 음수량: {{{petProfile.waterIntake}}}
+- 체중변화: {{{petProfile.weightChange}}}, 산책: {{{petProfile.lifestyle}}}, 행동패턴: {{{petProfile.behaviorPattern}}}
 
-# 분석 알고리즘 가이드라인 (엄격 준수)
-1. [비만 및 목표 체중]: BCS 4 이상인 경우 다음 공식을 엄격히 적용하십시오.
+# 분석 가이드라인 (엄격 준수)
+1. [비만 진단]: BCS 4 이상인 경우 감량 목표를 산출하십시오.
    - Ideal_Weight = Current_Weight * (100 - (BCS - 3) * 10) / 100
-   - weightGap = Current_Weight - Ideal_Weight
-   - breedGeneticInsight: {{{petProfile.breed}}}의 유전적 취약점(예: 슬개골, 심장 등)과 현재 비만이 해당 질환에 미치는 악영향을 서술하십시오.
+   - breedGeneticInsight: {{{petProfile.breed}}}의 유전적 질환과 비만의 상관관계를 반드시 서술하십시오.
 
-2. [급여량 로드맵 - 중요 로직]: 
-   - 감량기(Phase 1, 현재 체중): 감량을 위해 매우 적은 칼로리(IW 기준 RER * 1.0)를 급여합니다.
-   - 유지기(Phase 3, 목표 체중 도달 시): 건강 유지를 위해 다시 정상 칼로리(IW 기준 RER * 1.4~1.6)를 급여합니다.
-   - **결과적으로 몸무게가 줄어들어 목표 체중에 가까워질수록 일일 급여량(g)은 감량기보다 늘어나는 것이 정상입니다.** (감량 칼로리 < 유지 칼로리)
-   - 이 'V자형' 또는 '점진적 상승' 로직을 dietRoadmap 데이터에 반영하십시오.
+2. [5단계 다이어트 로드맵]: 
+   - 현재 체중에서 목표 체중까지 **균등한 간격의 5개 지점(몸무게)**을 생성하십시오.
+   - 지점 1(현재 체중): IW 기준 RER * 1.0 (감량 칼로리)
+   - 지점 5(목표 체중): IW 기준 RER * 1.4 (유지 칼로리)
+   - 중간 지점(2,3,4): 칼로리를 점진적으로 상향 조정하십시오.
+   - **중요: 목표 체중으로 갈수록 일일 급여량(g)은 늘어납니다 (감량 칼로리 < 유지 칼로리).** 이 논리적 곡선을 dietRoadmap에 반영하십시오.
 
-3. [영양 밀도(DM)]: 수분을 제외한 건물 기준(DM)으로 분석하십시오.
-   - 비만견인 경우 탄수화물(NFE) DM 40% 초과 시 'isHighCarb'를 true로 설정하고 강력 경고하십시오.
+3. [원재료 감사]: 
+   - Vegetable Oil, Animal Fat 등 모든 지방/오일류를 품질 티어에 따라 엄격히 심사하십시오. 
+   - 식물성 유지(Vegetable Oil)는 육식동물에게 Tier 2~3로 분류하며, 비만견에게는 혈당 자극 가능성을 언급하십시오.
 
 사진 데이터: {{#if photoDataUri}}{{media url=photoDataUri}}{{else}}사진 없음{{/if}}`,
 });
