@@ -14,7 +14,7 @@ import {
   Zap, ThumbsUp, ThumbsDown, 
   Sparkles, Dna, Calculator, Utensils, 
   PieChart, Factory, UserCircle, Truck,
-  CheckCircle2, Info, Globe, Calendar, History
+  CheckCircle2, Info, Calendar, History
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -23,7 +23,6 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 
 type AnalysisResultProps = {
   result: AnalyzePetFoodIngredientsOutput;
@@ -70,7 +69,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <div className="space-y-1">
               <Badge variant="outline" className={cn("border-none px-4 py-1.5 rounded-full text-[10px] tracking-widest uppercase font-black", 
                 isCustomMode ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
-                {isCustomMode ? 'Pettner V10.0 Consultant' : 'Pettner V10.0 Auditor'}
+                {isCustomMode ? 'Pettner V11.0 Consultant' : 'Pettner V11.0 Auditor'}
               </Badge>
               <h1 className="text-3xl font-black tracking-tighter pt-2 leading-tight">
                 {result.productIdentity.name}
@@ -255,12 +254,12 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      {/* 4. Weight Diagnosis & Roadmap (Mode B Only) */}
+      {/* 4. Weight Diagnosis (Mode B Only) */}
       {isCustomMode && result.weightDiagnosis && (
         <div className="space-y-6">
           <div className="flex items-center gap-2 px-2">
             <Scale className="text-primary w-6 h-6" />
-            <h2 className="text-2xl font-black font-headline tracking-tight">{isEn ? 'Obesity Diagnosis & Roadmap' : '비만도 진단 및 다이어트 로드맵'}</h2>
+            <h2 className="text-2xl font-black font-headline tracking-tight">{isEn ? 'Breed Standard & Weight Analysis' : '품종 표준 및 체중 분석'}</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10">
@@ -276,7 +275,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                    </div>
                    <div className="flex justify-between text-[11px] font-bold text-muted-foreground">
                       <span>{isEn ? 'Breed Standard' : '품종 표준'}: {result.weightDiagnosis.breedStandardRange}</span>
-                      <span className="text-destructive">{isEn ? 'Overweight' : '비만도'} {result.weightDiagnosis.overweightPercentage}%</span>
+                      <span className="text-destructive">{isEn ? 'Deviation' : '편차'} {result.weightDiagnosis.overweightPercentage}%</span>
                    </div>
                 </div>
                 <p className="text-sm font-bold text-muted-foreground leading-relaxed">{result.weightDiagnosis.verdict}</p>
@@ -291,29 +290,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                  </div>
             </Card>
           </div>
-
-          {result.dietRoadmap && result.dietRoadmap.length > 0 && (
-             <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10">
-                <div className="space-y-6">
-                   <h3 className="font-black text-lg flex items-center gap-2"><History className="text-primary w-5 h-5"/> {isEn ? 'Weight Loss Roadmap' : '단계별 체중 감량 로드맵'}</h3>
-                   <div className="h-48 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={result.dietRoadmap}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                          <XAxis dataKey="phase" hide />
-                          <YAxis hide />
-                          <Tooltip 
-                            contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', fontWeight: 'bold' }}
-                            formatter={(value: any, name: any) => [value + (name === 'weight' ? 'kg' : 'g'), name === 'weight' ? (isEn ? 'Weight' : '목표체중') : (isEn ? 'Amount' : '급여량')]}
-                          />
-                          <Line type="monotone" dataKey="grams" stroke="hsl(var(--primary))" strokeWidth={4} dot={{ r: 6, fill: 'white', strokeWidth: 3 }} activeDot={{ r: 8 }} />
-                          <Line type="monotone" dataKey="weight" stroke="#10b981" strokeWidth={4} strokeDasharray="5 5" dot={false} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                   </div>
-                </div>
-             </Card>
-          )}
         </div>
       )}
 
