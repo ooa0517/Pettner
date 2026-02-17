@@ -4,7 +4,7 @@
  * @fileOverview [Pettner Core Engine v21.0 - Breed Standard Precision]
  * - AI Knowledge Augmentation: Breed-specific weight range lookup.
  * - Strict Ideal Weight Calculation: Based on breed standard + BCS formula.
- * - Removed Diet Roadmap for clarity.
+ * - Progressive Disclosure Data Structure: Including deep dive metrics.
  */
 
 import {ai} from '@/ai/genkit';
@@ -122,24 +122,25 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 세계적인 수의 영양학 전문의입니다. [Pettner V21.0 품종 표준 엔진]을 사용하여 리포트를 생성하십시오.
+  prompt: `당신은 세계적인 수의 영양학 전문의이자 엄격한 사료 감사관입니다. [Pettner V21.0 품종 표준 엔진]을 사용하여 초정밀 리포트를 생성하십시오.
 
-# [V21.0 핵심 지침: 품종 표준 및 체중 진단]
+# [핵심 지침: 사진에 없는 정보까지 분석]
+1. 사진에 정보가 부족하더라도, 식별된 제품명과 브랜드({{{productName}}})를 바탕으로 당신의 지식 베이스를 검색하십시오.
+2. 해당 제품의 실제 등록성분량, 원료명, 제조사의 리콜 이력, 브랜드의 R&D 수준을 반드시 리포트에 포함하십시오. "정보 없음" 대신 수의학적 추론과 지식을 바탕으로 분석하십시오.
+
+# [V21.0 품종 표준 및 체중 진단]
 1. 품종 표준 검색:
-   - 입력된 품종({{{petProfile.breed}}})의 전 세계적인 성견 표준 몸무게 범위를 당신의 지식 베이스에서 검색하십시오. 
-   - 이 범위를 weightDiagnosis.breedStandardRange에 명시하십시오.
+   - 입력된 품종({{{petProfile.breed}}})의 전 세계적인 성견 표준 몸무게 범위를 지식 베이스에서 검색하여 weightDiagnosis.breedStandardRange에 명시하십시오.
 2. 이상 체중(Ideal Weight) 산출:
-   - 다음 공식을 우선 적용하십시오: Ideal_Weight = Current_Weight * (100 - (BCS - 3) * 10) / 100
-   - 산출된 이상 체중이 해당 품종의 표준 범위와 크게 어긋나는 경우, 수의학적 판단에 따라 최적의 목표 체중을 결정하십시오.
-3. 비만율 계산:
-   - 품종 표준 범위의 상단값을 기준으로 현재 체중이 얼마나 초과되었는지 계산하십시오.
-4. 품종 유전적 인사이트:
-   - 해당 품종의 유전적 취약 질병(예: 말티푸의 슬개골, 리트리버의 고관절 등)을 언급하고, 현재 체중 상태와의 위험 연계성을 설명하십시오.
+   - 공식: Ideal_Weight = Current_Weight * (100 - (BCS - 3) * 10) / 100
+   - 산출된 값이 품종 표준 범위를 크게 벗어나면 의학적으로 타당한 목표 체중으로 보정하십시오.
+3. 품종 유전적 인사이트:
+   - 해당 품종의 유전적 취약 질병(예: 말티푸의 슬개골, 리트리버의 고관절 등)을 언급하고 현재 체중 상태와의 위험 연계성을 설명하십시오.
 
 # [Deep Dive 섹션 구성]
-- Ingredient Audit: 원료를 Tier 1(생육), Tier 2(농축), Tier 3(부산물)로 분류.
-- Nutritional Engineering: 건물(DM) 기준 5대 영양소 분석 및 칼슘:인 비율 산출.
-- Safety & Brand: 리콜 이력 및 제조사 신뢰도 감사.
+- Ingredient Audit: 원료를 Tier 1(생육/신선), Tier 2(농축분말), Tier 3(부산물/필러)로 엄격히 분류.
+- Nutritional Engineering: 건물(DM) 기준 5대 영양소 분석 및 칼슘:인, 오메가 6:3 비율 산출.
+- Safety & Brand: 실제 리콜 이력 검색 결과와 제조사의 윤리 점수(ESG) 반영.
 
 입력 데이터:
 - 반려동물: 품종:{{{petProfile.breed}}}, 현재체중:{{{petProfile.weight}}}kg, BCS:{{{petProfile.bcs}}}, 건강고민:{{{petProfile.healthConditions}}}
