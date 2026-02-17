@@ -5,7 +5,6 @@
  * 
  * - Mode A: [Product Scientist] - Focus on Manufacturing, Sourcing, ESG, and Spec.
  * - Mode B: [Pet Consultant] - Focus on Personalized Match, Obesity Roadmap, and Dosage.
- * - Multi-language: Supports 'ko' and 'en' with localized units (g/oz, Paper/Standard Cup).
  */
 
 import {ai} from '@/ai/genkit';
@@ -32,28 +31,34 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
 
 export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngredientsInputSchema>;
 
+const PromptInputSchema = AnalyzePetFoodIngredientsInputSchema.extend({
+  isModeA: z.boolean().describe('단순 제품 분석 모드 여부'),
+  isModeB: z.boolean().describe('맞춤 가이드 모드 여부'),
+});
+
 const AnalyzePetFoodIngredientsOutputSchema = z.object({
   status: z.enum(['success', 'error']),
   productIdentity: z.object({
     name: z.string().describe('Exact identified product name'),
     brand: z.string().describe('Brand name'),
     category: z.string().describe('Category (e.g., Dry Food, Treat)'),
-    qualityGrade: z.string().describe('Quality grade (e.g., A, B, C)'),
+    qualityGrade: z.string().optional().describe('Quality grade (e.g., A, B, C)'),
     targetAudience: z.object({
       lifeStage: z.string().describe('Recommended life stage'),
       recommendedBreeds: z.string().describe('Optimal breed sizes'),
       focus: z.string().describe('Design focus/purpose')
-    }),
+    }).optional(),
     manufacturingDetails: z.object({
       productionType: z.string().describe('Production type (In-house/OEM/ODM)'),
       facilityInfo: z.string().describe('Facility info/Safety certifications'),
       sourcingOrigin: z.string().describe('Source of primary ingredients (e.g., Norway, USA)')
-    })
+    }).optional()
   }),
   scoreCard: z.object({
     totalScore: z.number().min(0).max(100).describe('Total score'),
     headline: z.string().describe('Core diagnostic headline'),
-    statusTags: z.array(z.string()).describe('Status tags')
+    statusTags: z.array(z.string()).describe('Status tags'),
+    grade: z.string().optional().describe('Display grade (e.g., A+, B)')
   }),
   calculatorData: z.object({
     unitName: z.string().describe('Unit (g, oz, pill, piece)'),
@@ -121,43 +126,44 @@ export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngre
 
 const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
-  input: {schema: AnalyzePetFoodIngredientsInputSchema},
+  input: {schema: PromptInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
   prompt: `You are the world's most advanced Veterinary Nutritionist and Product Auditor.
 Analyze the pet food product and provide a precision report in the TARGET LANGUAGE: {{{language}}}.
 
 # [Mandatory Execution: Error Prevention]
 - Response Format: 반드시 순수한 JSON 데이터만 출력할 것. 마크다운 태그조차 생략하고 순수 객체만 반환하라.
-- ALL text fields in the output MUST be in {{{language}}}.
-- For Units:
-  - If language === 'ko', use 'g', 'kcal', and '종이컵 (Paper Cup)'.
-  - If language === 'en', use 'oz/g', 'kcal', and 'Standard Cup'.
+- Language Sync: 모든 텍스트 필드는 반드시 {{{language}}}로 작성하라.
 - Numerical Data: 모든 dosage, weight, calories 관련 수치는 Number(숫자) 타입으로 생성하라.
+- Unit Localization:
+  - ko: 'g', 'kcal', '종이컵 (Paper Cup)'
+  - en: 'oz/g', 'kcal', 'Standard Cup'
 
 # [Logic Path Separation]
-{{#if (eq analysisMode "general")}}
-## [Mode A: Product Scientist]
-- Identify the product with 99% accuracy by cross-referencing OCR data with your database.
-- Focus on:
-  1. Manufacturer Audit: Identify if In-house, OEM, or ODM. Analyze facility safety (HACCP/ISO).
-  2. Ingredient Sourcing: Track the origin of the top 10 ingredients (e.g., Salmon from Norway).
-  3. ESG Report: Analyze recall history, sustainability, and ethics.
-  4. Specs: 100g (Food) or 1 unit (Treat/Supp) nutritional density.
-{{else}}
-## [Mode B: Personalized Consultant]
-- Prioritize Pet Profile: Breed Standards, Obesity (BCS), Health conditions, and Allergies.
-- Focus on:
-  1. Clinical Reasoning: Explain pros/cons based on breed standards and current status.
-  2. Obesity Roadmap: If Pet is Obese (BCS 4-5), calculate calories based on IDEAL WEIGHT (목표 체중).
-  3. Dosage Logic: Calculate Total Daily vs. Per Meal (2 meals/day).
+{{#if isModeA}}
+## [Mode A: Product Scientist] - 단순 제품 분석 모드
+- 사용자의 반려동물 정보를 절대 참조하지 마십시오.
+- Identity Verification: OCR 데이터와 제품명을 99% 확률로 매칭하여 식별하십시오.
+- Manufacturer Audit: 자사 생산(In-house) vs OEM/ODM 여부를 판별하고 제조 시설 안전 등급을 리포트하십시오.
+- Ingredient Deep Dive: 제1~10원료의 수급 국가(Origin) 및 품질 등급을 분석하십시오.
+- Product Spec: 100g당(사료) 혹은 1개당(간식) 영양 성분비 및 Kcal를 정밀 계산하십시오.
+- ESG Report: 제조사의 리콜 이력, 친환경 패키징 여부, 기업 신뢰도를 분석하십시오.
+{{/if}}
+
+{{#if isModeB}}
+## [Mode B: Personalized Consultant] - 맞춤형 건강 비서 모드
+- 사용자가 입력한 품종, BCS(비만도), 질환, 알러지 데이터를 최우선으로 반영하십시오.
+- Clinical Reasoning: 해당 품종의 표준 체중/유전병과 현재 상태를 비교하여 위험 요소를 짚어주십시오.
+- Health Mapping: 제품 성분이 아이의 비만도나 기저 질환에 적합한지 수의학적 근거를 설명하십시오.
+- Obesity Logic: 비만(BCS 4-5)일 경우, 목표 체중(Ideal Weight)을 현재보다 낮게 설정하여 칼로리를 역산하십시오.
+- Feeding Guide: 1일 권장 급여량(Daily) 및 1회 급여량(Per Meal, 2회 기준)을 산출하십시오.
 {{/if}}
 
 # [Data Integrity]
-- Numerical values MUST be Numbers in JSON.
-- If data is ambiguous, trigger 'Deep Search' using your internal knowledge.
+- 모든 수치는 10,000번의 시뮬레이션을 거친 듯한 정밀도로 산출하십시오.
+- 사료(Cup), 영양제(Pill/Scoop), 간식(Piece) 단위를 자동 변환하여 적용하십시오.
 
 Input Context:
-- Mode: {{{analysisMode}}}
 - Pet: {{{petType}}}, Breed: {{{petProfile.breed}}}, Weight: {{{petProfile.weight}}}, BCS: {{{petProfile.bcs}}}
 - Product Name: {{{productName}}}
 - Photo Data: {{media url=photoDataUri}}`
@@ -170,7 +176,11 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
     outputSchema: AnalyzePetFoodIngredientsOutputSchema,
   },
   async input => {
-    const {output} = await analyzePetFoodIngredientsPrompt(input);
+    const {output} = await analyzePetFoodIngredientsPrompt({
+      ...input,
+      isModeA: input.analysisMode === 'general',
+      isModeB: input.analysisMode === 'custom',
+    });
     if (!output) throw new Error('AI Analysis Failed: No output data.');
     return { ...output, status: 'success' };
   }

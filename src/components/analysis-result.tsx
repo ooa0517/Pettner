@@ -54,7 +54,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         <div className="space-y-8 py-20 text-center animate-in fade-in duration-500">
           <AlertCircle className="w-20 h-20 text-destructive mx-auto opacity-30"/>
           <h1 className="text-3xl font-black">Analysis Report Error</h1>
-          <p className="text-muted-foreground">AI failed to generate a complete report due to missing label data.</p>
+          <p className="text-muted-foreground">AI failed to generate a complete report. Please ensure the label is clear.</p>
           <Button onClick={onReset} variant="outline" size="lg" className="rounded-full mt-4">Try Again</Button>
         </div>
      );
@@ -79,9 +79,11 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </div>
             <div className="text-left md:text-right shrink-0">
                <div className="text-6xl font-black text-primary leading-none">{result.scoreCard.totalScore}<span className="text-xl ml-1">{isEn ? 'pts' : '점'}</span></div>
-               <Badge className="mt-3 font-black px-4 py-1 rounded-full text-sm bg-success">
-                 Grade {result.productIdentity.qualityGrade || 'N/A'}
-               </Badge>
+               {result.scoreCard.grade && (
+                 <Badge className="mt-3 font-black px-4 py-1 rounded-full text-sm bg-success">
+                   Grade {result.scoreCard.grade}
+                 </Badge>
+               )}
             </div>
           </div>
 
@@ -91,8 +93,8 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                <div>
                   <p className="text-[10px] font-black opacity-50 uppercase">Target Audience</p>
                   <p className="text-xs font-bold leading-tight">
-                    {result.productIdentity.targetAudience?.lifeStage}<br/>
-                    {result.productIdentity.targetAudience?.recommendedBreeds}
+                    {result.productIdentity.targetAudience?.lifeStage || 'N/A'}<br/>
+                    {result.productIdentity.targetAudience?.recommendedBreeds || 'All Breeds'}
                   </p>
                </div>
             </div>
@@ -101,7 +103,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                <div>
                   <p className="text-[10px] font-black opacity-50 uppercase">Manufacture</p>
                   <p className="text-xs font-bold leading-tight">
-                    {result.productIdentity.manufacturingDetails?.productionType}<br/>
+                    {result.productIdentity.manufacturingDetails?.productionType || 'Standard'}<br/>
                     <span className="text-[10px] opacity-60 font-medium">{result.productIdentity.manufacturingDetails?.facilityInfo}</span>
                   </p>
                </div>
@@ -109,9 +111,9 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <div className="p-6 bg-muted/10 rounded-[2rem] flex items-center gap-4">
                <div className="p-3 bg-white rounded-2xl shadow-sm text-primary"><Truck size={20}/></div>
                <div>
-                  <p className="text-[10px] font-black opacity-50 uppercase">Sourcing</p>
+                  <p className="text-[10px] font-black opacity-50 uppercase">Sourcing Origin</p>
                   <p className="text-xs font-bold leading-tight">
-                    {result.productIdentity.manufacturingDetails?.sourcingOrigin}
+                    {result.productIdentity.manufacturingDetails?.sourcingOrigin || 'International'}
                   </p>
                </div>
             </div>
@@ -309,14 +311,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                         </LineChart>
                       </ResponsiveContainer>
                    </div>
-                   <div className="grid grid-cols-3 gap-4">
-                      {result.dietRoadmap.map((step, i) => (
-                        <div key={i} className="text-center space-y-1">
-                           <p className="text-[10px] font-black opacity-40 uppercase">{step.phase}</p>
-                           <p className="text-xs font-black">{step.weight}kg / {step.grams}g</p>
-                        </div>
-                      ))}
-                   </div>
                 </div>
              </Card>
           )}
@@ -389,7 +383,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                  <div className="flex gap-4">
                     <div className="flex-1 p-6 bg-primary/5 rounded-2xl border border-primary/10 flex items-center gap-4">
                         <Truck className="text-primary" />
-                        <div><p className="text-[10px] font-black opacity-50 uppercase">Origin</p><p className="text-sm font-bold">{result.productIdentity.manufacturingDetails?.sourcingOrigin}</p></div>
+                        <div><p className="text-[10px] font-black opacity-50 uppercase">Origin</p><p className="text-sm font-bold">{result.productIdentity.manufacturingDetails?.sourcingOrigin || 'International'}</p></div>
                     </div>
                     <div className="flex-1 p-6 bg-muted/10 rounded-2xl flex items-center gap-4">
                         <CheckCircle2 className="text-success" />
@@ -399,23 +393,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                  <div className="p-6 bg-muted/10 rounded-2xl space-y-2">
                     <p className="text-[10px] font-black opacity-50 uppercase">{isEn ? 'Recall History' : '리콜 및 안전 이력'}</p>
                     <p className="text-xs font-bold leading-relaxed">{result.deepDive.safetyToxicology.recallHistory}</p>
-                 </div>
-              </AccordionContent>
-            </AccordionItem>
-          )}
-
-          {result?.deepDive?.brandESG && (
-            <AccordionItem value="esg" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
-              <AccordionTrigger className="px-8 py-6 hover:no-underline">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Globe className="w-5 h-5" /></div>
-                  <div className="text-left"><h3 className="font-black text-lg">{isEn ? 'Brand Trust & ESG' : '브랜드 신뢰도 감사'}</h3><p className="text-xs text-muted-foreground font-medium">{isEn ? 'R&D and Sustainability report' : '윤리적 수급 및 환경 경영'}</p></div>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="p-6 bg-muted/10 rounded-2xl"><p className="text-[10px] font-black opacity-50 mb-1">R&D Level</p><p className="font-bold text-primary">{result.deepDive.brandESG.rdLevel}</p></div>
-                    <div className="p-6 bg-muted/10 rounded-2xl"><p className="text-[10px] font-black opacity-50 mb-1">Sustainability</p><p className="font-bold text-primary">{result.deepDive.brandESG.sustainability}</p></div>
                  </div>
               </AccordionContent>
             </AccordionItem>
