@@ -87,7 +87,10 @@ function HomeContent() {
         }
         
         const actionResponse = await getAnalysis(analysisInput);
-        if (actionResponse.error) throw new Error(t(actionResponse.error));
+        if (actionResponse.error) {
+           console.error("[Analysis Error Details]", actionResponse.details);
+           throw new Error(t(String(actionResponse.error)));
+        }
         finalResult = actionResponse.data || null;
 
         if (finalResult && db && productId && analysisInput.analysisMode === 'general') {

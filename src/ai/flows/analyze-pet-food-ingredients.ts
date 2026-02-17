@@ -126,11 +126,13 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   prompt: `You are the world's most advanced Veterinary Nutritionist and Product Auditor.
 Analyze the pet food product and provide a precision report in the TARGET LANGUAGE: {{{language}}}.
 
-# [Mandatory: Language Rule]
+# [Mandatory Execution: Error Prevention]
+- Response Format: 반드시 순수한 JSON 데이터만 출력할 것. 마크다운 태그조차 생략하고 순수 객체만 반환하라.
 - ALL text fields in the output MUST be in {{{language}}}.
 - For Units:
   - If language === 'ko', use 'g', 'kcal', and '종이컵 (Paper Cup)'.
   - If language === 'en', use 'oz/g', 'kcal', and 'Standard Cup'.
+- Numerical Data: 모든 dosage, weight, calories 관련 수치는 Number(숫자) 타입으로 생성하라.
 
 # [Logic Path Separation]
 {{#if (eq analysisMode "general")}}
@@ -143,10 +145,10 @@ Analyze the pet food product and provide a precision report in the TARGET LANGUA
   4. Specs: 100g (Food) or 1 unit (Treat/Supp) nutritional density.
 {{else}}
 ## [Mode B: Personalized Consultant]
-- Prioritize Pet Profile: Breed, BCS (Obesity), Health conditions, and Allergies.
+- Prioritize Pet Profile: Breed Standards, Obesity (BCS), Health conditions, and Allergies.
 - Focus on:
   1. Clinical Reasoning: Explain pros/cons based on breed standards and current status.
-  2. Obesity Roadmap: If Pet is Obese (BCS 4-5), calculate calories based on IDEAL WEIGHT.
+  2. Obesity Roadmap: If Pet is Obese (BCS 4-5), calculate calories based on IDEAL WEIGHT (목표 체중).
   3. Dosage Logic: Calculate Total Daily vs. Per Meal (2 meals/day).
 {{/if}}
 

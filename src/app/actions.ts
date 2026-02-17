@@ -17,7 +17,8 @@ export async function getAnalysis(input: AnalyzePetFoodIngredientsInput): Promis
     if (!result || result.status === 'error') {
       throw new Error('AI returned an error status or empty result.');
     }
-    
+
+    console.log("[AI Analysis] Successfully generated report.");
     return { data: result };
   } catch (e: any) {
     // 서버 로그에 구체적인 에러 내용을 남깁니다. (Schema validation error 등 확인용)

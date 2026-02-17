@@ -89,7 +89,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <div className="p-6 bg-muted/10 rounded-[2rem] flex items-center gap-4">
                <div className="p-3 bg-white rounded-2xl shadow-sm text-primary"><UserCircle size={20}/></div>
                <div>
-                  <p className="text-[10px] font-black opacity-50 uppercase">Audience</p>
+                  <p className="text-[10px] font-black opacity-50 uppercase">Target Audience</p>
                   <p className="text-xs font-bold leading-tight">
                     {result.productIdentity.targetAudience?.lifeStage}<br/>
                     {result.productIdentity.targetAudience?.recommendedBreeds}
@@ -324,7 +324,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
       )}
 
       {/* 5. Deep Dive (Common) */}
-      {result.deepDive && (
       <div className="space-y-6">
         <div className="flex items-center gap-2 px-2">
           <Microscope className="text-primary w-6 h-6" />
@@ -423,7 +422,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           )}
         </Accordion>
       </div>
-      )}
 
       {/* 6. Final Advice Card */}
       <Card className="border-none shadow-2xl rounded-[3.5rem] bg-primary text-white p-12 relative overflow-hidden">
