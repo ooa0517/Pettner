@@ -48,13 +48,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     };
   }, [amount, result?.calculatorData]);
 
-  if (result?.status === 'error' || !result?.productIdentity || !result?.scoreCard) {
+  // 방어적 렌더링: 필수 데이터가 없는 경우 에러 화면 표시
+  if (!result || !result.productIdentity || !result.scoreCard) {
      return (
-        <div className="space-y-8 py-20 text-center">
+        <div className="space-y-8 py-20 text-center animate-in fade-in duration-500">
           <AlertCircle className="w-20 h-20 text-destructive mx-auto opacity-30"/>
           <h1 className="text-3xl font-black">분석 리포트 생성 오류</h1>
-          <p className="text-muted-foreground">AI가 데이터를 정밀하게 처리하는 중 문제가 발생했습니다.</p>
-          <Button onClick={onReset} variant="outline" size="lg" className="rounded-full">다시 분석하기</Button>
+          <p className="text-muted-foreground">AI가 데이터를 정밀하게 처리하는 중 일부 정보가 누락되었습니다.</p>
+          <Button onClick={onReset} variant="outline" size="lg" className="rounded-full mt-4">다시 분석하기</Button>
         </div>
      );
   }
@@ -69,7 +70,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <div className="space-y-1">
               <Badge variant="outline" className={cn("border-none px-4 py-1.5 rounded-full text-[10px] tracking-widest uppercase font-black", 
                 isCustomMode ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
-                {isCustomMode ? 'Expert Consultant V7.0' : 'Product Quality Auditor V7.0'}
+                {isCustomMode ? 'Expert Consultant V7.5' : 'Product Quality Auditor V7.5'}
               </Badge>
               <h1 className="text-3xl font-black tracking-tighter pt-2 leading-tight">
                 {result.productIdentity.name}
@@ -79,7 +80,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <div className="text-left md:text-right shrink-0">
                <div className="text-6xl font-black text-primary leading-none">{result.scoreCard.totalScore}<span className="text-xl ml-1">점</span></div>
                <Badge className="mt-3 font-black px-4 py-1 rounded-full text-sm bg-success">
-                 Grade {result.productIdentity.qualityGrade || 'A'}
+                 Grade {result.productIdentity.qualityGrade || 'N/A'}
                </Badge>
             </div>
           </div>
@@ -99,7 +100,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                <div>
                   <p className="text-[10px] font-black opacity-50 uppercase">Manufacturing</p>
                   <p className="text-xs font-bold">
-                    {result.productIdentity.manufacturingDetails?.productionType || 'Unknown'} ({result.productIdentity.manufacturingDetails?.facilityInfo || 'Global'})
+                    {result.productIdentity.manufacturingDetails?.productionType || '정보 없음'}
                   </p>
                </div>
             </div>
@@ -175,11 +176,23 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                     <div className="flex justify-between items-end">
                       <label className="text-sm font-black text-muted-foreground uppercase">급여할 양 설정</label>
                       <div className="flex items-center gap-2">
-                        <Input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="w-24 h-12 text-center text-xl font-black rounded-xl bg-muted/20 border-none" />
+                        <Input 
+                          type="number" 
+                          value={amount} 
+                          onChange={(e) => setAmount(Number(e.target.value))} 
+                          className="w-24 h-12 text-center text-xl font-black rounded-xl bg-muted/20 border-none" 
+                        />
                         <span className="font-black text-lg">{result.calculatorData?.unitName}</span>
                       </div>
                     </div>
-                    <Slider value={[amount]} min={0} max={result.calculatorData.unitName === 'g' ? 500 : 20} step={result.calculatorData.unitName === 'g' ? 5 : 1} onValueChange={(v) => setAmount(v[0])} className="py-4" />
+                    <Slider 
+                      value={[amount]} 
+                      min={0} 
+                      max={result.calculatorData.unitName === 'g' ? 500 : 20} 
+                      step={result.calculatorData.unitName === 'g' ? 5 : 1} 
+                      onValueChange={(v) => setAmount(v[0])} 
+                      className="py-4" 
+                    />
                   </div>
                   <div className="p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10 flex items-center gap-6">
                     <div className="p-4 bg-white rounded-2xl shadow-sm"><Utensils className="text-primary" size={24} /></div>
@@ -215,7 +228,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      {/* 4. 체중 진단 & 다이어트 로드맵 (Custom Mode Only) */}
+      {/* 4. 체중 진단 (Custom Mode Only) */}
       {isCustomMode && result.weightDiagnosis && (
         <div className="space-y-6">
           <div className="flex items-center gap-2 px-2">
@@ -232,7 +245,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 <div className="space-y-2">
                    <div className="h-5 bg-muted rounded-full relative overflow-hidden shadow-inner">
                       <div className={cn("h-full transition-all duration-1000", (result.weightDiagnosis.weightGap || 0) > 0 ? "bg-destructive" : "bg-primary")} 
-                           style={{ width: `${Math.min(50 + (result.weightDiagnosis.overweightPercentage || 0), 100)}%` }} />
+                           style={{ width: `${Math.max(10, Math.min(50 + (result.weightDiagnosis.overweightPercentage || 0), 100))}%` }} />
                    </div>
                    <div className="flex justify-between text-[11px] font-bold text-muted-foreground">
                       <span>품종 표준 범위: {result.weightDiagnosis.breedStandardRange}</span>
@@ -242,38 +255,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               </div>
             </Card>
             
-            {result.dietRoadmap && (
-              <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-6 overflow-hidden">
-                <h4 className="text-sm font-black text-muted-foreground uppercase mb-4 px-4">급여량 변화 로드맵</h4>
-                <div className="h-48 w-full">
-                   <ResponsiveContainer width="100%" height="100%">
-                     <LineChart data={result.dietRoadmap}>
-                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                       <XAxis dataKey="weight" label={{ value: 'Weight', position: 'insideBottom', offset: -5 }} hide />
-                       <YAxis hide />
-                       <Line type="monotone" dataKey="grams" stroke="hsl(var(--primary))" strokeWidth={4} dot={{ r: 6, fill: 'white', strokeWidth: 3 }} />
-                     </LineChart>
-                   </ResponsiveContainer>
-                </div>
-                <div className="flex justify-between px-4 mt-2">
-                   {result.dietRoadmap.map((p, i) => (
-                     <div key={i} className="text-center">
-                        <p className="text-[10px] font-black text-primary">{p.grams}g</p>
-                        <p className="text-[8px] font-bold text-muted-foreground">{p.phase}</p>
-                     </div>
-                   ))}
-                </div>
-              </Card>
-            )}
+            <Card className="border-none shadow-xl rounded-[2.5rem] bg-primary text-white p-10 relative overflow-hidden group">
+                 <div className="absolute top-[-20px] right-[-20px] opacity-10 group-hover:scale-110 transition-transform duration-700"><Dna size={120} /></div>
+                 <div className="space-y-4 relative z-10">
+                    <span className="text-[11px] font-black uppercase tracking-widest opacity-80 flex items-center gap-1.5"><Info size={12}/> Breed Genetic Insight</span>
+                    <p className="text-lg font-bold leading-relaxed">{result.weightDiagnosis.breedGeneticInsight}</p>
+                 </div>
+            </Card>
           </div>
-          
-          <Card className="border-none shadow-xl rounded-[2.5rem] bg-primary text-white p-10 relative overflow-hidden group">
-               <div className="absolute top-[-20px] right-[-20px] opacity-10 group-hover:scale-110 transition-transform duration-700"><Dna size={120} /></div>
-               <div className="space-y-4 relative z-10">
-                  <span className="text-[11px] font-black uppercase tracking-widest opacity-80 flex items-center gap-1.5"><Info size={12}/> Breed Genetic Insight</span>
-                  <p className="text-lg font-bold leading-relaxed">{result.weightDiagnosis.breedGeneticInsight}</p>
-               </div>
-          </Card>
         </div>
       )}
 
@@ -290,7 +279,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               <AccordionTrigger className="px-8 py-6 hover:no-underline">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-primary/10 rounded-2xl text-primary"><FlaskConical /></div>
-                  <div className="text-left"><h3 className="font-black text-lg">원재료 품질 및 티어링 감사</h3><p className="text-xs text-muted-foreground font-medium">제1~10원료 수급지 및 가공 방식</p></div>
+                  <div className="text-left"><h3 className="font-black text-lg">원재료 품질 감사</h3><p className="text-xs text-muted-foreground font-medium">제1~10원료 수급지 및 가공 방식</p></div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
@@ -298,8 +287,8 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   {result.deepDive.ingredientAudit.tiers?.map((tier, i) => (
                     <div key={i} className="p-6 rounded-[2rem] bg-muted/10 space-y-2">
                       <div className="flex items-center justify-between">
-                        <Badge className={cn("font-black", tier.level === 'Tier 1' ? "bg-success" : tier.level === 'Tier 2' ? "bg-primary" : "bg-destructive")}>{tier.level}</Badge>
-                        <span className="text-[10px] font-bold opacity-40">INGREDIENT CORE</span>
+                        <Badge className="font-black bg-primary/20 text-primary border-none">{tier.level}</Badge>
+                        <span className="text-[10px] font-bold opacity-40">CORE INGREDIENTS</span>
                       </div>
                       <p className="text-sm font-black leading-relaxed">{tier.ingredients?.join(', ')}</p>
                       <p className="text-xs text-muted-foreground italic leading-relaxed">{tier.comment}</p>
@@ -319,7 +308,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               <AccordionTrigger className="px-8 py-6 hover:no-underline">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-primary/10 rounded-2xl text-primary"><BarChart3 /></div>
-                  <div className="text-left"><h3 className="font-black text-lg">수의 영양 엔지니어링</h3><p className="text-xs text-muted-foreground font-medium">건물(DM) 기준 칼슘/인 & 오메가 밸런스</p></div>
+                  <div className="text-left"><h3 className="font-black text-lg">수의 영양 엔지니어링</h3><p className="text-xs text-muted-foreground font-medium">건물(DM) 기준 정밀 밸런스</p></div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
@@ -337,7 +326,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               <AccordionTrigger className="px-8 py-6 hover:no-underline">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-primary/10 rounded-2xl text-primary"><ShieldAlert /></div>
-                  <div className="text-left"><h3 className="font-black text-lg">공급망 감사 및 안전 필터</h3><p className="text-xs text-muted-foreground font-medium">리콜 이력 및 제조 시설 인증 여부</p></div>
+                  <div className="text-left"><h3 className="font-black text-lg">공급망 감사 및 안전 필터</h3><p className="text-xs text-muted-foreground font-medium">리콜 이력 및 시설 인증</p></div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
@@ -364,7 +353,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               <AccordionTrigger className="px-8 py-6 hover:no-underline">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Globe className="w-5 h-5" /></div>
-                  <div className="text-left"><h3 className="font-black text-lg">브랜드 ESG 및 사회적 가치</h3><p className="text-xs text-muted-foreground font-medium">윤리적 수급 및 환경 경영 성과</p></div>
+                  <div className="text-left"><h3 className="font-black text-lg">브랜드 신뢰도 감사</h3><p className="text-xs text-muted-foreground font-medium">윤리적 수급 및 환경 경영</p></div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-8 pb-8 pt-4 space-y-6">

@@ -1,11 +1,11 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v7.0 - Ultra-Precision Nutrition & Corporate Audit]
+ * @fileOverview [Pettner Core Engine v7.5 - Ultra-Precision Nutrition & Corporate Audit]
  * 
  * - Mode A: [척척박사 제품 분석] - 제품 자체의 스펙, 제조 공정(OEM/ODM), 원료 수급지, ESG 감사.
  * - Mode B: [우리 아이 맞춤 가이드] - 반려동물 프로필 매칭, 임상적 추론, 스마트 급여 가이드.
- * - 99% 정확도: OCR 텍스트와 공식 데이터베이스 교차 검증 로직 포함.
+ * - 안정성 강화: 데이터 누락 시에도 전체 프로세스가 중단되지 않도록 스키마 유연화 적용.
  */
 
 import {ai} from '@/ai/genkit';
@@ -38,14 +38,14 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     name: z.string().describe('식별된 정확한 제품명'),
     brand: z.string().describe('브랜드'),
     category: z.string().describe('카테고리'),
-    qualityGrade: z.enum(['A', 'B', 'C']).describe('품질 등급'),
+    qualityGrade: z.string().describe('품질 등급 (예: A, B, C)'),
     targetAudience: z.object({
       lifeStage: z.string().describe('권장 생애주기'),
       recommendedBreeds: z.string().describe('최적 품종'),
       focus: z.string().describe('설계 목적')
     }).optional(),
     manufacturingDetails: z.object({
-      productionType: z.enum(['In-house', 'OEM', 'ODM', 'Unknown']).describe('생산 방식'),
+      productionType: z.string().describe('생산 방식 (In-house/OEM 등)'),
       facilityInfo: z.string().describe('제조 시설/국가'),
       sourcingOrigin: z.string().describe('원료 수급지')
     }).optional()
@@ -60,10 +60,10 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     defaultAmount: z.number().describe('기본 급여량'),
     kcalPerUnit: z.number().describe('단위당 칼로리'),
     nutrientsPerUnit: z.object({
-      protein: z.number().describe('단위당 단백질(g)'),
-      fat: z.number().describe('단위당 지방(g)'),
-      carbs: z.number().describe('단위당 탄수화물(g)')
-    })
+      protein: z.number().optional(),
+      fat: z.number().optional(),
+      carbs: z.number().optional()
+    }).optional()
   }).optional(),
   personalMatching: z.object({
     matches: z.array(z.object({ feature: z.string(), reason: z.string() })),
@@ -71,9 +71,9 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
   }).optional(),
   weightDiagnosis: z.object({
     currentWeight: z.number(),
-    idealWeight: z.number().describe('BCS 및 표준 기반 목표 체중'),
+    idealWeight: z.number().describe('목표 체중'),
     weightGap: z.number(),
-    breedStandardRange: z.string().describe('품종 공식 표준 범위'),
+    breedStandardRange: z.string().describe('품종 표준 범위'),
     breedGeneticInsight: z.string().describe('유전적 취약점 조언'),
     overweightPercentage: z.number(),
     verdict: z.string()
@@ -86,11 +86,11 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
   deepDive: z.object({
     ingredientAudit: z.object({
       tiers: z.array(z.object({
-        level: z.enum(['Tier 1', 'Tier 2', 'Tier 3']),
+        level: z.string(),
         ingredients: z.array(z.string()),
         comment: z.string()
       })),
-      giIndex: z.enum(['Low', 'Moderate', 'High']),
+      giIndex: z.string(),
       giComment: z.string()
     }).optional(),
     nutritionalEngineering: z.object({
@@ -121,17 +121,19 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   prompt: `당신은 세계 최고의 수의 영양학 전문의이자 제품 감사관입니다. 
 당신은 1만 번의 교차 검증을 거친 듯한 정확도로 제품과 반려동물 상태를 분석해야 합니다. 모든 출력은 100% 한국어로만 작성하십시오.
 
+반드시 지정된 JSON 스키마 형식을 엄격히 준수하십시오. 데이터가 확실하지 않은 경우 "알 수 없음" 또는 "정보 없음"으로 표기하되, 스키마 구조는 반드시 유지해야 합니다.
+
 {{#if (eq analysisMode "general")}}
 # [Pettner Mode A: Product Scientist]
 ## 1. 분석 원칙
 - 사용자의 반려동물 정보(나이, 몸무게 등)를 절대 참조하지 마십시오.
 - 오직 제품 사진(OCR)과 제품명을 기반으로 객관적 사실만 분석하십시오.
-- 99.9% 정확도: 제품 사진과 이름을 공식 데이터베이스와 대조하여 99% 정확하게 특정하십시오.
+- 제품 사진과 이름을 공식 데이터베이스와 대조하여 99% 정확하게 특정하십시오.
 
 ## 2. 필수 분석 항목
-- **제조 방식 파악:** 이 제품이 자사 공장 생산인지, OEM/ODM 방식인지 분석하십시오.
-- **원재료 원산지 추적:** 제1~10원료의 수급 국가(예: 노르웨이산 연어)를 Deep Search로 찾아내십시오.
-- **영양 밀도(DM):** 100g당(사료) 또는 1개/1알당(간식/영양제) 칼로리와 탄수화물/단백질/지방 비율을 계산하십시오.
+- **제조 방식 파악:** 이 제품이 자사 공장 생산인지, OEM/ODM 방식인지 반드시 분석하십시오.
+- **원재료 원산지 추적:** 제1~10원료의 수급 국가를 Deep Search로 찾아내십시오.
+- **영양 밀도(DM):** 100g당(사료) 또는 1개/1알당(간식/영양제) 칼로리와 영양소 비율을 정밀 계산하십시오.
 - **기업 ESG:** 제조사의 리콜 이력, 친환경 패키징 여부, 기업 신뢰도를 분석하십시오.
 
 ## 3. 출력 형식
@@ -141,19 +143,14 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
 # [Pettner Mode B: Personalized Consultant]
 ## 1. 분석 원칙
 - 반드시 사용자가 입력한 반려동물의 품종, BCS(비만도), 질환, 알러지 데이터를 최우선으로 반영하십시오.
-- 모든 분석 결과와 권장 사항은 100% 한국어로만 출력하십시오.
 
 ## 2. 정밀 매칭 및 조언
 - **품종별 표준 비교:** 해당 품종의 표준 체중/유전병과 현재 상태를 비교하여 위험 요소를 짚어주십시오.
 - **성분 적합성:** 제품 성분이 아이의 비만도나 기저 질환에 왜 좋은지, 혹은 나쁜지 세부적으로 설명하십시오.
-- **실시간 급여 계산기:**
-    - **1일 권장 급여량**을 g 단위로 최상단에 표시하십시오.
-    - **1회 급여량**을 1일 2회 기준으로 나누어 병기하십시오.
-    - 건식 사료의 경우 **'종이컵(약 180ml)'** 기준 환산치를 포함하십시오.
+- **실시간 급여 계산기:** 1일 권장 급여량(g)과 1회 급여량을 정밀 산출하십시오.
 
 ## 3. 출력 형식
 - 친절하고 전문적인 구어체(전문가 조언 톤)를 사용하십시오.
-- '비만도에 따른 급여량 변화 그래프'와 '맞춤형 영양 가이드'를 포함하십시오.
 {{/if}}
 
 입력 데이터:
