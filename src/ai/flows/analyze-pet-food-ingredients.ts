@@ -4,6 +4,7 @@
  * @fileOverview [Pettner Core Engine v22.0 - Precision Nutrition Calculator]
  * - AI Knowledge Augmentation: Breed-specific weight range & Product calorie density.
  * - Interactive Feeding Calculator: Dynamic scaling based on user-defined quantity.
+ * - Hierarchical Deep Dive: Ingredient tiering, GI index, Safety filters, and Brand ESG.
  */
 
 import {ai} from '@/ai/genkit';
@@ -136,7 +137,7 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
 # [핵심 지침: 실시간 계산기 데이터 산출]
 1. 제품의 등록성분량(As-fed)과 칼로리 밀도를 분석하여 calculatorData를 정확히 채우십시오.
 2. 단위(unitName)는 제품 유형({{{foodType}}})에 따라 가장 적절한 것(사료=g, 영양제=알, 간식=개/g)을 선택하십시오.
-3. 1단위당 실제 단백질/지방/탄수화물의 무게(g)를 계산하십시오.
+3. 1단위당 실제 단백질/지방/탄수화물의 무게(g)를 계산하십시오. 사진에 정보가 부족하면 해당 제품의 표준 영양 밀도를 지식 베이스에서 검색하십시오.
 
 # [품종 표준 및 체중 진단]
 1. 입력된 품종({{{petProfile.breed}}})의 성견 표준 체중 범위를 지식 베이스에서 검색하여 weightDiagnosis.breedStandardRange에 명시하십시오.

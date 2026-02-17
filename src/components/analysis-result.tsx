@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import type { AnalyzePetFoodIngredientsOutput, AnalyzePetFoodIngredientsInput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
@@ -36,10 +36,9 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   const { t } = useLanguage();
   const [amount, setAmount] = useState<number>(result.calculatorData?.defaultAmount || 0);
 
-  // 실시간 계산 로직
+  // 실시간 계산 로직 (에러 방지를 위한 방어적 코딩)
   const calculatedNutrition = useMemo(() => {
     if (!result.calculatorData) return null;
-    const factor = amount;
     return {
       kcal: amount * result.calculatorData.kcalPerUnit,
       protein: amount * result.calculatorData.nutrientsPerUnit.protein,
@@ -109,7 +108,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </CardContent>
       </Card>
 
-      {/* [LEVEL 2] 초개인화 1:1 매칭 리포트 */}
+      {/* [LEVEL 2] 초개인화 1:1 매칭 리포트 (맞춤형 전용) */}
       {isCustomMode && result.personalMatching && (
         <div className="space-y-6">
            <div className="flex items-center gap-2 px-2">
@@ -153,92 +152,82 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      {/* [LEVEL 3] 실시간 영양 계산기 (NEW) */}
-      <div className="space-y-6">
-        <div className="flex items-center gap-2 px-2">
-          <Calculator className="text-primary w-6 h-6" />
-          <h2 className="text-2xl font-black font-headline tracking-tight">🧮 실시간 급여량 & 영양 계산기</h2>
+      {/* [LEVEL 3] 실시간 영양 계산기 (공통 기능) */}
+      {result.calculatorData && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 px-2">
+            <Calculator className="text-primary w-6 h-6" />
+            <h2 className="text-2xl font-black font-headline tracking-tight">🧮 실시간 급여량 & 영양 계산기</h2>
+          </div>
+          
+          <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
+            <CardContent className="p-10 space-y-10">
+              <div className="flex flex-col md:flex-row gap-10">
+                <div className="flex-1 space-y-8">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-end">
+                      <label className="text-sm font-black text-muted-foreground uppercase">급여할 양을 설정하세요</label>
+                      <div className="flex items-center gap-2">
+                        <Input 
+                          type="number" 
+                          value={amount} 
+                          onChange={(e) => setAmount(Number(e.target.value))}
+                          className="w-24 h-12 text-center text-xl font-black rounded-xl bg-muted/20 border-none"
+                        />
+                        <span className="font-black text-lg">{result.calculatorData.unitName}</span>
+                      </div>
+                    </div>
+                    <Slider 
+                      value={[amount]} 
+                      min={0} 
+                      max={result.calculatorData.unitName === 'g' ? 500 : 50} 
+                      step={result.calculatorData.unitName === 'g' ? 5 : 1}
+                      onValueChange={(v) => setAmount(v[0])}
+                      className="py-4"
+                    />
+                  </div>
+                  
+                  <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/10 flex items-center gap-4">
+                    <div className="p-3 bg-white rounded-2xl shadow-sm">
+                      <UtensilsCrossed className="text-primary" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-black opacity-40 uppercase">Calculated Energy</p>
+                      <h4 className="text-3xl font-black text-primary">{calculatedNutrition?.kcal.toFixed(1)} <span className="text-sm">kcal</span></h4>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 bg-muted/10 rounded-[2.5rem] p-8 space-y-6">
+                  <p className="text-xs font-black text-muted-foreground flex items-center gap-2">
+                    <PieChart size={14} /> 영양 성분 구성 (Net Weight)
+                  </p>
+                  <div className="grid grid-cols-1 gap-4">
+                    {[
+                      { label: '단백질 (Protein)', value: calculatedNutrition?.protein, color: 'bg-primary' },
+                      { label: '지방 (Fat)', value: calculatedNutrition?.fat, color: 'bg-yellow-500' },
+                      { label: '탄수화물 (Carbs)', value: calculatedNutrition?.carbs, color: 'bg-muted-foreground' }
+                    ].map((item, i) => (
+                      <div key={i} className="space-y-1.5">
+                        <div className="flex justify-between text-[11px] font-black">
+                          <span>{item.label}</span>
+                          <span>{item.value?.toFixed(2)}g</span>
+                        </div>
+                        <div className="h-1.5 bg-white rounded-full overflow-hidden">
+                          <div className={cn("h-full transition-all duration-700", item.color)} 
+                               style={{ width: `${Math.min((item.value || 0) * 10, 100)}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-        
-        <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
-          <CardContent className="p-10 space-y-10">
-            <div className="flex flex-col md:flex-row gap-10">
-              {/* 왼쪽: 조절 섹션 */}
-              <div className="flex-1 space-y-8">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-end">
-                    <label className="text-sm font-black text-muted-foreground uppercase">급여할 양을 설정하세요</label>
-                    <div className="flex items-center gap-2">
-                      <Input 
-                        type="number" 
-                        value={amount} 
-                        onChange={(e) => setAmount(Number(e.target.value))}
-                        className="w-24 h-12 text-center text-xl font-black rounded-xl bg-muted/20 border-none"
-                      />
-                      <span className="font-black text-lg">{result.calculatorData.unitName}</span>
-                    </div>
-                  </div>
-                  <Slider 
-                    value={[amount]} 
-                    min={0} 
-                    max={result.calculatorData.unitName === 'g' ? 500 : 50} 
-                    step={result.calculatorData.unitName === 'g' ? 5 : 1}
-                    onValueChange={(v) => setAmount(v[0])}
-                    className="py-4"
-                  />
-                  <div className="flex justify-between text-[10px] font-black text-muted-foreground/40 uppercase">
-                    <span>min</span>
-                    <span>{result.calculatorData.unitName === 'g' ? '500g' : '50units'}</span>
-                  </div>
-                </div>
-                
-                <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/10 flex items-center gap-4">
-                  <div className="p-3 bg-white rounded-2xl shadow-sm">
-                    <Utensils className="text-primary" />
-                  </div>
-                  <div className="space-y-0.5">
-                    <p className="text-[10px] font-black opacity-40 uppercase">Calculated Energy</p>
-                    <h4 className="text-3xl font-black text-primary">{calculatedNutrition?.kcal.toFixed(1)} <span className="text-sm">kcal</span></h4>
-                  </div>
-                </div>
-              </div>
+      )}
 
-              {/* 오른쪽: 상세 영양 수치 */}
-              <div className="flex-1 bg-muted/10 rounded-[2.5rem] p-8 space-y-6">
-                <p className="text-xs font-black text-muted-foreground flex items-center gap-2">
-                  <PieChart size={14} /> 영양 성분 구성 (Net Weight)
-                </p>
-                <div className="grid grid-cols-1 gap-4">
-                  {[
-                    { label: '단백질 (Protein)', value: calculatedNutrition?.protein, color: 'bg-primary' },
-                    { label: '지방 (Fat)', value: calculatedNutrition?.fat, color: 'bg-yellow-500' },
-                    { label: '탄수화물 (Carbs)', value: calculatedNutrition?.carbs, color: 'bg-muted-foreground' }
-                  ].map((item, i) => (
-                    <div key={i} className="space-y-1.5">
-                      <div className="flex justify-between text-[11px] font-black">
-                        <span>{item.label}</span>
-                        <span>{item.value?.toFixed(2)}g</span>
-                      </div>
-                      <div className="h-1.5 bg-white rounded-full overflow-hidden">
-                        <div className={cn("h-full transition-all duration-700", item.color)} 
-                             style={{ width: `${Math.min((item.value || 0) * 10, 100)}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="pt-4 border-t border-muted/20 flex items-start gap-3">
-                   <Info size={16} className="text-primary mt-0.5 shrink-0" />
-                   <p className="text-[10px] text-muted-foreground font-bold leading-relaxed">
-                     본 계산기는 제품의 As-fed(실제 급여 상태) 기준 영양 밀도를 바탕으로 산출된 추정치입니다. 실제 급여량은 아이의 당일 활동량에 따라 수의사와 상의하여 조절하십시오.
-                   </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* [LEVEL 4] 초정밀 품종 표준 체중 진단 */}
+      {/* [LEVEL 4] 초정밀 품종 표준 체중 진단 (맞춤형 전용) */}
       {isCustomMode && result.weightDiagnosis && (
         <div className="space-y-6">
           <div className="flex items-center gap-2 px-2">
@@ -247,7 +236,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10 flex flex-col justify-center">
+            <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-10">
               <div className="space-y-6">
                 <div className="flex justify-between items-end">
                    <div>
@@ -259,12 +248,12 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                       <h4 className="text-4xl font-black text-success">{result.weightDiagnosis.idealWeight.toFixed(1)}kg</h4>
                    </div>
                 </div>
-                <div className="h-4 bg-muted rounded-full relative overflow-hidden shadow-inner">
-                   <div className={cn("h-full transition-all duration-1000 shadow-lg", result.weightDiagnosis.weightGap > 0 ? "bg-destructive" : "bg-primary")} 
+                <div className="h-4 bg-muted rounded-full relative overflow-hidden">
+                   <div className={cn("h-full transition-all duration-1000", result.weightDiagnosis.weightGap > 0 ? "bg-destructive" : "bg-primary")} 
                         style={{ width: `${Math.min(50 + (result.weightDiagnosis.overweightPercentage || 0), 100)}%` }} />
                 </div>
                 <div className="flex justify-between text-[11px] font-bold text-muted-foreground">
-                   <span className="flex items-center gap-1"><Award size={14} className="text-primary"/> 품종 표준: {result.weightDiagnosis.breedStandardRange}</span>
+                   <span>품종 표준: {result.weightDiagnosis.breedStandardRange}</span>
                    <span className="text-primary font-black">{result.weightDiagnosis.verdict}</span>
                 </div>
               </div>
@@ -275,15 +264,12 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   <Dna size={120} />
                </div>
                <div className="space-y-4 relative z-10">
-                  <div className="flex items-center gap-2">
-                    <Sparkles size={18} className="text-yellow-300" />
-                    <span className="text-[11px] font-black uppercase tracking-widest opacity-80">Breed Standard Insights</span>
-                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-widest opacity-80">Breed Standard Insights</span>
                   <p className="text-base font-bold leading-relaxed break-keep">{result.weightDiagnosis.breedGeneticInsight}</p>
                   <div className="pt-4 border-t border-white/20">
                      <p className="text-sm font-black flex items-center gap-2">
                         <Activity size={16} />
-                        {result.weightDiagnosis.weightGap > 0 ? `체중 감량 목표: ${result.weightDiagnosis.weightGap.toFixed(1)}kg` : '현재 정상 체중 유지 권장'}
+                        {result.weightDiagnosis.weightGap > 0 ? `체중 감량 목표: ${result.weightDiagnosis.weightGap.toFixed(1)}kg` : '정상 체중 유지 중'}
                      </p>
                   </div>
                </div>
@@ -294,22 +280,18 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
 
       {/* [LEVEL 5] 심층 리포트 (Progressive Disclosure) */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between px-2">
-          <div className="flex items-center gap-2">
-            <Microscope className="text-primary w-6 h-6" />
-            <h2 className="text-2xl font-black font-headline tracking-tight">전문가용 심층 분석 리포트</h2>
-          </div>
-          <Badge variant="outline" className="border-primary text-primary font-black px-3 py-1">Deep Dive v22.0</Badge>
+        <div className="flex items-center gap-2 px-2">
+          <Microscope className="text-primary w-6 h-6" />
+          <h2 className="text-2xl font-black font-headline tracking-tight">전문가용 심층 분석 리포트</h2>
         </div>
 
         <Accordion type="single" collapsible className="w-full space-y-4">
-          {/* 섹션 1: 원재료 등급 */}
           <AccordionItem value="ingredients" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
-            <AccordionTrigger className="px-8 py-6 hover:no-underline [&[data-state=open]>div>div>div]:text-primary">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-primary/10 rounded-2xl text-primary"><FlaskConical /></div>
                 <div className="text-left">
-                  <h3 className="font-black text-lg transition-colors">🧬 원재료 등급 정밀 감사</h3>
+                  <h3 className="font-black text-lg">🧬 원재료 등급 정밀 감사</h3>
                   <p className="text-xs text-muted-foreground font-medium">원료 티어링 및 GI 지수 심사</p>
                 </div>
               </div>
@@ -330,20 +312,19 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   </div>
                 ))}
               </div>
-              <div className="p-4 bg-muted/5 border-2 border-dashed rounded-[1.5rem] flex justify-between items-center">
+              <div className="p-4 bg-muted/5 border-2 border-dashed rounded-[1.5rem] flex justify-between items-center px-6">
                  <span className="text-sm font-black">GI Index: <span className={cn(result.deepDive.ingredientAudit.giIndex === 'High' ? 'text-destructive' : 'text-primary')}>{result.deepDive.ingredientAudit.giIndex}</span></span>
                  <p className="text-xs text-muted-foreground italic">{result.deepDive.ingredientAudit.giComment}</p>
               </div>
             </AccordionContent>
           </AccordionItem>
 
-          {/* 섹션 2: 영양 밸런스 */}
           <AccordionItem value="nutrition" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-primary/10 rounded-2xl text-primary"><BarChart3 /></div>
                 <div className="text-left">
-                  <h3 className="font-black text-lg transition-colors">⚖️ 영양 밸런스 엔지니어링</h3>
+                  <h3 className="font-black text-lg">⚖️ 영양 밸런스 엔지니어링</h3>
                   <p className="text-xs text-muted-foreground font-medium">건물(DM) 환산 분석</p>
                 </div>
               </div>
@@ -374,19 +355,15 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   </div>
                 ))}
               </div>
-              <div className="p-4 bg-primary/5 rounded-2xl border">
-                 <p className="text-xs font-bold leading-relaxed">{result.deepDive.nutritionalEngineering.ratios.balanceVerdict}</p>
-              </div>
             </AccordionContent>
           </AccordionItem>
 
-          {/* 섹션 3: 안전성 필터 */}
           <AccordionItem value="safety" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-primary/10 rounded-2xl text-primary"><ShieldAlert /></div>
                 <div className="text-left">
-                  <h3 className="font-black text-lg transition-colors">🛡️ 안전성 & 유해 성분 필터</h3>
+                  <h3 className="font-black text-lg">🛡️ 안전성 & 유해 성분 필터</h3>
                   <p className="text-xs text-muted-foreground font-medium">리콜 이력 및 첨가물 심사</p>
                 </div>
               </div>
@@ -412,13 +389,12 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </AccordionContent>
           </AccordionItem>
 
-          {/* 섹션 4: 브랜드 & ESG */}
           <AccordionItem value="brand" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
             <AccordionTrigger className="px-8 py-6 hover:no-underline">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Globe /></div>
                 <div className="text-left">
-                  <h3 className="font-black text-lg transition-colors">🌍 브랜드 신뢰도 & ESG 점수</h3>
+                  <h3 className="font-black text-lg">🌍 브랜드 신뢰도 & ESG 점수</h3>
                   <p className="text-xs text-muted-foreground font-medium">제조사 R&D 및 윤리성 평가</p>
                 </div>
               </div>
@@ -432,14 +408,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   <div className="p-4 bg-muted/10 rounded-2xl">
                     <p className="text-[10px] font-black opacity-50 uppercase mb-1">R&D 투자 수준</p>
                     <p className="text-xs font-bold">{result.deepDive.brandESG.rdLevel}</p>
-                  </div>
-                  <div className="p-4 bg-muted/10 rounded-2xl">
-                    <p className="text-[10px] font-black opacity-50 uppercase mb-1">지속 가능성(ESG)</p>
-                    <p className="text-xs font-bold">{result.deepDive.brandESG.sustainability}</p>
-                  </div>
-                  <div className="p-4 bg-muted/10 rounded-2xl">
-                    <p className="text-[10px] font-black opacity-50 uppercase mb-1">동물 복지 인증</p>
-                    <p className="text-xs font-bold">{result.deepDive.brandESG.animalWelfare}</p>
                   </div>
                </div>
             </AccordionContent>
@@ -466,12 +434,12 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
       {/* Floating Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-2xl border-t z-50 flex justify-center shadow-lg">
         <div className="w-full max-w-4xl flex gap-4">
-          <Button onClick={onReset} variant="outline" className="flex-1 h-16 rounded-2xl border-2 font-black text-primary hover:bg-primary/5 transition-all">
+          <Button onClick={onReset} variant="outline" className="flex-1 h-16 rounded-2xl border-2 font-black text-primary">
             <Zap size={20} className="mr-2" /> {resetButtonText || '다시 분석하기'}
           </Button>
           <Button 
             onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(result.productIdentity.name)}`, '_blank')}
-            className="flex-[2] h-16 rounded-2xl text-xl font-black shadow-xl hover:scale-[1.02] transition-transform"
+            className="flex-[2] h-16 rounded-2xl text-xl font-black shadow-xl"
           >
             <ShoppingBag size={24} className="mr-3" /> 최저가 구매하기
           </Button>
