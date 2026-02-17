@@ -4,7 +4,8 @@
  * @fileOverview [Pettner Core Engine v6.0 - Precision Nutrition & Audit System]
  * - Context Separation: Mode A (Product Only) vs Mode B (Pet + Product)
  * - Deep Searching AI: Ingredient Tiering, GI Index, and Brand ESG Audit.
- * - Personalized Matching: Genetic risk mapping and breed-standard weight calculation.
+ * - Manufacturing Intel: OEM/ODM check, Sourcing origin, Target life-stage.
+ * - Accuracy: 99% Product identification target.
  */
 
 import {ai} from '@/ai/genkit';
@@ -42,11 +43,21 @@ export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngred
 const AnalyzePetFoodIngredientsOutputSchema = z.object({
   status: z.enum(['success', 'error']),
   productIdentity: z.object({
-    name: z.string().describe('추출된 제품명'),
+    name: z.string().describe('식별된 정확한 제품명 (99% 정확도 목표)'),
     brand: z.string().describe('추출된 브랜드'),
     category: z.string().describe('제품 카테고리'),
     qualityGrade: z.enum(['A', 'B', 'C']).describe('원료 기반 품질 등급'),
-    oneLineVerdict: z.string().describe('제품 품질 한 줄 요약')
+    oneLineVerdict: z.string().describe('제품 품질 한 줄 요약'),
+    targetAudience: z.object({
+      lifeStage: z.string().describe('권장 생애주기 (예: 전연령, 퍼피, 시니어)'),
+      recommendedBreeds: z.string().describe('최적화된 품종군'),
+      focus: z.string().describe('제품의 핵심 설계 목적 (예: 장 건강, 체중 조절)')
+    }),
+    manufacturingDetails: z.object({
+      productionType: z.enum(['In-house', 'OEM', 'ODM', 'Unknown']).describe('생산 방식'),
+      facilityInfo: z.string().describe('제조 시설 및 국가 정보'),
+      sourcingOrigin: z.string().describe('주요 원재료 수급지 정보')
+    })
   }),
   scoreCard: z.object({
     totalScore: z.number().min(0).max(100).describe('종합 적합성/품질 점수'),
@@ -55,33 +66,27 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     statusTags: z.array(z.string()).describe('상태 태그')
   }),
   calculatorData: z.object({
-    unitName: z.string().describe('급여 단위 (사료=g, 영양제=알, 간식=개/g)'),
-    defaultAmount: z.number().describe('기본 권장 급여량 (1회 기준)'),
+    unitName: z.string().describe('급여 단위 (g, 알, 개)'),
+    defaultAmount: z.number().describe('기본 권장 급여량'),
     kcalPerUnit: z.number().describe('단위당 칼로리 (kcal)'),
     nutrientsPerUnit: z.object({
       protein: z.number().describe('단위당 단백질 (g)'),
       fat: z.number().describe('단위당 지방 (g)'),
       carbs: z.number().describe('단위당 탄수화물 (g)')
     })
-  }).describe('실시간 영양 계산기용 데이터'),
+  }),
   personalMatching: z.object({
-    matches: z.array(z.object({
-      feature: z.string(),
-      reason: z.string()
-    })),
-    mismatches: z.array(z.object({
-      feature: z.string(),
-      reason: z.string()
-    }))
+    matches: z.array(z.object({ feature: z.string(), reason: z.string() })),
+    mismatches: z.array(z.object({ feature: z.string(), reason: z.string() }))
   }).optional(),
   weightDiagnosis: z.object({
     currentWeight: z.number(),
     idealWeight: z.number().describe('품종 표준 및 BCS 기반 이상적 목표 체중'),
-    weightGap: z.number().describe('현재와 목표 사이의 차이 (kg)'),
+    weightGap: z.number(),
     breedStandardRange: z.string().describe('해당 품종의 공식 성견 표준 체중 범위'),
-    breedGeneticInsight: z.string().describe('품종별 유전적 취약점 및 건강 조언'),
-    overweightPercentage: z.number().describe('표준 대비 초과 비율 (%)'),
-    verdict: z.string().describe('체중 판정 결론')
+    breedGeneticInsight: z.string().describe('품종별 유전적 취약점 조언'),
+    overweightPercentage: z.number(),
+    verdict: z.string()
   }).optional(),
   deepDive: z.object({
     ingredientAudit: z.object({
@@ -108,18 +113,14 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       })
     }),
     safetyToxicology: z.object({
-      checks: z.array(z.object({
-        label: z.string(),
-        status: z.boolean(),
-        comment: z.string()
-      })),
+      checks: z.array(z.object({ label: z.string(), status: z.boolean(), comment: z.string() })),
       recallHistory: z.string().describe('브랜드 리콜 이력 상세')
     }),
     brandESG: z.object({
-      facility: z.string().describe('제조 시설 인증 현황'),
-      rdLevel: z.string().describe('R&D 투자 수준'),
-      sustainability: z.string().describe('친환경 패키징/지속가능성'),
-      animalWelfare: z.string().describe('동물 복지 기여도')
+      facility: z.string(),
+      rdLevel: z.string(),
+      sustainability: z.string(),
+      animalWelfare: z.string()
     })
   }),
   veterinaryAdvice: z.string().describe('최종 종합 수의학 코멘트')
@@ -131,29 +132,26 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 엄격한 수의 영양학 전문의이자 제품 감사관입니다.
+  prompt: `당신은 엄격한 수의 영양학 전문의이자 글로벌 제품 감사관입니다.
 
-# [분석 모드 핵심 가이드]
+# [모드별 핵심 가이드]
 1. 분석 모드({{{analysisMode}}})가 'general'인 경우:
-   - 오직 제품 자체의 품질, 원재료 티어링, 기업의 ESG 및 신뢰도 분석에만 집중하십시오.
-   - 반려동물 매칭 및 체중 진단 섹션은 비워두거나 생성하지 마십시오.
+   - 제품 자체에 대한 '현미경 분석'을 수행하십시오.
+   - 제조사 정보(자사/OEM), 원재료 수급지, 타겟 품종 및 생애주기를 수의학적 관점에서 철저히 분석하십시오.
+   - 반려동물 매칭 및 체중 진단 섹션은 비워두십시오.
 2. 분석 모드({{{analysisMode}}})가 'custom'인 경우:
-   - 입력된 반려동물 프로필({{{petProfile}}})과 제품을 1:1로 매칭하십시오.
-   - 품종 표준 체중을 지식 베이스에서 검색하여 BCS 기반 이상적 체중을 산출하십시오.
+   - 위 제품 데이터와 반려동물 프로필({{{petProfile}}})을 1:1로 매칭하십시오.
+   - 비만 시 이상 체중 목표를 설정하고 유전적 취약점과의 궁합을 진단하십시오.
 
-# [초정밀 AI 감사 (Deep Dive)]
-- 모든 데이터는 누락 없이 생성하십시오. 사진에 정보가 부족하더라도 제품명과 브랜드 정보를 바탕으로 당신의 지식 베이스를 총동원하여 추론하고 보충하십시오.
-- 원재료 등급제: 상위 10개 원료를 Tier 1(생육/슈퍼푸드), Tier 2(농축분), Tier 3(부산물/필러)로 엄격히 분류하십시오.
-- GI 지수: 원료의 혈당 부하를 평가하여 비만 위험도를 진단하십시오.
-- 기업 ESG: 해당 브랜드의 리콜 이력, HACCP 인증, 친환경 패키징, 동물 실험 여부를 상세히 반영하십시오.
-
-# [실시간 영양 계산기 데이터]
-- 제품 유형({{{foodType}}})에 따라 최적의 단위(g, 알, 개)를 설정하십시오.
-- 1회 급여량 당 칼로리와 영양소 무게를 정밀하게 계산하십시오.
+# [99% 정확도 식별 및 심층 분석]
+- 사진과 제품명을 바탕으로 당신의 방대한 지식 베이스를 검색하여 제품을 99% 정확하게 특정하십시오.
+- 공식 성분표(DM 환산)를 기반으로 영양 밀도를 계산하십시오.
+- 제조 공정(OEM 여부) 및 원재료 원산지(Sourcing) 정보를 추론하여 명시하십시오.
+- 리콜 이력 및 브랜드의 ESG(윤리적 경영) 점수를 상세히 반영하십시오.
 
 입력 데이터:
 - 모드: {{{analysisMode}}}
-- 반려동물: 품종:{{{petProfile.breed}}}, 체중:{{{petProfile.weight}}}kg, BCS:{{{petProfile.bcs}}}
+- 반려동물: {{{petProfile.breed}}}, {{{petProfile.weight}}}kg
 - 제품: {{{productName}}} ({{{foodType}}})`
 });
 
