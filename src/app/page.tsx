@@ -46,22 +46,22 @@ function HomeContent() {
   const handleAnalysis = async (formData: any) => {
     setStep('loading');
     
-    // Simple Age parsing
-    const finalAge = parseFloat(formData.petProfile.age) || undefined;
-
+    // V7.0: 모드 격리 로직
+    // general 모드일 경우 petProfile을 완전히 비웁니다.
+    const isCustom = formData.analysisMode === 'custom';
+    
     const analysisInput: AnalyzePetFoodIngredientsInput = {
         petType: formData.petType,
         analysisMode: formData.analysisMode,
         productName: formData.productName,
         foodType: formData.foodType,
         language: language,
-        petProfile: formData.analysisMode === 'custom' ? {
+        petProfile: isCustom ? {
           name: formData.petProfile.name,
           breed: formData.petProfile.breed,
-          age: finalAge,
+          age: parseFloat(formData.petProfile.age) || undefined,
           weight: parseFloat(formData.petProfile.weight) || undefined,
           neutered: (formData.petProfile.genderStatus || '').includes('neutered'),
-          activityLevel: formData.petProfile.activityLevel,
           bcs: formData.petProfile.bcs,
           healthConditions: formData.petProfile.healthConditions,
           allergies: formData.petProfile.allergies,
@@ -74,6 +74,7 @@ function HomeContent() {
         let finalResult: AnalyzePetFoodIngredientsOutput | null = null;
         let isCached = false;
 
+        // V7.0: 단순 제품 분석일 경우에만 글로벌 캐시 참조 (개인화 데이터 오염 방지)
         if (db && productId && productId.length > 5 && input.analysisMode === 'general') {
           const productRef = doc(db, 'products', productId);
           const productSnap = await getDoc(productRef);
@@ -88,8 +89,10 @@ function HomeContent() {
           if (actionResponse.error) throw new Error(t(actionResponse.error));
           if (actionResponse.data) {
             finalResult = actionResponse.data;
+            
+            // V7.0: 성공적인 단순 제품 분석 결과만 캐시에 저장
             if (db && productId && productId.length > 5 && finalResult.status === 'success' && input.analysisMode === 'general') {
-              setDoc(doc(db, 'products', productId), finalResult).catch(e => console.error("Global cache save failed:", e));
+              setDoc(doc(db, 'products', productId), finalResult).catch(e => console.error("Cache save failed:", e));
             }
           }
         }
@@ -97,13 +100,15 @@ function HomeContent() {
         if (finalResult) {
           setAnalysisResult(finalResult);
           setResultInput(input);
+          
           if (user && db && finalResult.status === 'success') {
             saveAnalysisToHistory(db, user.uid, input, finalResult);
           }
+          
           setStep('result');
           toast({
-            title: isCached ? "기존 분석 리포트 확인" : t('homePage.analysisCompleteTitle'),
-            description: isCached ? "이미 검증된 제품 데이터로 리포트를 불러왔습니다." : t('homePage.analysisCompleteDescription'),
+            title: isCached ? "검증된 제품 데이터 로드" : t('homePage.analysisCompleteTitle'),
+            description: isCached ? "이미 검증된 Pettner 데이터베이스의 리포트를 불러왔습니다." : t('homePage.analysisCompleteDescription'),
           });
         }
       } catch (error) {
