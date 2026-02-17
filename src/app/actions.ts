@@ -6,6 +6,7 @@ import type { AnalyzePetFoodIngredientsInput, AnalyzePetFoodIngredientsOutput } 
 type ActionResult = {
   data?: AnalyzePetFoodIngredientsOutput;
   error?: string;
+  details?: string;
 }
 
 export async function getAnalysis(input: AnalyzePetFoodIngredientsInput): Promise<ActionResult> {
@@ -15,6 +16,10 @@ export async function getAnalysis(input: AnalyzePetFoodIngredientsInput): Promis
     return { data: result };
   } catch (e: any) {
     console.error("Analysis Server Action Error:", e);
-    return { error: 'homePage.aiError' };
+    // Log the full error to the console for debugging
+    return { 
+      error: 'homePage.aiError', 
+      details: e.message || 'An unknown error occurred during AI generation.'
+    };
   }
 }

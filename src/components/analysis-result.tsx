@@ -278,6 +278,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
       )}
 
       {/* 5. 딥다이브 */}
+      {result.deepDive && (
       <div className="space-y-6">
         <div className="flex items-center gap-2 px-2">
           <Microscope className="text-primary w-6 h-6" />
@@ -376,6 +377,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           )}
         </Accordion>
       </div>
+      )}
 
       <Card className="border-none shadow-2xl rounded-[3.5rem] bg-primary text-white p-12 relative overflow-hidden">
         <div className="absolute top-[-20px] right-[-20px] opacity-10"><Stethoscope size={150} /></div>

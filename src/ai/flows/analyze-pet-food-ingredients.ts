@@ -43,12 +43,12 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       lifeStage: z.string().describe('권장 생애주기'),
       recommendedBreeds: z.string().describe('최적 품종'),
       focus: z.string().describe('설계 목적')
-    }),
+    }).optional(),
     manufacturingDetails: z.object({
       productionType: z.enum(['In-house', 'OEM', 'ODM', 'Unknown']).describe('생산 방식'),
       facilityInfo: z.string().describe('제조 시설/국가'),
       sourcingOrigin: z.string().describe('원료 수급지')
-    })
+    }).optional()
   }),
   scoreCard: z.object({
     totalScore: z.number().min(0).max(100).describe('종합 점수'),
@@ -64,7 +64,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       fat: z.number().describe('단위당 지방(g)'),
       carbs: z.number().describe('단위당 탄수화물(g)')
     })
-  }),
+  }).optional(),
   personalMatching: z.object({
     matches: z.array(z.object({ feature: z.string(), reason: z.string() })),
     mismatches: z.array(z.object({ feature: z.string(), reason: z.string() }))
@@ -92,23 +92,23 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       })),
       giIndex: z.enum(['Low', 'Moderate', 'High']),
       giComment: z.string()
-    }),
+    }).optional(),
     nutritionalEngineering: z.object({
       ratios: z.object({
         caPRatio: z.string(),
         omega63Ratio: z.string(),
         balanceVerdict: z.string()
       })
-    }),
+    }).optional(),
     safetyToxicology: z.object({
       checks: z.array(z.object({ label: z.string(), status: z.boolean() })),
       recallHistory: z.string().describe('브랜드 리콜 및 안전 이력')
-    }),
+    }).optional(),
     brandESG: z.object({
       rdLevel: z.string(),
       sustainability: z.string()
-    })
-  }),
+    }).optional()
+  }).optional(),
   veterinaryAdvice: z.string().describe('최종 조언')
 });
 
@@ -153,7 +153,7 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
 
 ## 3. 출력 형식
 - 친절하고 전문적인 구어체(전문가 조언 톤)를 사용하십시오.
-- '비만도에 따른 급여량 변화 그래프(dietRoadmap)'와 '맞춤형 영양 가이드'를 포함하십시오.
+- '비만도에 따른 급여량 변화 그래프'와 '맞춤형 영양 가이드'를 포함하십시오.
 {{/if}}
 
 입력 데이터:
@@ -172,7 +172,7 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await analyzePetFoodIngredientsPrompt(input);
-    if (!output) throw new Error('AI 분석 실패');
+    if (!output) throw new Error('AI 분석 실패: 출력 데이터가 없습니다.');
     return { ...output, status: 'success' };
   }
 );
