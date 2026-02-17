@@ -1,11 +1,11 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v7.5 - Ultra-Precision Nutrition & Corporate Audit]
+ * @fileOverview [Pettner Core Engine v10.0 - Global Multi-language & Ultra-Precision Audit]
  * 
- * - Mode A: [척척박사 제품 분석] - 제품 자체의 스펙, 제조 공정(OEM/ODM), 원료 수급지, ESG 감사.
- * - Mode B: [우리 아이 맞춤 가이드] - 반려동물 프로필 매칭, 임상적 추론, 스마트 급여 가이드.
- * - 안정성 강화: 데이터 누락 시에도 전체 프로세스가 중단되지 않도록 스키마 유연화 적용.
+ * - Mode A: [Product Scientist] - Focus on Manufacturing, Sourcing, ESG, and Spec.
+ * - Mode B: [Pet Consultant] - Focus on Personalized Match, Obesity Roadmap, and Dosage.
+ * - Multi-language: Supports 'ko' and 'en' with localized units (g/oz, Paper/Standard Cup).
  */
 
 import {ai} from '@/ai/genkit';
@@ -17,7 +17,7 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
   productName: z.string().optional().describe('제품명'),
   foodType: z.enum(['dry', 'wet', 'treat', 'supplement']).optional().describe('제품 유형'),
   photoDataUri: z.string().optional().describe("라벨 사진 데이터 URI"),
-  language: z.string().optional().default('ko').describe("출력 언어"),
+  language: z.string().optional().default('ko').describe("출력 언어 (ko, en)"),
   petProfile: z.object({
     name: z.string().optional(),
     breed: z.string().optional(),
@@ -35,30 +35,30 @@ export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngred
 const AnalyzePetFoodIngredientsOutputSchema = z.object({
   status: z.enum(['success', 'error']),
   productIdentity: z.object({
-    name: z.string().describe('식별된 정확한 제품명'),
-    brand: z.string().describe('브랜드'),
-    category: z.string().describe('카테고리'),
-    qualityGrade: z.string().describe('품질 등급 (예: A, B, C)'),
+    name: z.string().describe('Exact identified product name'),
+    brand: z.string().describe('Brand name'),
+    category: z.string().describe('Category (e.g., Dry Food, Treat)'),
+    qualityGrade: z.string().describe('Quality grade (e.g., A, B, C)'),
     targetAudience: z.object({
-      lifeStage: z.string().describe('권장 생애주기'),
-      recommendedBreeds: z.string().describe('최적 품종'),
-      focus: z.string().describe('설계 목적')
-    }).optional(),
+      lifeStage: z.string().describe('Recommended life stage'),
+      recommendedBreeds: z.string().describe('Optimal breed sizes'),
+      focus: z.string().describe('Design focus/purpose')
+    }),
     manufacturingDetails: z.object({
-      productionType: z.string().describe('생산 방식 (In-house/OEM 등)'),
-      facilityInfo: z.string().describe('제조 시설/국가'),
-      sourcingOrigin: z.string().describe('원료 수급지')
-    }).optional()
+      productionType: z.string().describe('Production type (In-house/OEM/ODM)'),
+      facilityInfo: z.string().describe('Facility info/Safety certifications'),
+      sourcingOrigin: z.string().describe('Source of primary ingredients (e.g., Norway, USA)')
+    })
   }),
   scoreCard: z.object({
-    totalScore: z.number().min(0).max(100).describe('종합 점수'),
-    headline: z.string().describe('핵심 진단 문구'),
-    statusTags: z.array(z.string()).describe('상태 태그')
+    totalScore: z.number().min(0).max(100).describe('Total score'),
+    headline: z.string().describe('Core diagnostic headline'),
+    statusTags: z.array(z.string()).describe('Status tags')
   }),
   calculatorData: z.object({
-    unitName: z.string().describe('단위 (g, 알, 개)'),
-    defaultAmount: z.number().describe('기본 급여량'),
-    kcalPerUnit: z.number().describe('단위당 칼로리'),
+    unitName: z.string().describe('Unit (g, oz, pill, piece)'),
+    defaultAmount: z.number().describe('Default serving amount'),
+    kcalPerUnit: z.number().describe('Calories per unit'),
     nutrientsPerUnit: z.object({
       protein: z.number().optional(),
       fat: z.number().optional(),
@@ -71,10 +71,10 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
   }).optional(),
   weightDiagnosis: z.object({
     currentWeight: z.number(),
-    idealWeight: z.number().describe('목표 체중'),
+    idealWeight: z.number().describe('Target ideal weight'),
     weightGap: z.number(),
-    breedStandardRange: z.string().describe('품종 표준 범위'),
-    breedGeneticInsight: z.string().describe('유전적 취약점 조언'),
+    breedStandardRange: z.string().describe('Standard range for the breed'),
+    breedGeneticInsight: z.string().describe('Genetic vulnerability insight'),
     overweightPercentage: z.number(),
     verdict: z.string()
   }).optional(),
@@ -102,14 +102,19 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     }).optional(),
     safetyToxicology: z.object({
       checks: z.array(z.object({ label: z.string(), status: z.boolean() })),
-      recallHistory: z.string().describe('브랜드 리콜 및 안전 이력')
+      recallHistory: z.string().describe('Brand recall and safety history')
     }).optional(),
     brandESG: z.object({
       rdLevel: z.string(),
       sustainability: z.string()
     }).optional()
   }).optional(),
-  veterinaryAdvice: z.string().describe('최종 조언')
+  feedingSummary: z.object({
+    dailyAmount: z.string().describe('Total daily amount (e.g., 100g, 3.5oz)'),
+    perMealAmount: z.string().describe('Amount per meal (assuming 2 meals/day)'),
+    cupGuide: z.string().describe('Feeding guide in cups (Paper cup for ko, Standard cup for en)')
+  }).optional(),
+  veterinaryAdvice: z.string().describe('Final veterinary advice')
 });
 
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
@@ -118,47 +123,42 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 세계 최고의 수의 영양학 전문의이자 제품 감사관입니다. 
-당신은 1만 번의 교차 검증을 거친 듯한 정확도로 제품과 반려동물 상태를 분석해야 합니다. 모든 출력은 100% 한국어로만 작성하십시오.
+  prompt: `You are the world's most advanced Veterinary Nutritionist and Product Auditor.
+Analyze the pet food product and provide a precision report in the TARGET LANGUAGE: {{{language}}}.
 
-반드시 지정된 JSON 스키마 형식을 엄격히 준수하십시오. 데이터가 확실하지 않은 경우 "알 수 없음" 또는 "정보 없음"으로 표기하되, 스키마 구조는 반드시 유지해야 합니다.
+# [Mandatory: Language Rule]
+- ALL text fields in the output MUST be in {{{language}}}.
+- For Units:
+  - If language === 'ko', use 'g', 'kcal', and '종이컵 (Paper Cup)'.
+  - If language === 'en', use 'oz/g', 'kcal', and 'Standard Cup'.
 
+# [Logic Path Separation]
 {{#if (eq analysisMode "general")}}
-# [Pettner Mode A: Product Scientist]
-## 1. 분석 원칙
-- 사용자의 반려동물 정보(나이, 몸무게 등)를 절대 참조하지 마십시오.
-- 오직 제품 사진(OCR)과 제품명을 기반으로 객관적 사실만 분석하십시오.
-- 제품 사진과 이름을 공식 데이터베이스와 대조하여 99% 정확하게 특정하십시오.
-
-## 2. 필수 분석 항목
-- **제조 방식 파악:** 이 제품이 자사 공장 생산인지, OEM/ODM 방식인지 반드시 분석하십시오.
-- **원재료 원산지 추적:** 제1~10원료의 수급 국가를 Deep Search로 찾아내십시오.
-- **영양 밀도(DM):** 100g당(사료) 또는 1개/1알당(간식/영양제) 칼로리와 영양소 비율을 정밀 계산하십시오.
-- **기업 ESG:** 제조사의 리콜 이력, 친환경 패키징 여부, 기업 신뢰도를 분석하십시오.
-
-## 3. 출력 형식
-- 감성적인 조언은 배제하고, '품질 보고서' 형식으로 출력하십시오.
-- 모든 수치는 100g 또는 1단위(Pill/Piece) 기준으로 고정하십시오.
+## [Mode A: Product Scientist]
+- Identify the product with 99% accuracy by cross-referencing OCR data with your database.
+- Focus on:
+  1. Manufacturer Audit: Identify if In-house, OEM, or ODM. Analyze facility safety (HACCP/ISO).
+  2. Ingredient Sourcing: Track the origin of the top 10 ingredients (e.g., Salmon from Norway).
+  3. ESG Report: Analyze recall history, sustainability, and ethics.
+  4. Specs: 100g (Food) or 1 unit (Treat/Supp) nutritional density.
 {{else}}
-# [Pettner Mode B: Personalized Consultant]
-## 1. 분석 원칙
-- 반드시 사용자가 입력한 반려동물의 품종, BCS(비만도), 질환, 알러지 데이터를 최우선으로 반영하십시오.
-
-## 2. 정밀 매칭 및 조언
-- **품종별 표준 비교:** 해당 품종의 표준 체중/유전병과 현재 상태를 비교하여 위험 요소를 짚어주십시오.
-- **성분 적합성:** 제품 성분이 아이의 비만도나 기저 질환에 왜 좋은지, 혹은 나쁜지 세부적으로 설명하십시오.
-- **실시간 급여 계산기:** 1일 권장 급여량(g)과 1회 급여량을 정밀 산출하십시오.
-
-## 3. 출력 형식
-- 친절하고 전문적인 구어체(전문가 조언 톤)를 사용하십시오.
+## [Mode B: Personalized Consultant]
+- Prioritize Pet Profile: Breed, BCS (Obesity), Health conditions, and Allergies.
+- Focus on:
+  1. Clinical Reasoning: Explain pros/cons based on breed standards and current status.
+  2. Obesity Roadmap: If Pet is Obese (BCS 4-5), calculate calories based on IDEAL WEIGHT.
+  3. Dosage Logic: Calculate Total Daily vs. Per Meal (2 meals/day).
 {{/if}}
 
-입력 데이터:
-- 분석 모드: {{{analysisMode}}}
-- 제품명: {{{productName}}}
-- 제품 유형: {{{foodType}}}
-- 반려동물 프로필: {{{petProfile.breed}}}, {{{petProfile.weight}}}kg, BCS: {{{petProfile.bcs}}}
-- 사진 데이터: {{media url=photoDataUri}}`
+# [Data Integrity]
+- Numerical values MUST be Numbers in JSON.
+- If data is ambiguous, trigger 'Deep Search' using your internal knowledge.
+
+Input Context:
+- Mode: {{{analysisMode}}}
+- Pet: {{{petType}}}, Breed: {{{petProfile.breed}}}, Weight: {{{petProfile.weight}}}, BCS: {{{petProfile.bcs}}}
+- Product Name: {{{productName}}}
+- Photo Data: {{media url=photoDataUri}}`
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(
@@ -169,7 +169,7 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await analyzePetFoodIngredientsPrompt(input);
-    if (!output) throw new Error('AI 분석 실패: 출력 데이터가 없습니다.');
+    if (!output) throw new Error('AI Analysis Failed: No output data.');
     return { ...output, status: 'success' };
   }
 );
