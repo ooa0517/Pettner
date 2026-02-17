@@ -1,10 +1,10 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v11.0 - Global Multi-language & Ultra-Precision Audit]
+ * @fileOverview [Pettner Core Engine v12.0 - Strict Math & Obesity Logic]
  * 
  * - Mode A: [Product Scientist] - Focus on Manufacturing, Sourcing, ESG, and Spec.
- * - Mode B: [Pet Consultant] - Focus on Personalized Match, General Health, and Dosage.
+ * - Mode B: [Pet Consultant] - Focus on Personalized Match, Obesity Logic, and Precise Dosage.
  */
 
 import {ai} from '@/ai/genkit';
@@ -51,7 +51,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     manufacturingDetails: z.object({
       productionType: z.string().describe('Production type (In-house/OEM/ODM)'),
       facilityInfo: z.string().describe('Facility info/Safety certifications'),
-      sourcingOrigin: z.string().describe('Source of primary ingredients (e.g., Norway, USA)')
+      sourcingOrigin: z.string().describe('Source of primary ingredients')
     }).optional()
   }),
   scoreCard: z.object({
@@ -103,16 +103,12 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     safetyToxicology: z.object({
       checks: z.array(z.object({ label: z.string(), status: z.boolean() })),
       recallHistory: z.string().describe('Brand recall and safety history')
-    }).optional(),
-    brandESG: z.object({
-      rdLevel: z.string(),
-      sustainability: z.string()
     }).optional()
   }).optional(),
   feedingSummary: z.object({
-    dailyAmount: z.string().describe('Total daily amount (e.g., 100g, 3.5oz)'),
-    perMealAmount: z.string().describe('Amount per meal (assuming 2 meals/day)'),
-    cupGuide: z.string().describe('Feeding guide in cups (Paper cup for ko, Standard cup for en)')
+    dailyAmount: z.string().describe('Total daily amount (e.g., 230.2g)'),
+    perMealAmount: z.string().describe('Amount per meal (e.g., 115.1g)'),
+    cupGuide: z.string().describe('Feeding guide in cups')
   }).optional(),
   veterinaryAdvice: z.string().describe('Final veterinary advice')
 });
@@ -126,33 +122,46 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   prompt: `You are the world's most advanced Veterinary Nutritionist and Product Auditor.
 Analyze the pet food product and provide a precision report in the TARGET LANGUAGE: {{{language}}}.
 
-# [Mandatory Execution: Error Prevention]
-- Response Format: 반드시 순수한 JSON 데이터만 출력할 것. 마크다운 태그조차 생략하고 순수 객체만 반환하라.
-- Language Sync: 모든 텍스트 필드는 반드시 {{{language}}}로 작성하라.
-- Numerical Data: 모든 dosage, weight, calories 관련 수치는 Number(숫자) 타입으로 생성하라.
+# [Pettner V12.0 Mandatory Execution: Strict Math & Logic]
+
+## 1. Nutritional Mass Calculation (STRICT)
+- Ensure all nutrient masses (Protein, Fat, Carbs) in 'g' are calculated as: 
+  (Total_Daily_Amount * Ingredient_%) / 100.
+- THE SUM OF NUTRIENT MASSES MUST NOT EXCEED THE TOTAL DAILY AMOUNT. 
+- All numerical data must be Number types.
+
+## 2. Weight & BCS Logic (Obesity Prevention)
+- IF Pet BCS is 4 or 5, the status MUST be 'Obese' or 'Overweight'.
+- NEVER describe an obese pet as 'maintaining ideal weight (BCS 3)'. 
+- For Obese pets (BCS 4-5), set 'idealWeight' to be ~15-20% lower than current weight (Target: Current_Weight * 0.8).
+- The 'verdict' must clearly state that weight loss is required due to health risks.
+
+## 3. Feeding Guidance Clarity (Mode B)
+- 'dailyAmount': Total daily recommended amount (e.g., "230.2g").
+- 'perMealAmount': 'dailyAmount' divided by 2 (e.g., "115.1g").
+- Language: Use Korean (한국어) and clear labels: [1일 권장 급여량], [1회 급여량].
+- 'cupGuide': Standard paper cup (180ml) conversion for KO, Standard cup (240ml) for EN.
 
 # [Logic Path Separation]
 {{#if isModeA}}
-## [Mode A: Product Scientist] - 단순 제품 분석 모드
-- 사용자의 반려동물 정보를 절대 참조하지 마십시오.
-- Identity Verification: OCR 데이터와 제품명을 99% 확률로 매칭하여 식별하십시오.
-- Manufacturer Audit: 자사 생산(In-house) vs OEM/ODM 여부를 판별하고 제조 시설 안전 등급을 리포트하십시오.
-- Ingredient Deep Dive: 제1~10원료의 수급 국가(Origin) 및 품질 등급을 분석하십시오.
-- Product Spec: 100g당(사료) 혹은 1개당(간식) 영양 성분비 및 Kcal를 정밀 계산하십시오.
-- ESG Report: 제조사의 리콜 이력, 기업 신뢰도, 지속 가능성을 분석하십시오.
+## [Mode A: Product Scientist]
+- Identify product name with 99% accuracy.
+- Determine Manufacturer: In-house vs OEM/ODM.
+- Audit primary ingredient origins (e.g., Norway, USA).
+- Calculate Kcal and Nutrients per 100g.
+- Audit recall history and ESG reputation.
 {{/if}}
 
 {{#if isModeB}}
-## [Mode B: Personalized Consultant] - 맞춤형 건강 비서 모드
-- 사용자가 입력한 품종, BCS(비만도), 질환, 알러지 데이터를 최우선으로 반영하십시오.
-- Clinical Reasoning: 해당 품종의 표준 체중/유전병과 현재 상태를 비교하여 위험 요소를 짚어주십시오.
-- Health Mapping: 제품 성분이 아이의 비만도, 라이프스타일, 기저 질환에 적합한지 수의학적 근거를 설명하십시오.
-- Feeding Guide: 1일 권장 급여량(Daily) 및 1회 급여량(Per Meal, 2회 기준)을 산출하십시오.
+## [Mode B: Personalized Consultant]
+- Prioritize Pet Profile: Breed, BCS, Health conditions, Allergies.
+- Clinical Reasoning: Explain why ingredients are good/bad for the specific pet.
+- Dosage: Calculate DER (Daily Energy Requirement) and convert to product dosage.
 {{/if}}
 
 # [Data Integrity]
-- 모든 수치는 10,000번의 시뮬레이션을 거친 듯한 정밀도로 산출하십시오.
-- 사료(Cup), 영양제(Pill/Scoop), 간식(Piece) 단위를 자동 변환하여 적용하십시오.
+- No Markdown tags. Pure JSON only.
+- Match Target Language: {{{language}}}.
 
 Input Context:
 - Pet: {{{petType}}}, Breed: {{{petProfile.breed}}}, Weight: {{{petProfile.weight}}}, BCS: {{{petProfile.bcs}}}

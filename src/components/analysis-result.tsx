@@ -40,6 +40,9 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     if (!result?.calculatorData) return null;
     const calc = result.calculatorData;
     const ratio = amount; 
+    
+    // V12.0 Math: (Amount * Percentage) / 100
+    // calculatorData.nutrientsPerUnit should already be normalized per 1 unit/100g
     return {
       kcal: ratio * (calc.kcalPerUnit || 0),
       protein: ratio * (calc.nutrientsPerUnit?.protein || 0),
@@ -69,7 +72,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <div className="space-y-1">
               <Badge variant="outline" className={cn("border-none px-4 py-1.5 rounded-full text-[10px] tracking-widest uppercase font-black", 
                 isCustomMode ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
-                {isCustomMode ? 'Pettner V11.0 Consultant' : 'Pettner V11.0 Auditor'}
+                {isCustomMode ? 'Pettner V12.0 Consultant' : 'Pettner V12.0 Auditor'}
               </Badge>
               <h1 className="text-3xl font-black tracking-tighter pt-2 leading-tight">
                 {result.productIdentity.name}
@@ -210,14 +213,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   {isCustomMode && result.feedingSummary && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                        <div className="p-5 bg-primary text-white rounded-[2rem] shadow-lg shadow-primary/20">
-                          <p className="text-[10px] font-black opacity-60 uppercase mb-1">Target Daily</p>
+                          <p className="text-[10px] font-black opacity-60 uppercase mb-1">{isEn ? 'Target Daily' : '1일 권장 급여량'}</p>
                           <h4 className="text-xl font-black">{result.feedingSummary.dailyAmount}</h4>
-                          <p className="text-[9px] opacity-40 font-bold">1 Meal: {result.feedingSummary.perMealAmount}</p>
+                          <p className="text-[9px] opacity-70 font-bold">{isEn ? 'Per Meal (1/2)' : '1회 급여량'}: {result.feedingSummary.perMealAmount}</p>
                        </div>
                        <div className="p-5 bg-white border-2 border-primary/20 rounded-[2rem] text-primary">
                           <p className="text-[10px] font-black opacity-60 uppercase mb-1">Cup Guide</p>
                           <h4 className="text-xl font-black">{result.feedingSummary.cupGuide}</h4>
-                          <p className="text-[9px] opacity-40 font-bold">{isEn ? 'Standard Cup (240ml)' : '종이컵 기준 (180ml)'}</p>
+                          <p className="text-[9px] opacity-40 font-bold">{isEn ? 'Standard Cup' : '종이컵 기준'}</p>
                        </div>
                     </div>
                   )}
@@ -249,6 +252,13 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   </div>
                 </div>
               </div>
+              {isCustomMode && result.feedingSummary && (
+                <div className="pt-6 border-t border-dashed">
+                  <p className="text-sm font-bold text-muted-foreground text-center">
+                    {isEn ? `Today, give ${result.feedingSummary.dailyAmount} in total. If feeding twice, give ${result.feedingSummary.perMealAmount} per meal.` : `오늘 하루 ${result.feedingSummary.dailyAmount}을 주세요. 두 번 나눠 주신다면 한 번에 ${result.feedingSummary.perMealAmount}씩 주시면 됩니다.`}
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -275,10 +285,10 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                    </div>
                    <div className="flex justify-between text-[11px] font-bold text-muted-foreground">
                       <span>{isEn ? 'Breed Standard' : '품종 표준'}: {result.weightDiagnosis.breedStandardRange}</span>
-                      <span className="text-destructive">{isEn ? 'Deviation' : '편차'} {result.weightDiagnosis.overweightPercentage}%</span>
+                      <span className="text-destructive font-black">{isEn ? 'Gap' : '차이'} {result.weightDiagnosis.overweightPercentage}%</span>
                    </div>
                 </div>
-                <p className="text-sm font-bold text-muted-foreground leading-relaxed">{result.weightDiagnosis.verdict}</p>
+                <p className="text-sm font-bold text-muted-foreground leading-relaxed p-4 bg-muted/20 rounded-2xl border-l-4 border-primary">{result.weightDiagnosis.verdict}</p>
               </div>
             </Card>
             
