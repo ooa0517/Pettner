@@ -14,7 +14,7 @@ import {
   Award, ShieldAlert,
   History, Globe, Microscope, Zap, CheckCircle,
   ThumbsUp, ThumbsDown, Sparkles, Dna, Activity,
-  Calculator, Utensils, Info, PieChart
+  Calculator, Utensils, PieChart, Info
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
@@ -174,14 +174,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                           onChange={(e) => setAmount(Number(e.target.value))}
                           className="w-24 h-12 text-center text-xl font-black rounded-xl bg-muted/20 border-none"
                         />
-                        <span className="font-black text-lg">{result.calculatorData.unitName}</span>
+                        <span className="font-black text-lg">{result.calculatorData?.unitName || 'g'}</span>
                       </div>
                     </div>
                     <Slider 
                       value={[amount]} 
                       min={0} 
-                      max={result.calculatorData.unitName === 'g' ? 500 : 50} 
-                      step={result.calculatorData.unitName === 'g' ? 5 : 1}
+                      max={(result.calculatorData?.unitName === 'g' || result.calculatorData?.unitName === '그램') ? 500 : 50} 
+                      step={(result.calculatorData?.unitName === 'g' || result.calculatorData?.unitName === '그램') ? 5 : 1}
                       onValueChange={(v) => setAmount(v[0])}
                       className="py-4"
                     />
@@ -189,7 +189,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   
                   <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/10 flex items-center gap-4">
                     <div className="p-3 bg-white rounded-2xl shadow-sm">
-                      <UtensilsCrossed className="text-primary" />
+                      <Utensils className="text-primary" />
                     </div>
                     <div className="space-y-0.5">
                       <p className="text-[10px] font-black opacity-40 uppercase">Calculated Energy</p>
@@ -279,141 +279,161 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
       )}
 
       {/* [LEVEL 5] 심층 리포트 (Progressive Disclosure) */}
-      <div className="space-y-6">
-        <div className="flex items-center gap-2 px-2">
-          <Microscope className="text-primary w-6 h-6" />
-          <h2 className="text-2xl font-black font-headline tracking-tight">전문가용 심층 분석 리포트</h2>
+      {result.deepDive && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 px-2">
+            <Microscope className="text-primary w-6 h-6" />
+            <h2 className="text-2xl font-black font-headline tracking-tight">전문가용 심층 분석 리포트</h2>
+          </div>
+
+          <Accordion type="single" collapsible className="w-full space-y-4">
+            {result.deepDive.ingredientAudit && (
+              <AccordionItem value="ingredients" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
+                <AccordionTrigger className="px-8 py-6 hover:no-underline">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary"><FlaskConical /></div>
+                    <div className="text-left">
+                      <h3 className="font-black text-lg">🧬 원재료 등급 정밀 감사</h3>
+                      <p className="text-xs text-muted-foreground font-medium">원료 티어링 및 GI 지수 심사</p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
+                  <div className="grid gap-4">
+                    {result.deepDive.ingredientAudit.tiers?.map((tier, i) => (
+                      <div key={i} className="p-6 rounded-[2rem] bg-muted/10 space-y-4">
+                        <Badge className={cn("font-black", tier.level === 'Tier 1' ? "bg-success" : tier.level === 'Tier 2' ? "bg-primary" : "bg-destructive")}>
+                          {tier.level}
+                        </Badge>
+                        <div className="flex flex-wrap gap-2">
+                            {tier.ingredients?.map((ing, idx) => (
+                              <span key={idx} className="px-3 py-1.5 bg-white rounded-xl text-xs font-bold border shadow-sm">{ing}</span>
+                            ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground font-bold leading-relaxed">{tier.comment}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="p-4 bg-muted/5 border-2 border-dashed rounded-[1.5rem] flex justify-between items-center px-6">
+                     <span className="text-sm font-black">GI Index: <span className={cn(result.deepDive.ingredientAudit.giIndex === 'High' ? 'text-destructive' : 'text-primary')}>{result.deepDive.ingredientAudit.giIndex}</span></span>
+                     <p className="text-xs text-muted-foreground italic">{result.deepDive.ingredientAudit.giComment}</p>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {result.deepDive.nutritionalEngineering && (
+              <AccordionItem value="nutrition" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
+                <AccordionTrigger className="px-8 py-6 hover:no-underline">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary"><BarChart3 /></div>
+                    <div className="text-left">
+                      <h3 className="font-black text-lg">⚖️ 영양 밸런스 엔지니어링</h3>
+                      <p className="text-xs text-muted-foreground font-medium">건물(DM) 환산 분석</p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-8 pb-8 pt-4 space-y-8">
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="p-5 rounded-2xl bg-primary/5 border text-center">
+                        <p className="text-[10px] font-black opacity-50 uppercase mb-1">Ca:P Ratio</p>
+                        <p className="text-xl font-black text-primary">{result.deepDive.nutritionalEngineering.ratios?.caPRatio}</p>
+                     </div>
+                     <div className="p-5 rounded-2xl bg-primary/5 border text-center">
+                        <p className="text-[10px] font-black opacity-50 uppercase mb-1">Omega 6:3</p>
+                        <p className="text-xl font-black text-primary">{result.deepDive.nutritionalEngineering.ratios?.omega63Ratio}</p>
+                     </div>
+                  </div>
+                  <div className="space-y-6 px-2">
+                    {Object.entries(result.deepDive.nutritionalEngineering.metrics || {}).map(([key, m]) => (
+                      <div key={key} className="space-y-2">
+                        <div className="flex justify-between text-xs font-black">
+                           <span className="uppercase">{key}</span>
+                           <span className="text-muted-foreground">{m.value}% (Success Zone: {m.minStd}-{m.maxStd}%)</span>
+                        </div>
+                        <div className="h-2 bg-muted rounded-full overflow-hidden relative">
+                           <div className={cn("h-full transition-all duration-1000", m.status === 'optimal' ? "bg-success" : "bg-destructive")} 
+                                style={{ width: `${Math.min((m.value/50)*100, 100)}%` }} />
+                        </div>
+                        <p className="text-[10px] font-bold text-muted-foreground">{m.verdict}</p>
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {result.deepDive.safetyToxicology && (
+              <AccordionItem value="safety" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
+                <AccordionTrigger className="px-8 py-6 hover:no-underline">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary"><ShieldAlert /></div>
+                    <div className="text-left">
+                      <h3 className="font-black text-lg">🛡️ 안전성 & 유해 성분 필터</h3>
+                      <p className="text-xs text-muted-foreground font-medium">리콜 이력 및 첨가물 심사</p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
+                   <div className="space-y-3">
+                      {result.deepDive.safetyToxicology.checks?.map((check, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 bg-muted/5 rounded-xl border">
+                           <div className="flex items-center gap-2">
+                              {check.status ? <CheckCircle className="text-success w-4 h-4" /> : <AlertCircle className="text-destructive w-4 h-4" />}
+                              <span className="text-xs font-bold">{check.label}</span>
+                           </div>
+                           <span className="text-[10px] text-muted-foreground font-medium">{check.comment}</span>
+                        </div>
+                      ))}
+                   </div>
+                   <div className="p-4 bg-destructive/5 rounded-2xl border border-destructive/10">
+                      <p className="text-xs font-black text-destructive flex items-center gap-2 uppercase mb-1">
+                        <History size={14} /> Brand Recall History
+                      </p>
+                      <p className="text-xs text-muted-foreground font-bold leading-relaxed">{result.deepDive.safetyToxicology.recallHistory}</p>
+                   </div>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {result.deepDive.brandESG && (
+              <AccordionItem value="brand" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
+                <AccordionTrigger className="px-8 py-6 hover:no-underline">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Globe /></div>
+                    <div className="text-left">
+                      <h3 className="font-black text-lg">🌍 브랜드 신뢰도 & ESG 점수</h3>
+                      <p className="text-xs text-muted-foreground font-medium">제조사 R&D 및 윤리성 평가</p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-8 pb-8 pt-4 space-y-4">
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 bg-muted/10 rounded-2xl">
+                        <p className="text-[10px] font-black opacity-50 uppercase mb-1">제조 시설 인증</p>
+                        <p className="text-xs font-bold">{result.deepDive.brandESG.facility}</p>
+                      </div>
+                      <div className="p-4 bg-muted/10 rounded-2xl">
+                        <p className="text-[10px] font-black opacity-50 uppercase mb-1">R&D 투자 수준</p>
+                        <p className="text-xs font-bold">{result.deepDive.brandESG.rdLevel}</p>
+                      </div>
+                   </div>
+                   <div className="p-4 bg-muted/5 rounded-2xl space-y-2">
+                      <div className="flex justify-between text-xs font-bold">
+                        <span>Sustainability</span>
+                        <span>{result.deepDive.brandESG.sustainability}</span>
+                      </div>
+                      <div className="flex justify-between text-xs font-bold">
+                        <span>Animal Welfare</span>
+                        <span>{result.deepDive.brandESG.animalWelfare}</span>
+                      </div>
+                   </div>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+          </Accordion>
         </div>
-
-        <Accordion type="single" collapsible className="w-full space-y-4">
-          <AccordionItem value="ingredients" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
-            <AccordionTrigger className="px-8 py-6 hover:no-underline">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-2xl text-primary"><FlaskConical /></div>
-                <div className="text-left">
-                  <h3 className="font-black text-lg">🧬 원재료 등급 정밀 감사</h3>
-                  <p className="text-xs text-muted-foreground font-medium">원료 티어링 및 GI 지수 심사</p>
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
-              <div className="grid gap-4">
-                {result.deepDive.ingredientAudit.tiers.map((tier, i) => (
-                  <div key={i} className="p-6 rounded-[2rem] bg-muted/10 space-y-4">
-                    <Badge className={cn("font-black", tier.level === 'Tier 1' ? "bg-success" : tier.level === 'Tier 2' ? "bg-primary" : "bg-destructive")}>
-                      {tier.level}
-                    </Badge>
-                    <div className="flex flex-wrap gap-2">
-                        {tier.ingredients.map((ing, idx) => (
-                          <span key={idx} className="px-3 py-1.5 bg-white rounded-xl text-xs font-bold border shadow-sm">{ing}</span>
-                        ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground font-bold leading-relaxed">{tier.comment}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="p-4 bg-muted/5 border-2 border-dashed rounded-[1.5rem] flex justify-between items-center px-6">
-                 <span className="text-sm font-black">GI Index: <span className={cn(result.deepDive.ingredientAudit.giIndex === 'High' ? 'text-destructive' : 'text-primary')}>{result.deepDive.ingredientAudit.giIndex}</span></span>
-                 <p className="text-xs text-muted-foreground italic">{result.deepDive.ingredientAudit.giComment}</p>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="nutrition" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
-            <AccordionTrigger className="px-8 py-6 hover:no-underline">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-2xl text-primary"><BarChart3 /></div>
-                <div className="text-left">
-                  <h3 className="font-black text-lg">⚖️ 영양 밸런스 엔지니어링</h3>
-                  <p className="text-xs text-muted-foreground font-medium">건물(DM) 환산 분석</p>
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-8 pb-8 pt-4 space-y-8">
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="p-5 rounded-2xl bg-primary/5 border text-center">
-                    <p className="text-[10px] font-black opacity-50 uppercase mb-1">Ca:P Ratio</p>
-                    <p className="text-xl font-black text-primary">{result.deepDive.nutritionalEngineering.ratios.caPRatio}</p>
-                 </div>
-                 <div className="p-5 rounded-2xl bg-primary/5 border text-center">
-                    <p className="text-[10px] font-black opacity-50 uppercase mb-1">Omega 6:3</p>
-                    <p className="text-xl font-black text-primary">{result.deepDive.nutritionalEngineering.ratios.omega63Ratio}</p>
-                 </div>
-              </div>
-              <div className="space-y-6 px-2">
-                {Object.entries(result.deepDive.nutritionalEngineering.metrics).map(([key, m]) => (
-                  <div key={key} className="space-y-2">
-                    <div className="flex justify-between text-xs font-black">
-                       <span className="uppercase">{key}</span>
-                       <span className="text-muted-foreground">{m.value}% (Success Zone: {m.minStd}-{m.maxStd}%)</span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden relative">
-                       <div className={cn("h-full transition-all duration-1000", m.status === 'optimal' ? "bg-success" : "bg-destructive")} 
-                            style={{ width: `${Math.min((m.value/50)*100, 100)}%` }} />
-                    </div>
-                    <p className="text-[10px] font-bold text-muted-foreground">{m.verdict}</p>
-                  </div>
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="safety" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
-            <AccordionTrigger className="px-8 py-6 hover:no-underline">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-2xl text-primary"><ShieldAlert /></div>
-                <div className="text-left">
-                  <h3 className="font-black text-lg">🛡️ 안전성 & 유해 성분 필터</h3>
-                  <p className="text-xs text-muted-foreground font-medium">리콜 이력 및 첨가물 심사</p>
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
-               <div className="space-y-3">
-                  {result.deepDive.safetyToxicology.checks.map((check, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-muted/5 rounded-xl border">
-                       <div className="flex items-center gap-2">
-                          {check.status ? <CheckCircle className="text-success w-4 h-4" /> : <AlertCircle className="text-destructive w-4 h-4" />}
-                          <span className="text-xs font-bold">{check.label}</span>
-                       </div>
-                       <span className="text-[10px] text-muted-foreground font-medium">{check.comment}</span>
-                    </div>
-                  ))}
-               </div>
-               <div className="p-4 bg-destructive/5 rounded-2xl border border-destructive/10">
-                  <p className="text-xs font-black text-destructive flex items-center gap-2 uppercase mb-1">
-                    <History size={14} /> Brand Recall History
-                  </p>
-                  <p className="text-xs text-muted-foreground font-bold leading-relaxed">{result.deepDive.safetyToxicology.recallHistory}</p>
-               </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="brand" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
-            <AccordionTrigger className="px-8 py-6 hover:no-underline">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Globe /></div>
-                <div className="text-left">
-                  <h3 className="font-black text-lg">🌍 브랜드 신뢰도 & ESG 점수</h3>
-                  <p className="text-xs text-muted-foreground font-medium">제조사 R&D 및 윤리성 평가</p>
-                </div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-8 pb-8 pt-4 space-y-4">
-               <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 bg-muted/10 rounded-2xl">
-                    <p className="text-[10px] font-black opacity-50 uppercase mb-1">제조 시설 인증</p>
-                    <p className="text-xs font-bold">{result.deepDive.brandESG.facility}</p>
-                  </div>
-                  <div className="p-4 bg-muted/10 rounded-2xl">
-                    <p className="text-[10px] font-black opacity-50 uppercase mb-1">R&D 투자 수준</p>
-                    <p className="text-xs font-bold">{result.deepDive.brandESG.rdLevel}</p>
-                  </div>
-               </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </div>
+      )}
 
       {/* [LEVEL 6] 최종 처방 조언 */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-primary text-white p-12 relative overflow-hidden">

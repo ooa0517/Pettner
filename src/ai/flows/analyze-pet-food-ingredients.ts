@@ -146,6 +146,7 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
 
 # [사진에 없는 정보까지 분석]
 1. 식별된 제품명({{{productName}}})을 바탕으로 제조 시설, 리콜 이력, 브랜드의 R&D 수준을 당신의 지식 베이스에서 검색하여 포함하십시오. "정보 없음" 대신 최신 데이터를 바탕으로 분석하십시오.
+2. deepDive 객체의 모든 필드를 누락 없이 작성하십시오. 특히 ingredientAudit의 tiers는 상위 원료를 등급별로 분류해야 합니다.
 
 입력 데이터:
 - 반려동물: 품종:{{{petProfile.breed}}}, 현재체중:{{{petProfile.weight}}}kg, BCS:{{{petProfile.bcs}}}, 건강고민:{{{petProfile.healthConditions}}}
