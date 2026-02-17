@@ -285,7 +285,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
 
         <Accordion type="single" collapsible className="w-full space-y-4">
-          {result.deepDive.ingredientAudit && (
+          {result.deepDive?.ingredientAudit && (
             <AccordionItem value="ingredients" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
               <AccordionTrigger className="px-8 py-6 hover:no-underline">
                 <div className="flex items-center gap-4">
@@ -320,7 +320,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </AccordionItem>
           )}
 
-          {result.deepDive.nutritionalEngineering && (
+          {result.deepDive?.nutritionalEngineering && (
             <AccordionItem value="nutrition" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
               <AccordionTrigger className="px-8 py-6 hover:no-underline">
                 <div className="flex items-center gap-4">
@@ -361,7 +361,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </AccordionItem>
           )}
 
-          {result.deepDive.safetyToxicology && (
+          {result.deepDive?.safetyToxicology && (
             <AccordionItem value="safety" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
               <AccordionTrigger className="px-8 py-6 hover:no-underline">
                 <div className="flex items-center gap-4">
@@ -394,7 +394,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </AccordionItem>
           )}
 
-          {result.deepDive.brandESG && (
+          {result.deepDive?.brandESG && (
             <AccordionItem value="brand" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
               <AccordionTrigger className="px-8 py-6 hover:no-underline">
                 <div className="flex items-center gap-4">

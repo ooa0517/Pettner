@@ -4,7 +4,7 @@
  * @fileOverview [Pettner Core Engine v6.0 - Precision Nutrition & Audit System]
  * - Context Separation: Mode A (Product Only) vs Mode B (Pet + Product)
  * - Deep Searching AI: Ingredient Tiering, GI Index, and Brand ESG Audit.
- * - Personalized Matching: Genetic risk mapping and BCS-aware ideal weight calculation.
+ * - Personalized Matching: Genetic risk mapping and breed-standard weight calculation.
  */
 
 import {ai} from '@/ai/genkit';
@@ -142,9 +142,10 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
    - 품종 표준 체중을 지식 베이스에서 검색하여 BCS 기반 이상적 체중을 산출하십시오.
 
 # [초정밀 AI 감사 (Deep Dive)]
+- 모든 데이터는 누락 없이 생성하십시오. 사진에 정보가 부족하더라도 제품명과 브랜드 정보를 바탕으로 당신의 지식 베이스를 총동원하여 추론하고 보충하십시오.
 - 원재료 등급제: 상위 10개 원료를 Tier 1(생육/슈퍼푸드), Tier 2(농축분), Tier 3(부산물/필러)로 엄격히 분류하십시오.
 - GI 지수: 원료의 혈당 부하를 평가하여 비만 위험도를 진단하십시오.
-- 기업 ESG: 해당 브랜드의 리콜 이력, HACCP 인증, 친환경 패키징, 동물 실험 여부를 지식 베이스에서 검색하여 반영하십시오.
+- 기업 ESG: 해당 브랜드의 리콜 이력, HACCP 인증, 친환경 패키징, 동물 실험 여부를 상세히 반영하십시오.
 
 # [실시간 영양 계산기 데이터]
 - 제품 유형({{{foodType}}})에 따라 최적의 단위(g, 알, 개)를 설정하십시오.
