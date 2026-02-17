@@ -14,7 +14,7 @@ import {
   Zap, ThumbsUp, ThumbsDown, 
   Sparkles, Dna, Calculator, Utensils, 
   PieChart, Factory, UserCircle, Truck,
-  CheckCircle2, Info
+  CheckCircle2, Info, Globe
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -23,11 +23,6 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 import { Line, LineChart, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 
 type AnalysisResultProps = {
@@ -44,7 +39,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   const calculatedNutrition = useMemo(() => {
     if (!result?.calculatorData) return null;
     const calc = result.calculatorData;
-    const ratio = amount; // unitName에 기반한 계산
+    const ratio = amount; 
     return {
       kcal: ratio * (calc.kcalPerUnit || 0),
       protein: ratio * (calc.nutrientsPerUnit?.protein || 0),
@@ -67,7 +62,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-40 max-w-4xl mx-auto px-4">
       
-      {/* 1. 종합 요약 (Quality Report or Expert Advice) */}
+      {/* 1. 종합 요약 */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
         <CardContent className="p-10 space-y-8">
           <div className="flex flex-col md:flex-row justify-between items-start gap-6">
@@ -165,7 +160,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      {/* 3. 실시간 영양 계산기 (Always Visible) */}
+      {/* 3. 실시간 영양 계산기 */}
       {result.calculatorData && (
         <div className="space-y-6">
           <div className="flex items-center gap-2 px-2">
@@ -181,7 +176,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                       <label className="text-sm font-black text-muted-foreground uppercase">급여할 양 설정</label>
                       <div className="flex items-center gap-2">
                         <Input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} className="w-24 h-12 text-center text-xl font-black rounded-xl bg-muted/20 border-none" />
-                        <span className="font-black text-lg">{result.calculatorData.unitName || 'g'}</span>
+                        <span className="font-black text-lg">{result.calculatorData?.unitName}</span>
                       </div>
                     </div>
                     <Slider value={[amount]} min={0} max={result.calculatorData.unitName === 'g' ? 500 : 20} step={result.calculatorData.unitName === 'g' ? 5 : 1} onValueChange={(v) => setAmount(v[0])} className="py-4" />
@@ -282,7 +277,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      {/* 5. 딥다이브 (Expert Audit) */}
+      {/* 5. 딥다이브 */}
       <div className="space-y-6">
         <div className="flex items-center gap-2 px-2">
           <Microscope className="text-primary w-6 h-6" />
