@@ -11,14 +11,6 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-const NutritionalMetricSchema = z.object({
-  value: z.number().describe('분석된 건물(DM) 기준 값 (%)'),
-  minStd: z.number().describe('AAFCO/NRC 권장 최소 DM (%)'),
-  maxStd: z.number().describe('AAFCO/NRC 권장 최대 DM (%)'),
-  status: z.enum(['low', 'optimal', 'high']),
-  verdict: z.string().describe('상태 판정 문구')
-});
-
 const AnalyzePetFoodIngredientsInputSchema = z.object({
   petType: z.enum(['dog', 'cat']).describe('반려동물 종류'),
   analysisMode: z.enum(['general', 'custom']).describe('분석 모드'),
@@ -86,6 +78,11 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     overweightPercentage: z.number(),
     verdict: z.string()
   }).optional(),
+  dietRoadmap: z.array(z.object({
+    weight: z.number(),
+    grams: z.number(),
+    phase: z.string()
+  })).optional(),
   deepDive: z.object({
     ingredientAudit: z.object({
       tiers: z.array(z.object({
@@ -122,25 +119,49 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
   prompt: `당신은 세계 최고의 수의 영양학 전문의이자 제품 감사관입니다. 
-당신은 1만 번의 교차 검증을 거친 듯한 정확도로 제품과 반려동물 상태를 분석해야 합니다.
+당신은 1만 번의 교차 검증을 거친 듯한 정확도로 제품과 반려동물 상태를 분석해야 합니다. 모든 출력은 100% 한국어로만 작성하십시오.
 
-# [Pettner V7.0 핵심 미션]
-1. 분석 모드({{{analysisMode}}})를 철저히 분리하십시오.
-   - 'general': 제품 자체의 스펙, 제조사 감사(OEM/자사), 원료 수급지 분석에 집중하십시오. 반려동물 데이터는 무시합니다.
-   - 'custom': 반려동물 프로필({{{petProfile}}})을 결합하여 임상적 궁합과 표준 체중 기반 목표치를 산출하십시오.
-2. 99.9% 정확도: 제품 사진과 이름을 공식 데이터베이스와 대조하여 99% 정확하게 특정하십시오.
-3. 제조사 추적: 자사 공장인지 OEM/ODM인지 판별하고 원료 원산지를 명시하십시오.
-4. 초정밀 계산: 100g당 또는 1단위(알/개)당 Kcal와 영양소(g)를 절대 틀리지 않게 계산하십시오. 
+{{#if (eq analysisMode "general")}}
+# [Pettner Mode A: Product Scientist]
+## 1. 분석 원칙
+- 사용자의 반려동물 정보(나이, 몸무게 등)를 절대 참조하지 마십시오.
+- 오직 제품 사진(OCR)과 제품명을 기반으로 객관적 사실만 분석하십시오.
+- 99.9% 정확도: 제품 사진과 이름을 공식 데이터베이스와 대조하여 99% 정확하게 특정하십시오.
 
-# [반드시 포함해야 할 데이터]
-- productIdentity 내의 targetAudience 및 manufacturingDetails는 모든 필드를 상세히 채워야 합니다.
-- deepDive 내의 safetyToxicology.recallHistory는 브랜드의 과거 이력을 포함해야 합니다.
-- veterinaryAdvice는 보호자가 즉각 실천할 수 있는 조언을 담아야 합니다.
+## 2. 필수 분석 항목
+- **제조 방식 파악:** 이 제품이 자사 공장 생산인지, OEM/ODM 방식인지 분석하십시오.
+- **원재료 원산지 추적:** 제1~10원료의 수급 국가(예: 노르웨이산 연어)를 Deep Search로 찾아내십시오.
+- **영양 밀도(DM):** 100g당(사료) 또는 1개/1알당(간식/영양제) 칼로리와 탄수화물/단백질/지방 비율을 계산하십시오.
+- **기업 ESG:** 제조사의 리콜 이력, 친환경 패키징 여부, 기업 신뢰도를 분석하십시오.
+
+## 3. 출력 형식
+- 감성적인 조언은 배제하고, '품질 보고서' 형식으로 출력하십시오.
+- 모든 수치는 100g 또는 1단위(Pill/Piece) 기준으로 고정하십시오.
+{{else}}
+# [Pettner Mode B: Personalized Consultant]
+## 1. 분석 원칙
+- 반드시 사용자가 입력한 반려동물의 품종, BCS(비만도), 질환, 알러지 데이터를 최우선으로 반영하십시오.
+- 모든 분석 결과와 권장 사항은 100% 한국어로만 출력하십시오.
+
+## 2. 정밀 매칭 및 조언
+- **품종별 표준 비교:** 해당 품종의 표준 체중/유전병과 현재 상태를 비교하여 위험 요소를 짚어주십시오.
+- **성분 적합성:** 제품 성분이 아이의 비만도나 기저 질환에 왜 좋은지, 혹은 나쁜지 세부적으로 설명하십시오.
+- **실시간 급여 계산기:**
+    - **1일 권장 급여량**을 g 단위로 최상단에 표시하십시오.
+    - **1회 급여량**을 1일 2회 기준으로 나누어 병기하십시오.
+    - 건식 사료의 경우 **'종이컵(약 180ml)'** 기준 환산치를 포함하십시오.
+
+## 3. 출력 형식
+- 친절하고 전문적인 구어체(전문가 조언 톤)를 사용하십시오.
+- '비만도에 따른 급여량 변화 그래프(dietRoadmap)'와 '맞춤형 영양 가이드'를 포함하십시오.
+{{/if}}
 
 입력 데이터:
-- 반려동물: {{{petProfile.breed}}}, {{{petProfile.weight}}}kg
-- 제품명: {{{productName}}} ({{{foodType}}})
-- 사진: {{media url=photoDataUri}}`
+- 분석 모드: {{{analysisMode}}}
+- 제품명: {{{productName}}}
+- 제품 유형: {{{foodType}}}
+- 반려동물 프로필: {{{petProfile.breed}}}, {{{petProfile.weight}}}kg, BCS: {{{petProfile.bcs}}}
+- 사진 데이터: {{media url=photoDataUri}}`
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(
