@@ -14,7 +14,7 @@ import {
   Zap, ThumbsUp, ThumbsDown, 
   Sparkles, Dna, Calculator, Utensils, 
   PieChart, Factory, UserCircle, Truck,
-  CheckCircle2, Info, Calendar, History
+  CheckCircle2, Info, Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -39,15 +39,15 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   const calculatedNutrition = useMemo(() => {
     if (!result?.calculatorData) return null;
     const calc = result.calculatorData;
-    const ratio = amount; 
+    const ratio = amount / calc.defaultAmount;
     
-    // V12.0 Math: (Amount * Percentage) / 100
-    // calculatorData.nutrientsPerUnit should already be normalized per 1 unit/100g
+    // V14.0 Strict Math: (Amount * Ingredient_%) / 100
+    // calculatorData already provides mass for 1 unit/100g
     return {
-      kcal: ratio * (calc.kcalPerUnit || 0),
-      protein: ratio * (calc.nutrientsPerUnit?.protein || 0),
-      fat: ratio * (calc.nutrientsPerUnit?.fat || 0),
-      carbs: ratio * (calc.nutrientsPerUnit?.carbs || 0),
+      kcal: ratio * calc.kcalPerUnit,
+      protein: ratio * calc.nutrientsPerUnit.protein,
+      fat: ratio * calc.nutrientsPerUnit.fat,
+      carbs: ratio * calc.nutrientsPerUnit.carbs,
     };
   }, [amount, result?.calculatorData]);
 
@@ -72,7 +72,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <div className="space-y-1">
               <Badge variant="outline" className={cn("border-none px-4 py-1.5 rounded-full text-[10px] tracking-widest uppercase font-black", 
                 isCustomMode ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
-                {isCustomMode ? 'Pettner V12.0 Consultant' : 'Pettner V12.0 Auditor'}
+                {isCustomMode ? 'Pettner V14.0 Consultant' : 'Pettner V14.0 Auditor'}
               </Badge>
               <h1 className="text-3xl font-black tracking-tighter pt-2 leading-tight">
                 {result.productIdentity.name}
@@ -252,13 +252,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   </div>
                 </div>
               </div>
-              {isCustomMode && result.feedingSummary && (
-                <div className="pt-6 border-t border-dashed">
-                  <p className="text-sm font-bold text-muted-foreground text-center">
-                    {isEn ? `Today, give ${result.feedingSummary.dailyAmount} in total. If feeding twice, give ${result.feedingSummary.perMealAmount} per meal.` : `오늘 하루 ${result.feedingSummary.dailyAmount}을 주세요. 두 번 나눠 주신다면 한 번에 ${result.feedingSummary.perMealAmount}씩 주시면 됩니다.`}
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -276,12 +269,12 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               <div className="space-y-8">
                 <div className="flex justify-between items-end">
                    <div><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Current</p><h4 className="text-5xl font-black">{result.weightDiagnosis.currentWeight}kg</h4></div>
-                   <div className="text-right"><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Ideal</p><h4 className="text-5xl font-black text-success">{(result.weightDiagnosis.idealWeight || 0).toFixed(1)}kg</h4></div>
+                   <div className="text-right"><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Ideal</p><h4 className="text-5xl font-black text-success">{result.weightDiagnosis.idealWeight.toFixed(1)}kg</h4></div>
                 </div>
                 <div className="space-y-2">
                    <div className="h-5 bg-muted rounded-full relative overflow-hidden shadow-inner">
-                      <div className={cn("h-full transition-all duration-1000", (result.weightDiagnosis.weightGap || 0) > 0 ? "bg-destructive" : "bg-primary")} 
-                           style={{ width: `${Math.max(10, Math.min(50 + (result.weightDiagnosis.overweightPercentage || 0), 100))}%` }} />
+                      <div className={cn("h-full transition-all duration-1000", result.weightDiagnosis.weightGap > 0 ? "bg-destructive" : "bg-primary")} 
+                           style={{ width: `${Math.max(10, Math.min(50 + result.weightDiagnosis.overweightPercentage, 100))}%` }} />
                    </div>
                    <div className="flex justify-between text-[11px] font-bold text-muted-foreground">
                       <span>{isEn ? 'Breed Standard' : '품종 표준'}: {result.weightDiagnosis.breedStandardRange}</span>
@@ -310,7 +303,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           <h2 className="text-2xl font-black font-headline tracking-tight">{isEn ? 'Expert Deep Dive Audit' : '전문가용 심층 감사 리포트'}</h2>
         </div>
         <Accordion type="single" collapsible className="w-full space-y-4">
-          {result?.deepDive?.ingredientAudit && (
+          {result.deepDive?.ingredientAudit && (
             <AccordionItem value="ingredients" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
               <AccordionTrigger className="px-8 py-6 hover:no-underline">
                 <div className="flex items-center gap-4">
@@ -326,7 +319,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                         <Badge className="font-black bg-primary/20 text-primary border-none">{tier.level}</Badge>
                         <span className="text-[10px] font-bold opacity-40 uppercase">Core Ingredients</span>
                       </div>
-                      <p className="text-sm font-black leading-relaxed">{tier.ingredients?.join(', ')}</p>
+                      <p className="text-sm font-black leading-relaxed">{tier.ingredients.join(', ')}</p>
                       <p className="text-xs text-muted-foreground italic leading-relaxed">{tier.comment}</p>
                     </div>
                   ))}
@@ -339,7 +332,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </AccordionItem>
           )}
 
-          {result?.deepDive?.nutritionalEngineering && (
+          {result.deepDive?.nutritionalEngineering && (
             <AccordionItem value="nutrition" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
               <AccordionTrigger className="px-8 py-6 hover:no-underline">
                 <div className="flex items-center gap-4">
@@ -357,7 +350,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </AccordionItem>
           )}
 
-          {result?.deepDive?.safetyToxicology && (
+          {result.deepDive?.safetyToxicology && (
             <AccordionItem value="safety" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
               <AccordionTrigger className="px-8 py-6 hover:no-underline">
                 <div className="flex items-center gap-4">

@@ -1,10 +1,11 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v12.0 - Strict Math & Obesity Logic]
+ * @fileOverview [Pettner Core Engine v14.0 - Professional Life-stage & Genetic Matching]
  * 
- * - Mode A: [Product Scientist] - Focus on Manufacturing, Sourcing, ESG, and Spec.
- * - Mode B: [Pet Consultant] - Focus on Personalized Match, Obesity Logic, and Precise Dosage.
+ * - Mathematical Integrity: (Dosage * %) / 100.
+ * - Genetic Engine: Breed-specific risk matching.
+ * - Life-cycle: Puppy/Adult/Senior precision nutrition.
  */
 
 import {ai} from '@/ai/genkit';
@@ -32,26 +33,24 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
 export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngredientsInputSchema>;
 
 const PromptInputSchema = AnalyzePetFoodIngredientsInputSchema.extend({
-  isModeA: z.boolean().describe('단순 제품 분석 모드 여부'),
-  isModeB: z.boolean().describe('맞춤 가이드 모드 여부'),
+  isModeA: z.boolean().describe('제품 감사 모드 여부'),
+  isModeB: z.boolean().describe('맞춤 컨설팅 모드 여부'),
 });
 
 const AnalyzePetFoodIngredientsOutputSchema = z.object({
   status: z.enum(['success', 'error']),
   productIdentity: z.object({
-    name: z.string().describe('Exact identified product name'),
+    name: z.string().describe('Identified product name'),
     brand: z.string().describe('Brand name'),
-    category: z.string().describe('Category (e.g., Dry Food, Treat)'),
-    qualityGrade: z.string().optional().describe('Quality grade (e.g., A, B, C)'),
+    category: z.string().describe('Category'),
     targetAudience: z.object({
-      lifeStage: z.string().describe('Recommended life stage'),
-      recommendedBreeds: z.string().describe('Optimal breed sizes'),
-      focus: z.string().describe('Design focus/purpose')
+      lifeStage: z.string().describe('Recommended life stage (Puppy/Adult/Senior)'),
+      recommendedBreeds: z.string().describe('Optimal breeds'),
     }).optional(),
     manufacturingDetails: z.object({
-      productionType: z.string().describe('Production type (In-house/OEM/ODM)'),
-      facilityInfo: z.string().describe('Facility info/Safety certifications'),
-      sourcingOrigin: z.string().describe('Source of primary ingredients')
+      productionType: z.string().describe('In-house/OEM/ODM'),
+      facilityInfo: z.string().describe('Safety certifications'),
+      sourcingOrigin: z.string().describe('Origin of primary ingredients')
     }).optional()
   }),
   scoreCard: z.object({
@@ -61,14 +60,14 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     grade: z.string().optional().describe('Display grade (e.g., A+, B)')
   }),
   calculatorData: z.object({
-    unitName: z.string().describe('Unit (g, oz, pill, piece)'),
-    defaultAmount: z.number().describe('Default serving amount'),
+    unitName: z.string().describe('Unit (g, pill, piece)'),
+    defaultAmount: z.number().describe('Default amount for 1 unit or 100g'),
     kcalPerUnit: z.number().describe('Calories per unit'),
     nutrientsPerUnit: z.object({
-      protein: z.number().optional(),
-      fat: z.number().optional(),
-      carbs: z.number().optional()
-    }).optional()
+      protein: z.number().describe('Protein mass in grams'),
+      fat: z.number().describe('Fat mass in grams'),
+      carbs: z.number().describe('Carb mass in grams')
+    })
   }).optional(),
   personalMatching: z.object({
     matches: z.array(z.object({ feature: z.string(), reason: z.string() })),
@@ -76,7 +75,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
   }).optional(),
   weightDiagnosis: z.object({
     currentWeight: z.number(),
-    idealWeight: z.number().describe('Target ideal weight'),
+    idealWeight: z.number(),
     weightGap: z.number(),
     breedStandardRange: z.string().describe('Standard range for the breed'),
     breedGeneticInsight: z.string().describe('Genetic vulnerability insight'),
@@ -102,15 +101,15 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     }).optional(),
     safetyToxicology: z.object({
       checks: z.array(z.object({ label: z.string(), status: z.boolean() })),
-      recallHistory: z.string().describe('Brand recall and safety history')
+      recallHistory: z.string()
     }).optional()
   }).optional(),
   feedingSummary: z.object({
-    dailyAmount: z.string().describe('Total daily amount (e.g., 230.2g)'),
-    perMealAmount: z.string().describe('Amount per meal (e.g., 115.1g)'),
-    cupGuide: z.string().describe('Feeding guide in cups')
+    dailyAmount: z.string().describe('e.g., 230.2g'),
+    perMealAmount: z.string().describe('e.g., 115.1g'),
+    cupGuide: z.string().describe('e.g., 1.5 cups')
   }).optional(),
-  veterinaryAdvice: z.string().describe('Final veterinary advice')
+  veterinaryAdvice: z.string().describe('Final professional advice')
 });
 
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
@@ -122,49 +121,31 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   prompt: `You are the world's most advanced Veterinary Nutritionist and Product Auditor.
 Analyze the pet food product and provide a precision report in the TARGET LANGUAGE: {{{language}}}.
 
-# [Pettner V12.0 Mandatory Execution: Strict Math & Logic]
+# [Pettner V14.0 Mandatory Execution: Strict Math & Logic]
 
-## 1. Nutritional Mass Calculation (STRICT)
-- Ensure all nutrient masses (Protein, Fat, Carbs) in 'g' are calculated as: 
-  (Total_Daily_Amount * Ingredient_%) / 100.
-- THE SUM OF NUTRIENT MASSES MUST NOT EXCEED THE TOTAL DAILY AMOUNT. 
-- All numerical data must be Number types.
+## 1. Mathematical Integrity (STRICT)
+- Calculate nutrient masses (Protein, Fat, Carbs) in 'g' for the default unit (100g or 1 Piece/Pill).
+- Formula: (Unit_Amount * Ingredient_%) / 100.
+- THE SUM OF NUTRIENT MASSES MUST NOT EXCEED THE UNIT AMOUNT. 
+- Example: If defaultAmount is 100g, and Protein is 25%, Protein mass is 25g.
+- Ensure all numerical data are Number types.
 
-## 2. Weight & BCS Logic (Obesity Prevention)
-- IF Pet BCS is 4 or 5, the status MUST be 'Obese' or 'Overweight'.
-- NEVER describe an obese pet as 'maintaining ideal weight (BCS 3)'. 
-- For Obese pets (BCS 4-5), set 'idealWeight' to be ~15-20% lower than current weight (Target: Current_Weight * 0.8).
-- The 'verdict' must clearly state that weight loss is required due to health risks.
+## 2. Professional Life-stage & Genetic Matching (Mode B)
+- **Life-stage:** Determine if the pet is Puppy, Adult, or Senior based on Age. Evaluate if the product meets the specific nutritional guidelines (e.g., NRC/AAFCO growth vs maintenance).
+- **Breed Genetics:** Use your knowledge to identify breed-specific risks (e.g., Maltipoo -> Patellar Luxation, Poodle -> Skin/Trachea). Analyze if ingredients (e.g., Glucosamine, Omega-3) support these risks.
+- **Obesity Logic:** If BCS is 4 or 5, set 'idealWeight' to ~15-20% lower than current. The verdict must state weight loss is mandatory.
 
-## 3. Feeding Guidance Clarity (Mode B)
-- 'dailyAmount': Total daily recommended amount (e.g., "230.2g").
-- 'perMealAmount': 'dailyAmount' divided by 2 (e.g., "115.1g").
-- Language: Use Korean (한국어) and clear labels: [1일 권장 급여량], [1회 급여량].
-- 'cupGuide': Standard paper cup (180ml) conversion for KO, Standard cup (240ml) for EN.
-
-# [Logic Path Separation]
-{{#if isModeA}}
-## [Mode A: Product Scientist]
-- Identify product name with 99% accuracy.
-- Determine Manufacturer: In-house vs OEM/ODM.
-- Audit primary ingredient origins (e.g., Norway, USA).
-- Calculate Kcal and Nutrients per 100g.
-- Audit recall history and ESG reputation.
-{{/if}}
-
-{{#if isModeB}}
-## [Mode B: Personalized Consultant]
-- Prioritize Pet Profile: Breed, BCS, Health conditions, Allergies.
-- Clinical Reasoning: Explain why ingredients are good/bad for the specific pet.
-- Dosage: Calculate DER (Daily Energy Requirement) and convert to product dosage.
-{{/if}}
+## 3. Product Specialist Audit (Mode A)
+- Identify Manufacturer: In-house vs OEM/ODM.
+- Track Sourcing: Origin of top 10 ingredients.
+- ESG/Recall History: Audit brand reputation and safety records.
 
 # [Data Integrity]
-- No Markdown tags. Pure JSON only.
+- No Markdown. Pure JSON only.
 - Match Target Language: {{{language}}}.
 
 Input Context:
-- Pet: {{{petType}}}, Breed: {{{petProfile.breed}}}, Weight: {{{petProfile.weight}}}, BCS: {{{petProfile.bcs}}}
+- Pet: {{{petType}}}, Breed: {{{petProfile.breed}}}, Weight: {{{petProfile.weight}}}, BCS: {{{petProfile.bcs}}}, Age: {{{petProfile.age}}}
 - Product Name: {{{productName}}}
 - Photo Data: {{media url=photoDataUri}}`
 });
