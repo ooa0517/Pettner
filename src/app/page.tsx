@@ -15,12 +15,8 @@ import { useLanguage } from '@/contexts/language-context';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useSearchParams } from 'next/navigation';
 
-/**
- * 제품 아이디(슬러그) 생성
- */
-function generateProductId(brandName: string = '', productName: string = ''): string {
-  const combined = `${brandName.trim()}-${productName.trim()}`.toLowerCase();
-  return combined.replace(/[^a-z0-9가-힣]/g, '-').replace(/-+/g, '-');
+function generateProductId(productName: string = ''): string {
+  return productName.trim().toLowerCase().replace(/[^a-z0-9가-힣]/g, '-').replace(/-+/g, '-');
 }
 
 function HomeContent() {
@@ -35,8 +31,7 @@ function HomeContent() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const reset = searchParams.get('reset');
-    if (reset === 'true') {
+    if (searchParams.get('reset') === 'true') {
       setStep('landing');
       setAnalysisResult(null);
       setResultInput(null);
@@ -46,8 +41,6 @@ function HomeContent() {
   const handleAnalysis = async (formData: any) => {
     setStep('loading');
     
-    // V7.0: 모드 격리 로직
-    // general 모드일 경우 petProfile을 완전히 비웁니다.
     const isCustom = formData.analysisMode === 'custom';
     
     const analysisInput: AnalyzePetFoodIngredientsInput = {
@@ -57,81 +50,62 @@ function HomeContent() {
         foodType: formData.foodType,
         language: language,
         petProfile: isCustom ? {
-          name: formData.petProfile.name,
-          breed: formData.petProfile.breed,
-          age: parseFloat(formData.petProfile.age) || undefined,
-          weight: parseFloat(formData.petProfile.weight) || undefined,
-          neutered: (formData.petProfile.genderStatus || '').includes('neutered'),
-          bcs: formData.petProfile.bcs,
-          healthConditions: formData.petProfile.healthConditions,
-          allergies: formData.petProfile.allergies,
+          name: formData.petProfile?.name,
+          breed: formData.petProfile?.breed,
+          age: parseFloat(formData.petProfile?.age) || undefined,
+          weight: parseFloat(formData.petProfile?.weight) || undefined,
+          neutered: formData.petProfile?.neutered,
+          bcs: formData.petProfile?.bcs,
+          healthConditions: formData.petProfile?.healthConditions,
+          allergies: formData.petProfile?.allergies,
         } : undefined
     };
 
-    const processAndAnalyze = async (input: AnalyzePetFoodIngredientsInput) => {
-      try {
-        const productId = generateProductId('', input.productName);
-        let finalResult: AnalyzePetFoodIngredientsOutput | null = null;
-        let isCached = false;
+    try {
+      const productId = generateProductId(analysisInput.productName);
+      let finalResult: AnalyzePetFoodIngredientsOutput | null = null;
+      let isCached = false;
 
-        // V7.0: 단순 제품 분석일 경우에만 글로벌 캐시 참조 (개인화 데이터 오염 방지)
-        if (db && productId && productId.length > 5 && input.analysisMode === 'general') {
-          const productRef = doc(db, 'products', productId);
-          const productSnap = await getDoc(productRef);
-          if (productSnap.exists()) {
-            finalResult = productSnap.data() as AnalyzePetFoodIngredientsOutput;
-            isCached = true;
-          }
+      // Mode A일 때만 캐시 활용
+      if (db && productId && analysisInput.analysisMode === 'general') {
+        const productSnap = await getDoc(doc(db, 'products', productId));
+        if (productSnap.exists()) {
+          finalResult = productSnap.data() as AnalyzePetFoodIngredientsOutput;
+          isCached = true;
         }
-
-        if (!finalResult) {
-          const actionResponse = await getAnalysis(input);
-          if (actionResponse.error) throw new Error(t(actionResponse.error));
-          if (actionResponse.data) {
-            finalResult = actionResponse.data;
-            
-            // V7.0: 성공적인 단순 제품 분석 결과만 캐시에 저장
-            if (db && productId && productId.length > 5 && finalResult.status === 'success' && input.analysisMode === 'general') {
-              setDoc(doc(db, 'products', productId), finalResult).catch(e => console.error("Cache save failed:", e));
-            }
-          }
-        }
-
-        if (finalResult) {
-          setAnalysisResult(finalResult);
-          setResultInput(input);
-          
-          if (user && db && finalResult.status === 'success') {
-            saveAnalysisToHistory(db, user.uid, input, finalResult);
-          }
-          
-          setStep('result');
-          toast({
-            title: isCached ? "검증된 제품 데이터 로드" : t('homePage.analysisCompleteTitle'),
-            description: isCached ? "이미 검증된 Pettner 데이터베이스의 리포트를 불러왔습니다." : t('homePage.analysisCompleteDescription'),
-          });
-        }
-      } catch (error) {
-        console.error("Analysis Error:", error);
-        setStep('input');
-        toast({
-          variant: "destructive",
-          title: t('homePage.analysisFailedTitle'),
-          description: error instanceof Error ? error.message : t('homePage.analysisFailedDescriptionUnknown'),
-        });
       }
-    };
-    
-    const file = formData.image?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        analysisInput.photoDataUri = reader.result as string;
-        await processAndAnalyze(analysisInput);
-      };
-    } else {
-        await processAndAnalyze(analysisInput);
+
+      if (!finalResult) {
+        const file = formData.image?.[0];
+        if (file) {
+          const reader = new FileReader();
+          const base64Promise = new Promise<string>((resolve) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+          analysisInput.photoDataUri = await base64Promise;
+        }
+        
+        const actionResponse = await getAnalysis(analysisInput);
+        if (actionResponse.error) throw new Error(t(actionResponse.error));
+        finalResult = actionResponse.data || null;
+
+        if (finalResult && db && productId && analysisInput.analysisMode === 'general') {
+           setDoc(doc(db, 'products', productId), finalResult).catch(console.error);
+        }
+      }
+
+      if (finalResult) {
+        setAnalysisResult(finalResult);
+        setResultInput(analysisInput);
+        if (user && db) saveAnalysisToHistory(db, user.uid, analysisInput, finalResult);
+        setStep('result');
+        toast({ title: isCached ? "검증 데이터 로드" : t('homePage.analysisCompleteTitle') });
+      }
+    } catch (error: any) {
+      console.error(error);
+      setStep('input');
+      toast({ variant: "destructive", title: t('homePage.analysisFailedTitle'), description: error.message });
     }
   };
   
