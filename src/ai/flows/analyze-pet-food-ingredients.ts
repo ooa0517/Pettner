@@ -1,11 +1,12 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v6.0 - Precision Nutrition & Audit System]
+ * @fileOverview [Pettner Core Engine v6.1 - Precision Nutrition & Audit System]
  * - Context Separation: Mode A (Product Only) vs Mode B (Pet + Product)
  * - Deep Searching AI: Ingredient Tiering, GI Index, and Brand ESG Audit.
  * - Manufacturing Intel: OEM/ODM check, Sourcing origin, Target life-stage.
  * - Accuracy: 99% Product identification target.
+ * - Reliability: Ensured mandatory fields for targetAudience and manufacturingDetails.
  */
 
 import {ai} from '@/ai/genkit';
@@ -148,6 +149,7 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
 - 공식 성분표(DM 환산)를 기반으로 영양 밀도를 계산하십시오.
 - 제조 공정(OEM 여부) 및 원재료 원산지(Sourcing) 정보를 추론하여 명시하십시오.
 - 리콜 이력 및 브랜드의 ESG(윤리적 경영) 점수를 상세히 반영하십시오.
+- **중요**: productIdentity 내의 targetAudience와 manufacturingDetails 객체는 반드시 모든 필드를 채워서 반환해야 합니다. 정보를 알 수 없는 경우 '정보 없음' 또는 '전연령' 등 가장 적합한 기본값을 사용하십시오.
 
 입력 데이터:
 - 모드: {{{analysisMode}}}

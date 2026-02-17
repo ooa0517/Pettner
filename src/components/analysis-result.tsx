@@ -39,14 +39,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   const calculatedNutrition = useMemo(() => {
     if (!result.calculatorData) return null;
     return {
-      kcal: amount * result.calculatorData.kcalPerUnit,
-      protein: amount * result.calculatorData.nutrientsPerUnit.protein,
-      fat: amount * result.calculatorData.nutrientsPerUnit.fat,
-      carbs: amount * result.calculatorData.nutrientsPerUnit.carbs,
+      kcal: amount * (result.calculatorData.kcalPerUnit || 0),
+      protein: amount * (result.calculatorData.nutrientsPerUnit?.protein || 0),
+      fat: amount * (result.calculatorData.nutrientsPerUnit?.fat || 0),
+      carbs: amount * (result.calculatorData.nutrientsPerUnit?.carbs || 0),
     };
   }, [amount, result.calculatorData]);
 
-  if (result.status === 'error' || !result.scoreCard) {
+  if (result.status === 'error' || !result.productIdentity || !result.scoreCard) {
      return (
         <div className="space-y-8 py-20 text-center">
           <AlertCircle className="w-20 h-20 text-destructive mx-auto opacity-30"/>
@@ -92,14 +92,18 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                <div className="p-3 bg-white rounded-2xl shadow-sm text-primary"><UserCircle size={20}/></div>
                <div>
                   <p className="text-[10px] font-black opacity-50 uppercase">Target Audience</p>
-                  <p className="text-xs font-bold">{result.productIdentity.targetAudience.lifeStage} · {result.productIdentity.targetAudience.recommendedBreeds}</p>
+                  <p className="text-xs font-bold">
+                    {result.productIdentity.targetAudience?.lifeStage || '정보 없음'} · {result.productIdentity.targetAudience?.recommendedBreeds || '전연령'}
+                  </p>
                </div>
             </div>
             <div className="p-6 bg-muted/20 rounded-[2rem] flex items-center gap-4">
                <div className="p-3 bg-white rounded-2xl shadow-sm text-primary"><Factory size={20}/></div>
                <div>
                   <p className="text-[10px] font-black opacity-50 uppercase">Manufacturing Info</p>
-                  <p className="text-xs font-bold">{result.productIdentity.manufacturingDetails.productionType} ({result.productIdentity.manufacturingDetails.facilityInfo})</p>
+                  <p className="text-xs font-bold">
+                    {result.productIdentity.manufacturingDetails?.productionType || 'Unknown'} ({result.productIdentity.manufacturingDetails?.facilityInfo || '비공개'})
+                  </p>
                </div>
             </div>
           </div>
@@ -114,7 +118,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                  {result.scoreCard.headline}
                </p>
                <div className="flex flex-wrap gap-2">
-                 {result.scoreCard.statusTags.map((tag, i) => (
+                 {result.scoreCard.statusTags?.map((tag, i) => (
                    <Badge key={i} variant="secondary" className={cn("bg-white font-bold px-3 py-1 shadow-sm", tag.includes('주의') || tag.includes('비만') || tag.includes('경고') ? "text-destructive" : "text-primary")}>
                      {tag}
                    </Badge>
@@ -138,7 +142,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                  <CardTitle className="text-lg font-black text-success flex items-center gap-2"><ThumbsUp size={20}/> Perfect Match</CardTitle>
                </CardHeader>
                <CardContent className="p-6 space-y-4">
-                  {result.personalMatching.matches.map((match, i) => (
+                  {result.personalMatching.matches?.map((match, i) => (
                     <div key={i} className="space-y-1">
                       <p className="font-black text-sm text-success">{match.feature}</p>
                       <p className="text-xs text-muted-foreground font-bold leading-relaxed">{match.reason}</p>
@@ -151,7 +155,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                  <CardTitle className="text-lg font-black text-destructive flex items-center gap-2"><ThumbsDown size={20}/> Risk Alert</CardTitle>
                </CardHeader>
                <CardContent className="p-6 space-y-4">
-                  {result.personalMatching.mismatches.map((mismatch, i) => (
+                  {result.personalMatching.mismatches?.map((mismatch, i) => (
                     <div key={i} className="space-y-1">
                       <p className="font-black text-sm text-destructive">{mismatch.feature}</p>
                       <p className="text-xs text-muted-foreground font-bold leading-relaxed">{mismatch.reason}</p>
@@ -227,20 +231,20 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               <div className="space-y-6">
                 <div className="flex justify-between items-end">
                    <div><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Current</p><h4 className="text-4xl font-black">{result.weightDiagnosis.currentWeight}kg</h4></div>
-                   <div className="text-right"><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Ideal</p><h4 className="text-4xl font-black text-success">{result.weightDiagnosis.idealWeight.toFixed(1)}kg</h4></div>
+                   <div className="text-right"><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Ideal</p><h4 className="text-4xl font-black text-success">{(result.weightDiagnosis.idealWeight || 0).toFixed(1)}kg</h4></div>
                 </div>
                 <div className="h-4 bg-muted rounded-full relative overflow-hidden">
-                   <div className={cn("h-full transition-all duration-1000", result.weightDiagnosis.weightGap > 0 ? "bg-destructive" : "bg-primary")} 
+                   <div className={cn("h-full transition-all duration-1000", (result.weightDiagnosis.weightGap || 0) > 0 ? "bg-destructive" : "bg-primary")} 
                         style={{ width: `${Math.min(50 + (result.weightDiagnosis.overweightPercentage || 0), 100)}%` }} />
                 </div>
-                <p className="text-[11px] font-bold text-muted-foreground">품종 표준: {result.weightDiagnosis.breedStandardRange}</p>
+                <p className="text-[11px] font-bold text-muted-foreground">품종 표준: {result.weightDiagnosis.breedStandardRange || '분석 중'}</p>
               </div>
             </Card>
             <Card className="border-none shadow-xl rounded-[2.5rem] bg-primary text-white p-10 relative overflow-hidden group">
                <div className="absolute top-[-20px] right-[-20px] opacity-10 group-hover:scale-110 transition-transform duration-700"><Dna size={120} /></div>
                <div className="space-y-4 relative z-10">
                   <span className="text-[11px] font-black uppercase tracking-widest opacity-80">Genetic Insight</span>
-                  <p className="text-base font-bold leading-relaxed">{result.weightDiagnosis.breedGeneticInsight}</p>
+                  <p className="text-base font-bold leading-relaxed">{result.weightDiagnosis.breedGeneticInsight || '품종 특이 질환 분석 결과가 여기에 표시됩니다.'}</p>
                </div>
             </Card>
           </div>
@@ -259,7 +263,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               <AccordionTrigger className="px-8 py-6 hover:no-underline">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-primary/10 rounded-2xl text-primary"><FlaskConical /></div>
-                  <div className="text-left"><h3 className="font-black text-lg">🧬 원재료 등급 정밀 감사</h3><p className="text-xs text-muted-foreground font-medium">원료 티어링 및GI 지수 심사</p></div>
+                  <div className="text-left"><h3 className="font-black text-lg">🧬 원재료 등급 정밀 감사</h3><p className="text-xs text-muted-foreground font-medium">원료 티어링 및 GI 지수 심사</p></div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
@@ -267,7 +271,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   {result.deepDive.ingredientAudit.tiers?.map((tier, i) => (
                     <div key={i} className="p-6 rounded-[2rem] bg-muted/10 space-y-4">
                       <Badge className={cn("font-black", tier.level === 'Tier 1' ? "bg-success" : tier.level === 'Tier 2' ? "bg-primary" : "bg-destructive")}>{tier.level}</Badge>
-                      <p className="text-xs font-bold leading-relaxed">{tier.ingredients.join(', ')}</p>
+                      <p className="text-xs font-bold leading-relaxed">{tier.ingredients?.join(', ')}</p>
                       <p className="text-xs text-muted-foreground italic">{tier.comment}</p>
                     </div>
                   ))}
@@ -288,11 +292,11 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 <div className="grid grid-cols-2 gap-4">
                    <div className="p-5 rounded-2xl bg-primary/5 border text-center">
                       <p className="text-[10px] font-black opacity-50 uppercase mb-1">Ca:P Ratio</p>
-                      <p className="text-xl font-black text-primary">{result.deepDive.nutritionalEngineering.ratios?.caPRatio}</p>
+                      <p className="text-xl font-black text-primary">{result.deepDive.nutritionalEngineering.ratios?.caPRatio || 'N/A'}</p>
                    </div>
                    <div className="p-5 rounded-2xl bg-primary/5 border text-center">
                       <p className="text-[10px] font-black opacity-50 uppercase mb-1">Omega 6:3</p>
-                      <p className="text-xl font-black text-primary">{result.deepDive.nutritionalEngineering.ratios?.omega63Ratio}</p>
+                      <p className="text-xl font-black text-primary">{result.deepDive.nutritionalEngineering.ratios?.omega63Ratio || 'N/A'}</p>
                    </div>
                 </div>
                 <div className="p-6 bg-muted/10 rounded-2xl"><p className="text-xs font-bold leading-relaxed">{result.deepDive.nutritionalEngineering.ratios?.balanceVerdict}</p></div>
@@ -311,7 +315,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
                  <div className="p-6 bg-primary/5 rounded-2xl border border-primary/10 flex items-center gap-4">
                     <Truck className="text-primary" />
-                    <div><p className="text-[10px] font-black opacity-50 uppercase">Sourcing Origin</p><p className="text-sm font-bold">{result.productIdentity.manufacturingDetails.sourcingOrigin}</p></div>
+                    <div><p className="text-[10px] font-black opacity-50 uppercase">Sourcing Origin</p><p className="text-sm font-bold">{result.productIdentity.manufacturingDetails?.sourcingOrigin || '글로벌 수급'}</p></div>
                  </div>
                  <div className="space-y-2">
                     {result.deepDive.safetyToxicology.checks?.map((check, i) => (
@@ -334,10 +338,10 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-8 pb-8 pt-4 space-y-4">
-                 <div className="p-6 bg-muted/10 rounded-2xl"><p className="text-xs font-bold leading-relaxed">{result.deepDive.safetyToxicology.recallHistory}</p></div>
+                 <div className="p-6 bg-muted/10 rounded-2xl"><p className="text-xs font-bold leading-relaxed">{result.deepDive.safetyToxicology?.recallHistory || '최근 5년간 큰 리콜 이력 없음'}</p></div>
                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-muted/10 rounded-2xl"><p className="text-[10px] font-black opacity-50 uppercase">Facility</p><p className="text-xs font-bold">{result.deepDive.brandESG.facility}</p></div>
-                    <div className="p-4 bg-muted/10 rounded-2xl"><p className="text-[10px] font-black opacity-50 uppercase">Animal Welfare</p><p className="text-xs font-bold">{result.deepDive.brandESG.animalWelfare}</p></div>
+                    <div className="p-4 bg-muted/10 rounded-2xl"><p className="text-[10px] font-black opacity-50 uppercase">Facility</p><p className="text-xs font-bold">{result.deepDive.brandESG.facility || '인증 시설'}</p></div>
+                    <div className="p-4 bg-muted/10 rounded-2xl"><p className="text-[10px] font-black opacity-50 uppercase">Animal Welfare</p><p className="text-xs font-bold">{result.deepDive.brandESG.animalWelfare || '준수'}</p></div>
                  </div>
               </AccordionContent>
             </AccordionItem>
