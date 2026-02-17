@@ -1,10 +1,9 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v21.0 - Breed Standard Precision]
- * - AI Knowledge Augmentation: Breed-specific weight range lookup.
- * - Strict Ideal Weight Calculation: Based on breed standard + BCS formula.
- * - Progressive Disclosure Data Structure: Including deep dive metrics.
+ * @fileOverview [Pettner Core Engine v22.0 - Precision Nutrition Calculator]
+ * - AI Knowledge Augmentation: Breed-specific weight range & Product calorie density.
+ * - Interactive Feeding Calculator: Dynamic scaling based on user-defined quantity.
  */
 
 import {ai} from '@/ai/genkit';
@@ -52,25 +51,35 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     totalScore: z.number().min(0).max(100).describe('종합 적합성/품질 점수'),
     grade: z.string().describe('점수 기반 등급 (예: A+)'),
     headline: z.string().describe('핵심 진단 문구'),
-    statusTags: z.array(z.string()).describe('상태 태그 (예: 🔴 비만경고, ✅ 글루텐프리)')
+    statusTags: z.array(z.string()).describe('상태 태그')
   }),
+  calculatorData: z.object({
+    unitName: z.string().describe('급여 단위 (예: g, 알, 개, 컵)'),
+    defaultAmount: z.number().describe('기본 권장 급여량 (1회 기준)'),
+    kcalPerUnit: z.number().describe('단위당 칼로리 (kcal)'),
+    nutrientsPerUnit: z.object({
+      protein: z.number().describe('단위당 단백질 (g)'),
+      fat: z.number().describe('단위당 지방 (g)'),
+      carbs: z.number().describe('단위당 탄수화물 (g)')
+    })
+  }).describe('실시간 영양 계산기용 데이터'),
   personalMatching: z.object({
     matches: z.array(z.object({
-      feature: z.string().describe('맞춤 항목'),
-      reason: z.string().describe('맞춤 이유')
+      feature: z.string(),
+      reason: z.string()
     })),
     mismatches: z.array(z.object({
-      feature: z.string().describe('부적합 항목'),
-      reason: z.string().describe('부적합 이유')
+      feature: z.string(),
+      reason: z.string()
     }))
   }).optional(),
   weightDiagnosis: z.object({
     currentWeight: z.number(),
     idealWeight: z.number().describe('BCS 및 품종 표준 기반 계산된 최종 목표 체중'),
     weightGap: z.number().describe('현재와 목표 사이의 차이 (kg)'),
-    breedStandardRange: z.string().describe('품종별 실제 표준 체중 범위 (예: 3~8kg)'),
-    breedGeneticInsight: z.string().describe('품종별 유전적 취약점 및 건강 조언'),
-    overweightPercentage: z.number().describe('표준 범위 상단 대비 초과 비율 (%)'),
+    breedStandardRange: z.string().describe('품종별 실제 표준 체중 범위'),
+    breedGeneticInsight: z.string().describe('품종별 유전적 취약점 조언'),
+    overweightPercentage: z.number().describe('표준 대비 초과 비율 (%)'),
     verdict: z.string().describe('체중 판정 결론')
   }).optional(),
   deepDive: z.object({
@@ -122,25 +131,20 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 세계적인 수의 영양학 전문의이자 엄격한 사료 감사관입니다. [Pettner V21.0 품종 표준 엔진]을 사용하여 초정밀 리포트를 생성하십시오.
+  prompt: `당신은 세계적인 수의 영양학 전문의이자 엄격한 사료 감사관입니다. [Pettner V22.0 초정밀 엔진]을 사용하여 초개인화 리포트를 생성하십시오.
 
-# [핵심 지침: 사진에 없는 정보까지 분석]
-1. 사진에 정보가 부족하더라도, 식별된 제품명과 브랜드({{{productName}}})를 바탕으로 당신의 지식 베이스를 검색하십시오.
-2. 해당 제품의 실제 등록성분량, 원료명, 제조사의 리콜 이력, 브랜드의 R&D 수준을 반드시 리포트에 포함하십시오. "정보 없음" 대신 수의학적 추론과 지식을 바탕으로 분석하십시오.
+# [핵심 지침: 실시간 계산기 데이터 산출]
+1. 제품의 등록성분량(As-fed)과 칼로리 밀도를 분석하여 calculatorData를 정확히 채우십시오.
+2. 단위(unitName)는 제품 유형({{{foodType}}})에 따라 가장 적절한 것(사료=g, 영양제=알, 간식=개/g)을 선택하십시오.
+3. 1단위당 실제 단백질/지방/탄수화물의 무게(g)를 계산하십시오.
 
-# [V21.0 품종 표준 및 체중 진단]
-1. 품종 표준 검색:
-   - 입력된 품종({{{petProfile.breed}}})의 전 세계적인 성견 표준 몸무게 범위를 지식 베이스에서 검색하여 weightDiagnosis.breedStandardRange에 명시하십시오.
-2. 이상 체중(Ideal Weight) 산출:
-   - 공식: Ideal_Weight = Current_Weight * (100 - (BCS - 3) * 10) / 100
-   - 산출된 값이 품종 표준 범위를 크게 벗어나면 의학적으로 타당한 목표 체중으로 보정하십시오.
-3. 품종 유전적 인사이트:
-   - 해당 품종의 유전적 취약 질병(예: 말티푸의 슬개골, 리트리버의 고관절 등)을 언급하고 현재 체중 상태와의 위험 연계성을 설명하십시오.
+# [품종 표준 및 체중 진단]
+1. 입력된 품종({{{petProfile.breed}}})의 성견 표준 체중 범위를 지식 베이스에서 검색하여 weightDiagnosis.breedStandardRange에 명시하십시오.
+2. 이상 체중 산출 공식: Ideal_Weight = Current_Weight * (100 - (BCS - 3) * 10) / 100
+3. 품종별 유전적 취약점과 현재 상태를 연계하여 breedGeneticInsight를 작성하십시오.
 
-# [Deep Dive 섹션 구성]
-- Ingredient Audit: 원료를 Tier 1(생육/신선), Tier 2(농축분말), Tier 3(부산물/필러)로 엄격히 분류.
-- Nutritional Engineering: 건물(DM) 기준 5대 영양소 분석 및 칼슘:인, 오메가 6:3 비율 산출.
-- Safety & Brand: 실제 리콜 이력 검색 결과와 제조사의 윤리 점수(ESG) 반영.
+# [사진에 없는 정보까지 분석]
+1. 식별된 제품명({{{productName}}})을 바탕으로 제조 시설, 리콜 이력, 브랜드의 R&D 수준을 당신의 지식 베이스에서 검색하여 포함하십시오. "정보 없음" 대신 최신 데이터를 바탕으로 분석하십시오.
 
 입력 데이터:
 - 반려동물: 품종:{{{petProfile.breed}}}, 현재체중:{{{petProfile.weight}}}kg, BCS:{{{petProfile.bcs}}}, 건강고민:{{{petProfile.healthConditions}}}

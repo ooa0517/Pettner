@@ -1,17 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { AnalyzePetFoodIngredientsOutput, AnalyzePetFoodIngredientsInput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
 import { 
   ShoppingBag, 
   AlertCircle, Scale,
   Stethoscope, FlaskConical, BarChart3, 
   Award, ShieldAlert,
   History, Globe, Microscope, Zap, CheckCircle,
-  ThumbsUp, ThumbsDown, Sparkles, Dna, Activity
+  ThumbsUp, ThumbsDown, Sparkles, Dna, Activity,
+  Calculator, Utensils, Info, PieChart
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
@@ -31,6 +34,19 @@ type AnalysisResultProps = {
 
 export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
   const { t } = useLanguage();
+  const [amount, setAmount] = useState<number>(result.calculatorData?.defaultAmount || 0);
+
+  // 실시간 계산 로직
+  const calculatedNutrition = useMemo(() => {
+    if (!result.calculatorData) return null;
+    const factor = amount;
+    return {
+      kcal: amount * result.calculatorData.kcalPerUnit,
+      protein: amount * result.calculatorData.nutrientsPerUnit.protein,
+      fat: amount * result.calculatorData.nutrientsPerUnit.fat,
+      carbs: amount * result.calculatorData.nutrientsPerUnit.carbs,
+    };
+  }, [amount, result.calculatorData]);
 
   if (result.status === 'error' || !result.scoreCard) {
      return (
@@ -137,7 +153,92 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      {/* [LEVEL 3] 초정밀 품종 표준 체중 진단 */}
+      {/* [LEVEL 3] 실시간 영양 계산기 (NEW) */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 px-2">
+          <Calculator className="text-primary w-6 h-6" />
+          <h2 className="text-2xl font-black font-headline tracking-tight">🧮 실시간 급여량 & 영양 계산기</h2>
+        </div>
+        
+        <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
+          <CardContent className="p-10 space-y-10">
+            <div className="flex flex-col md:flex-row gap-10">
+              {/* 왼쪽: 조절 섹션 */}
+              <div className="flex-1 space-y-8">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-end">
+                    <label className="text-sm font-black text-muted-foreground uppercase">급여할 양을 설정하세요</label>
+                    <div className="flex items-center gap-2">
+                      <Input 
+                        type="number" 
+                        value={amount} 
+                        onChange={(e) => setAmount(Number(e.target.value))}
+                        className="w-24 h-12 text-center text-xl font-black rounded-xl bg-muted/20 border-none"
+                      />
+                      <span className="font-black text-lg">{result.calculatorData.unitName}</span>
+                    </div>
+                  </div>
+                  <Slider 
+                    value={[amount]} 
+                    min={0} 
+                    max={result.calculatorData.unitName === 'g' ? 500 : 50} 
+                    step={result.calculatorData.unitName === 'g' ? 5 : 1}
+                    onValueChange={(v) => setAmount(v[0])}
+                    className="py-4"
+                  />
+                  <div className="flex justify-between text-[10px] font-black text-muted-foreground/40 uppercase">
+                    <span>min</span>
+                    <span>{result.calculatorData.unitName === 'g' ? '500g' : '50units'}</span>
+                  </div>
+                </div>
+                
+                <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/10 flex items-center gap-4">
+                  <div className="p-3 bg-white rounded-2xl shadow-sm">
+                    <Utensils className="text-primary" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-black opacity-40 uppercase">Calculated Energy</p>
+                    <h4 className="text-3xl font-black text-primary">{calculatedNutrition?.kcal.toFixed(1)} <span className="text-sm">kcal</span></h4>
+                  </div>
+                </div>
+              </div>
+
+              {/* 오른쪽: 상세 영양 수치 */}
+              <div className="flex-1 bg-muted/10 rounded-[2.5rem] p-8 space-y-6">
+                <p className="text-xs font-black text-muted-foreground flex items-center gap-2">
+                  <PieChart size={14} /> 영양 성분 구성 (Net Weight)
+                </p>
+                <div className="grid grid-cols-1 gap-4">
+                  {[
+                    { label: '단백질 (Protein)', value: calculatedNutrition?.protein, color: 'bg-primary' },
+                    { label: '지방 (Fat)', value: calculatedNutrition?.fat, color: 'bg-yellow-500' },
+                    { label: '탄수화물 (Carbs)', value: calculatedNutrition?.carbs, color: 'bg-muted-foreground' }
+                  ].map((item, i) => (
+                    <div key={i} className="space-y-1.5">
+                      <div className="flex justify-between text-[11px] font-black">
+                        <span>{item.label}</span>
+                        <span>{item.value?.toFixed(2)}g</span>
+                      </div>
+                      <div className="h-1.5 bg-white rounded-full overflow-hidden">
+                        <div className={cn("h-full transition-all duration-700", item.color)} 
+                             style={{ width: `${Math.min((item.value || 0) * 10, 100)}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="pt-4 border-t border-muted/20 flex items-start gap-3">
+                   <Info size={16} className="text-primary mt-0.5 shrink-0" />
+                   <p className="text-[10px] text-muted-foreground font-bold leading-relaxed">
+                     본 계산기는 제품의 As-fed(실제 급여 상태) 기준 영양 밀도를 바탕으로 산출된 추정치입니다. 실제 급여량은 아이의 당일 활동량에 따라 수의사와 상의하여 조절하십시오.
+                   </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* [LEVEL 4] 초정밀 품종 표준 체중 진단 */}
       {isCustomMode && result.weightDiagnosis && (
         <div className="space-y-6">
           <div className="flex items-center gap-2 px-2">
@@ -191,14 +292,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      {/* [LEVEL 4] 심층 리포트 (Progressive Disclosure) */}
+      {/* [LEVEL 5] 심층 리포트 (Progressive Disclosure) */}
       <div className="space-y-6">
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2">
             <Microscope className="text-primary w-6 h-6" />
             <h2 className="text-2xl font-black font-headline tracking-tight">전문가용 심층 분석 리포트</h2>
           </div>
-          <Badge variant="outline" className="border-primary text-primary font-black px-3 py-1">Deep Dive v21.0</Badge>
+          <Badge variant="outline" className="border-primary text-primary font-black px-3 py-1">Deep Dive v22.0</Badge>
         </div>
 
         <Accordion type="single" collapsible className="w-full space-y-4">
@@ -346,7 +447,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </Accordion>
       </div>
 
-      {/* [LEVEL 5] 최종 처방 조언 */}
+      {/* [LEVEL 6] 최종 처방 조언 */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-primary text-white p-12 relative overflow-hidden">
         <div className="absolute top-[-20px] right-[-20px] opacity-10">
            <Stethoscope size={150} />
