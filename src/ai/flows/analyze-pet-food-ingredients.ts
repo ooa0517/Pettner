@@ -123,7 +123,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       animalWelfare: z.string()
     })
   }),
-  veterinaryAdvice: z.string().describe('수의학적 최종 종합 코멘트')
+  veterinaryAdvice: z.string().describe('최종 종합 코멘트')
 });
 
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
@@ -132,24 +132,28 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `당신은 세계적인 수의 영양학 전문의이자 엄격한 사료 감사관입니다. [Pettner V22.0 초정밀 엔진]을 사용하여 초개인화 리포트를 생성하십시오.
+  prompt: `당신은 세계적인 수의 영양학 전문의이자 엄격한 사료 감사관입니다.
 
-# [핵심 지침: 실시간 계산기 데이터 산출]
+# [분석 모드 핵심 가이드]
+1. 분석 모드({{{analysisMode}}})가 'general'인 경우에도 'calculatorData'와 'deepDive' 섹션은 반드시 당신의 전문 지식을 동원하여 100% 누락 없이 채우십시오.
+2. 'general' 모드에서는 제품 자체의 절대적 품질과 브랜드 평판을 심사하고, 'custom' 모드에서는 반려동물의 건강 상태와의 생물학적 매칭을 추가하십시오.
+
+# [실시간 계산기 데이터 산출]
 1. 제품의 등록성분량(As-fed)과 칼로리 밀도를 분석하여 calculatorData를 정확히 채우십시오.
 2. 단위(unitName)는 제품 유형({{{foodType}}})에 따라 가장 적절한 것(사료=g, 영양제=알, 간식=개/g)을 선택하십시오.
-3. 1단위당 실제 단백질/지방/탄수화물의 무게(g)를 계산하십시오. 사진에 정보가 부족하면 해당 제품의 표준 영양 밀도를 지식 베이스에서 검색하십시오.
+3. 사진에 정보가 부족하면 해당 제품의 표준 영양 밀도를 지식 베이스에서 검색하여 반영하십시오.
 
-# [품종 표준 및 체중 진단]
+# [품종 표준 및 체중 진단 (Custom 모드 전용)]
 1. 입력된 품종({{{petProfile.breed}}})의 성견 표준 체중 범위를 지식 베이스에서 검색하여 weightDiagnosis.breedStandardRange에 명시하십시오.
 2. 이상 체중 산출 공식: Ideal_Weight = Current_Weight * (100 - (BCS - 3) * 10) / 100
-3. 품종별 유전적 취약점과 현재 상태를 연계하여 breedGeneticInsight를 작성하십시오.
 
-# [사진에 없는 정보까지 분석]
-1. 식별된 제품명({{{productName}}})을 바탕으로 제조 시설, 리콜 이력, 브랜드의 R&D 수준을 당신의 지식 베이스에서 검색하여 포함하십시오. "정보 없음" 대신 최신 데이터를 바탕으로 분석하십시오.
-2. deepDive 객체의 모든 필드를 누락 없이 작성하십시오. 특히 ingredientAudit의 tiers는 상위 원료를 등급별로 분류해야 합니다.
+# [심층 리포트 (Deep Dive)]
+1. 모든 모드에서 반드시 ingredientAudit(원료 티어링), nutritionalEngineering(DM 기준 영양 분석), safetyToxicology(리콜 이력), brandESG(윤리 점수)를 누락 없이 작성하십시오.
+2. 사진에 정보가 없더라도 브랜드명과 제품명을 통해 당신이 알고 있는 최신 리콜 이력과 제조사 정보를 포함하십시오.
 
 입력 데이터:
-- 반려동물: 품종:{{{petProfile.breed}}}, 현재체중:{{{petProfile.weight}}}kg, BCS:{{{petProfile.bcs}}}, 건강고민:{{{petProfile.healthConditions}}}
+- 모드: {{{analysisMode}}}
+- 반려동물: 품종:{{{petProfile.breed}}}, 체중:{{{petProfile.weight}}}kg, BCS:{{{petProfile.bcs}}}
 - 제품: {{{productName}}} ({{{foodType}}})`
 });
 

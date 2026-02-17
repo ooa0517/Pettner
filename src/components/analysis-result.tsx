@@ -14,7 +14,7 @@ import {
   Award, ShieldAlert,
   History, Globe, Microscope, Zap, CheckCircle,
   ThumbsUp, ThumbsDown, Sparkles, Dna, Activity,
-  Calculator, Utensils, PieChart, Info
+  Calculator, Utensils, PieChart
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { cn } from '@/lib/utils';
@@ -36,7 +36,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   const { t } = useLanguage();
   const [amount, setAmount] = useState<number>(result.calculatorData?.defaultAmount || 0);
 
-  // 실시간 계산 로직 (에러 방지를 위한 방어적 코딩)
   const calculatedNutrition = useMemo(() => {
     if (!result.calculatorData) return null;
     return {
@@ -63,7 +62,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-40 max-w-4xl mx-auto px-4">
       
-      {/* [LEVEL 1] 종합 요약 (Headline) */}
+      {/* [LEVEL 1] 종합 요약 (Headline) - 공통 */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
         <CardContent className="p-10 space-y-8">
           <div className="flex flex-col md:flex-row justify-between items-start gap-6">
@@ -152,7 +151,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      {/* [LEVEL 3] 실시간 영양 계산기 (공통 기능) */}
+      {/* [LEVEL 3] 실시간 영양 계산기 (공통) */}
       {result.calculatorData && (
         <div className="space-y-6">
           <div className="flex items-center gap-2 px-2">
@@ -174,14 +173,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                           onChange={(e) => setAmount(Number(e.target.value))}
                           className="w-24 h-12 text-center text-xl font-black rounded-xl bg-muted/20 border-none"
                         />
-                        <span className="font-black text-lg">{result.calculatorData?.unitName || 'g'}</span>
+                        <span className="font-black text-lg">{result.calculatorData.unitName}</span>
                       </div>
                     </div>
                     <Slider 
                       value={[amount]} 
                       min={0} 
-                      max={(result.calculatorData?.unitName === 'g' || result.calculatorData?.unitName === '그램') ? 500 : 50} 
-                      step={(result.calculatorData?.unitName === 'g' || result.calculatorData?.unitName === '그램') ? 5 : 1}
+                      max={(result.calculatorData.unitName === 'g' || result.calculatorData.unitName === '그램') ? 500 : 50} 
+                      step={(result.calculatorData.unitName === 'g' || result.calculatorData.unitName === '그램') ? 5 : 1}
                       onValueChange={(v) => setAmount(v[0])}
                       className="py-4"
                     />
@@ -278,7 +277,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      {/* [LEVEL 5] 심층 리포트 (Progressive Disclosure) */}
+      {/* [LEVEL 5] 심층 리포트 (공통) */}
       {result.deepDive && (
         <div className="space-y-6">
           <div className="flex items-center gap-2 px-2">
@@ -435,7 +434,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      {/* [LEVEL 6] 최종 처방 조언 */}
+      {/* [LEVEL 6] 최종 처방 조언 - 공통 */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-primary text-white p-12 relative overflow-hidden">
         <div className="absolute top-[-20px] right-[-20px] opacity-10">
            <Stethoscope size={150} />
@@ -444,7 +443,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-md">
             <Stethoscope size={40} />
           </div>
-          <h3 className="text-2xl font-black">수의학적 최종 처방 조언</h3>
+          <h3 className="text-2xl font-black">전문 수의학적 최종 조언</h3>
         </div>
         <p className="text-xl font-bold leading-relaxed opacity-95 break-keep relative z-10">
           {result.veterinaryAdvice}
