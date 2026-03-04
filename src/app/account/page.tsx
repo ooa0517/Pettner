@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -9,30 +9,44 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PlusCircle, Loader2, ChevronRight, Star, HeartPulse, ClipboardCheck, CreditCard, Crown, Sparkles } from 'lucide-react';
+import { PlusCircle, Loader2, ChevronRight, HeartPulse, ClipboardCheck, CreditCard, Crown, Sparkles, Zap, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { Badge } from '@/components/ui/badge';
 import PetProfileSurvey from '@/components/pet-profile-survey';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
 export default function AccountPage() {
   const { user, isUserLoading } = useUser();
+  const db = useFirestore();
   const router = useRouter();
   const { t } = useLanguage();
   const { toast } = useToast();
   const [showSurvey, setShowSurvey] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
+
+  useEffect(() => {
+    if (user && db) {
+      const fetchUserData = async () => {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+        if (snap.exists()) {
+          setIsPremium(snap.data().isPremium || false);
+        }
+      };
+      fetchUserData();
+    }
+  }, [user, db]);
 
   if (isUserLoading || !user) {
     return (
@@ -46,19 +60,17 @@ export default function AccountPage() {
     return email ? email.substring(0, 2).toUpperCase() : '..';
   }
 
-  const handleProfileComplete = (data: any) => {
-    console.log('Survey Data:', data);
-    setShowSurvey(false);
+  const handleUpgrade = async () => {
+    if (!db || !user) return;
+    
+    // 시뮬레이션 결제 완료 처리
+    const userDocRef = doc(db, 'users', user.uid);
+    await updateDoc(userDocRef, { isPremium: true });
+    setIsPremium(true);
+    
     toast({
-      title: "프로필 등록 완료!",
-      description: "이제 아이의 상태에 맞춘 정밀 분석 리포트를 받아보실 수 있습니다.",
-    });
-  };
-
-  const handleUpgrade = () => {
-    toast({
-      title: "베타 서비스 안내",
-      description: "현재는 모든 기능을 무료로 이용하실 수 있습니다. 정식 버전에서 만나요!",
+      title: "결제 완료! 평생 무제한 패스 활성화",
+      description: "이제 광고 없이 무제한으로 AI 분석을 이용하실 수 있습니다.",
     });
   };
 
@@ -67,7 +79,9 @@ export default function AccountPage() {
       <div className="max-w-4xl mx-auto space-y-8 pb-20">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-black font-headline tracking-tight">내 정보</h1>
-          <Badge className="bg-primary/10 text-primary border-primary/20 px-3 py-1 font-bold">일반 회원</Badge>
+          <Badge className={isPremium ? "bg-amber-500 text-white font-black px-3 py-1" : "bg-primary/10 text-primary border-primary/20 px-3 py-1 font-bold"}>
+            {isPremium ? 'PREMIUM (Lifetime)' : 'FREE USER'}
+          </Badge>
         </div>
         
         {/* 사용자 프로필 카드 */}
@@ -84,33 +98,52 @@ export default function AccountPage() {
           </CardHeader>
         </Card>
 
-        {/* 구독 관리 섹션 (신규 추가) */}
-        <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
-          <CardHeader className="p-8 border-b bg-muted/5">
-            <div className="flex justify-between items-center">
-               <CardTitle className="flex items-center gap-2 text-xl font-black">
-                 <Crown className="text-amber-500"/>
-                 구독 서비스 관리
-               </CardTitle>
-               <Badge variant="outline" className="font-bold border-muted-foreground/30 text-muted-foreground">Free Plan</Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="p-8">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-               <div className="space-y-2">
-                  <p className="text-lg font-bold">프리미엄 멤버십으로 업그레이드하세요</p>
-                  <ul className="text-sm text-muted-foreground space-y-1 font-medium">
-                    <li className="flex items-center gap-2"><Sparkles size={14} className="text-primary"/> AI 무제한 정밀 분석</li>
-                    <li className="flex items-center gap-2"><Sparkles size={14} className="text-primary"/> 수의사 1:1 채팅 상담권</li>
-                    <li className="flex items-center gap-2"><Sparkles size={14} className="text-primary"/> 프리미엄 사료 정기 배송 할인</li>
-                  </ul>
+        {/* 구독 관리 섹션 - 평생권 판매 유도 */}
+        {!isPremium && (
+          <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden border-2 border-primary/20">
+            <CardHeader className="p-8 border-b bg-primary/5">
+              <div className="flex justify-between items-center">
+                 <CardTitle className="flex items-center gap-2 text-xl font-black">
+                   <Crown className="text-amber-500"/>
+                   한정 특가: 평생 무제한 패스
+                 </CardTitle>
+                 <Badge variant="outline" className="font-bold border-amber-500 text-amber-500">-50% OFF</Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="p-8 space-y-6">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                 <div className="space-y-2">
+                    <p className="text-lg font-bold">4,990원으로 누리는 수의사의 눈</p>
+                    <ul className="text-sm text-muted-foreground space-y-1 font-medium">
+                      <li className="flex items-center gap-2"><Sparkles size={14} className="text-primary"/> AI 무제한 정밀 분석</li>
+                      <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-primary"/> 모든 분석 광고 제거</li>
+                      <li className="flex items-center gap-2"><Zap size={14} className="text-primary"/> 가장 빠른 최신 모델 분석 적용</li>
+                    </ul>
+                 </div>
+                 <div className="text-center md:text-right space-y-2">
+                    <p className="text-3xl font-black text-primary">4,990원</p>
+                    <Button onClick={handleUpgrade} size="lg" className="rounded-2xl h-14 px-8 font-black text-lg shadow-lg hover:scale-105 transition-transform">
+                      지금 구매하기
+                    </Button>
+                 </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {isPremium && (
+          <Card className="border-none shadow-xl rounded-[2.5rem] bg-gradient-to-br from-amber-50 to-white overflow-hidden border-2 border-amber-200">
+            <CardContent className="p-10 flex flex-col items-center text-center space-y-4">
+               <div className="bg-amber-100 p-4 rounded-full text-amber-600">
+                 <Crown size={40} />
                </div>
-               <Button onClick={handleUpgrade} size="lg" className="rounded-2xl h-14 px-8 font-black text-lg shadow-lg hover:scale-105 transition-transform">
-                 멤버십 가입하기
-               </Button>
-            </div>
-          </CardContent>
-        </Card>
+               <div>
+                 <h3 className="text-2xl font-black text-amber-800">Premium Member</h3>
+                 <p className="text-amber-700/70 font-bold">평생 무제한 패스를 이용 중입니다.</p>
+               </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* 반려동물 프로필 섹션 */}
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
@@ -119,9 +152,6 @@ export default function AccountPage() {
               <HeartPulse className="text-primary"/>
               나의 반려동물 정밀 프로필
             </CardTitle>
-            <CardDescription className="font-medium">
-              아이의 건강 상태와 습관을 등록하면 맞춤 분석이 가능해집니다.
-            </CardDescription>
           </CardHeader>
           <CardContent className="p-8 pt-0">
             <div className="border-[3px] border-dashed border-muted rounded-[2rem] p-12 text-center bg-muted/5">
@@ -134,7 +164,7 @@ export default function AccountPage() {
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-3xl p-0 overflow-hidden border-none bg-transparent shadow-none">
-                    <PetProfileSurvey onComplete={handleProfileComplete} />
+                    <PetProfileSurvey onComplete={() => setShowSurvey(false)} />
                   </DialogContent>
                 </Dialog>
             </div>

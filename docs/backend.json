@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -18,6 +19,18 @@
         "name": {
           "type": "string",
           "description": "Full name of the user."
+        },
+        "isPremium": {
+          "type": "boolean",
+          "description": "Whether the user has purchased the lifetime unlimited pass."
+        },
+        "dailyUsageCount": {
+          "type": "number",
+          "description": "Number of analyses performed today."
+        },
+        "lastUsageDate": {
+          "type": "string",
+          "description": "The last date an analysis was performed (YYYY-MM-DD)."
         },
         "createdAt": {
           "type": "string",
@@ -76,7 +89,7 @@
           "schema": {
             "$ref": "#/backend/entities/User"
           },
-          "description": "Stores user profile data.",
+          "description": "Stores user profile data and usage limits.",
           "params": [
             {
               "name": "userId",
@@ -104,24 +117,7 @@
             }
           ]
         }
-      },
-      {
-        "path": "/products/{productId}",
-        "definition": {
-          "entityName": "Product",
-          "schema": {
-            "type": "object"
-          },
-          "description": "Global cache of product analyses.",
-          "params": [
-            {
-              "name": "productId",
-              "description": "Unique ID for the product."
-            }
-          ]
-        }
       }
-    ],
-    "reasoning": "The structure is designed to secure personal data while allowing for a shared knowledge base of product analyses. Nested subcollections for history ensure clean path-based security."
+    ]
   }
 }

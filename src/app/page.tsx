@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import type { AnalyzePetFoodIngredientsInput, AnalyzePetFoodIngredientsOutput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { getAnalysis } from '@/app/actions';
 import AnalysisResult from '@/components/analysis-result';
@@ -8,11 +9,12 @@ import ScannerHome from '@/components/scanner-home';
 import AnalysisLoading from '@/components/analysis-loading';
 import OnboardingSurvey from '@/components/onboarding-survey';
 import LandingPage from '@/components/landing-page';
+import UsageLimitModal from '@/components/usage-limit-modal';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { saveAnalysisToHistory } from '@/lib/history';
 import { useLanguage } from '@/contexts/language-context';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { useSearchParams } from 'next/navigation';
 
 function generateProductId(productName: string = ''): string {
@@ -24,11 +26,12 @@ function HomeContent() {
   const { user } = useUser();
   const db = useFirestore();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
   
   const [step, setStep] = useState<'landing' | 'survey' | 'input' | 'loading' | 'result'>('landing');
   const [analysisResult, setAnalysisResult] = useState<AnalyzePetFoodIngredientsOutput | null>(null);
   const [resultInput, setResultInput] = useState<AnalyzePetFoodIngredientsInput | null>(null);
-  const { toast } = useToast();
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   useEffect(() => {
     if (searchParams.get('reset') === 'true') {
@@ -38,11 +41,34 @@ function HomeContent() {
     }
   }, [searchParams]);
 
+  const checkUsageLimit = useCallback(async () => {
+    if (!user || !db) return true; // 비로그인 시 일단 허용 (또는 로그인 강제)
+
+    const userDocRef = doc(db, 'users', user.uid);
+    const userSnap = await getDoc(userDocRef);
+    
+    if (!userSnap.exists()) return true;
+
+    const userData = userSnap.data();
+    if (userData.isPremium) return true; // 평생권 소지자
+
+    const today = new Date().toISOString().split('T')[0];
+    if (userData.lastUsageDate === today && userData.dailyUsageCount >= 5) {
+      return false; // 한도 초과
+    }
+    return true;
+  }, [user, db]);
+
   const handleAnalysis = async (formData: any) => {
+    const canAnalyze = await checkUsageLimit();
+    if (!canAnalyze) {
+      setShowLimitModal(true);
+      return;
+    }
+
     setStep('loading');
     
     const isCustom = formData.analysisMode === 'custom';
-    
     const analysisInput: AnalyzePetFoodIngredientsInput = {
         petType: formData.petType,
         analysisMode: formData.analysisMode,
@@ -66,7 +92,6 @@ function HomeContent() {
       let finalResult: AnalyzePetFoodIngredientsOutput | null = null;
       let isCached = false;
 
-      // Mode A일 때만 캐시 활용
       if (db && productId && analysisInput.analysisMode === 'general') {
         const productSnap = await getDoc(doc(db, 'products', productId));
         if (productSnap.exists()) {
@@ -88,7 +113,6 @@ function HomeContent() {
         
         const actionResponse = await getAnalysis(analysisInput);
         if (actionResponse.error) {
-           console.error("[Analysis Error Details]", actionResponse.details);
            throw new Error(t(String(actionResponse.error)));
         }
         finalResult = actionResponse.data || null;
@@ -101,9 +125,25 @@ function HomeContent() {
       if (finalResult) {
         setAnalysisResult(finalResult);
         setResultInput(analysisInput);
-        if (user && db) saveAnalysisToHistory(db, user.uid, analysisInput, finalResult);
+        
+        // 기록 저장 및 사용량 카운트 증가
+        if (user && db) {
+          saveAnalysisToHistory(db, user.uid, analysisInput, finalResult);
+          
+          const today = new Date().toISOString().split('T')[0];
+          const userDocRef = doc(db, 'users', user.uid);
+          const userSnap = await getDoc(userDocRef);
+          const userData = userSnap.data();
+
+          if (userData?.lastUsageDate === today) {
+            updateDoc(userDocRef, { dailyUsageCount: increment(1) });
+          } else {
+            updateDoc(userDocRef, { lastUsageDate: today, dailyUsageCount: 1 });
+          }
+        }
+
         setStep('result');
-        toast({ title: isCached ? "검증 데이터 로드" : t('homePage.analysisCompleteTitle') });
+        toast({ title: isCached ? "검증 데이터 로드 완료" : t('homePage.analysisCompleteTitle') });
       }
     } catch (error: any) {
       console.error(error);
@@ -123,6 +163,7 @@ function HomeContent() {
           <AnalysisResult result={analysisResult} input={resultInput} onReset={() => setStep('input')} />
         )}
       </div>
+      <UsageLimitModal open={showLimitModal} onOpenChange={setShowLimitModal} />
     </div>
   );
 }
