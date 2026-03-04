@@ -2,7 +2,6 @@
 
 /**
  * @fileOverview [Pettner Core Engine v14.0 - Professional Life-stage & Genetic Matching]
- * 
  * - Mathematical Integrity: (Dosage * %) / 100.
  * - Genetic Engine: Breed-specific risk matching.
  * - Life-cycle: Puppy/Adult/Senior precision nutrition.
@@ -11,6 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
+// 1. 입력 데이터 규칙 (Input Schema)
 const AnalyzePetFoodIngredientsInputSchema = z.object({
   petType: z.enum(['dog', 'cat']).describe('반려동물 종류'),
   analysisMode: z.enum(['general', 'custom']).describe('분석 모드'),
@@ -32,11 +32,13 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
 
 export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngredientsInputSchema>;
 
+// 프롬프트용 확장 스키마 (Handlebars eq 헬퍼 에러 방지를 위해 불리언 플래그 사용)
 const PromptInputSchema = AnalyzePetFoodIngredientsInputSchema.extend({
   isModeA: z.boolean().describe('제품 감사 모드 여부'),
   isModeB: z.boolean().describe('맞춤 컨설팅 모드 여부'),
 });
 
+// 2. 출력 데이터 규칙 (Output Schema)
 const AnalyzePetFoodIngredientsOutputSchema = z.object({
   status: z.enum(['success', 'error']),
   productIdentity: z.object({
@@ -114,6 +116,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
 
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
 
+// 3. AI 프롬프트 정의
 const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: PromptInputSchema},
@@ -130,40 +133,55 @@ Analyze the pet food product and provide a precision report in the TARGET LANGUA
 - Example: If defaultAmount is 100g, and Protein is 25%, Protein mass is 25g.
 - Ensure all numerical data are Number types.
 
-## 2. Professional Life-stage & Genetic Matching (Mode B)
-- **Life-stage:** Determine if the pet is Puppy, Adult, or Senior based on Age. Evaluate if the product meets the specific nutritional guidelines (e.g., NRC/AAFCO growth vs maintenance).
-- **Breed Genetics:** Use your knowledge to identify breed-specific risks (e.g., Maltipoo -> Patellar Luxation, Poodle -> Skin/Trachea). Analyze if ingredients (e.g., Glucosamine, Omega-3) support these risks.
-- **Obesity Logic:** If BCS is 4 or 5, set 'idealWeight' to ~15-20% lower than current. The verdict must state weight loss is mandatory.
+## 2. Professional Life-stage & Genetic Matching (Mode B - isModeB: true)
+- Only if isModeB is true:
+- **Life-stage:** Determine if the pet is Puppy, Adult, or Senior based on Age. Evaluate if the product meets specific nutritional guidelines.
+- **Breed Genetics:** Identify breed-specific risks (e.g., Maltipoo -> Patellar Luxation). Analyze if ingredients support these risks.
+- **Obesity Logic:** If BCS is 4 or 5, set 'idealWeight' to ~15-20% lower than current. Status must be 'Obese' or 'Overweight'.
 
-## 3. Product Specialist Audit (Mode A)
+## 3. Product Specialist Audit (Mode A - isModeA: true)
 - Identify Manufacturer: In-house vs OEM/ODM.
-- Track Sourcing: Origin of top 10 ingredients.
-- ESG/Recall History: Audit brand reputation and safety records.
+- Track Sourcing: Origin of top 10 ingredients (e.g., "Salmon from Norway").
+- ESG Audit: Brand recall history and corporate ethical standards.
 
 # [Data Integrity]
 - No Markdown. Pure JSON only.
 - Match Target Language: {{{language}}}.
 
 Input Context:
+- Mode A: {{{isModeA}}}, Mode B: {{{isModeB}}}
 - Pet: {{{petType}}}, Breed: {{{petProfile.breed}}}, Weight: {{{petProfile.weight}}}, BCS: {{{petProfile.bcs}}}, Age: {{{petProfile.age}}}
 - Product Name: {{{productName}}}
-- Photo Data: {{media url=photoDataUri}}`
+{{#if photoDataUri}}
+- Photo Data: {{media url=photoDataUri}}
+{{/if}}`
 });
 
+// 4. 실행 흐름 정의
 const analyzePetFoodIngredientsFlow = ai.defineFlow(
   {
     name: 'analyzePetFoodIngredientsFlow',
     inputSchema: AnalyzePetFoodIngredientsInputSchema,
     outputSchema: AnalyzePetFoodIngredientsOutputSchema,
   },
-  async input => {
-    const {output} = await analyzePetFoodIngredientsPrompt({
-      ...input,
-      isModeA: input.analysisMode === 'general',
-      isModeB: input.analysisMode === 'custom',
-    });
-    if (!output) throw new Error('AI Analysis Failed: No output data.');
-    return { ...output, status: 'success' };
+  async (input) => {
+    try {
+      const response = await analyzePetFoodIngredientsPrompt({
+        ...input,
+        isModeA: input.analysisMode === 'general',
+        isModeB: input.analysisMode === 'custom',
+      });
+
+      if (!response || !response.output) {
+        throw new Error('AI failed to return analysis result.');
+      }
+
+      return { ...response.output, status: 'success' as const };
+
+    } catch (error: any) {
+      console.error("🔥 AI 분석 중 치명적 오류 발생:", error);
+      throw new Error(`분석 실패: ${error.message}`);
+    }
   }
 );
 

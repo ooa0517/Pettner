@@ -11,7 +11,8 @@ type ActionResult = {
 
 export async function getAnalysis(input: AnalyzePetFoodIngredientsInput): Promise<ActionResult> {
   try {
-    console.log(`[AI Analysis] Starting analysis for: ${input.productName || 'Unnamed Product'}`);
+    console.log(`[AI Analysis] Starting analysis for: ${input.productName || 'Unnamed Product'} in Mode: ${input.analysisMode}`);
+    
     const result = await analyzePetFoodIngredients(input);
     
     if (!result || result.status === 'error') {
@@ -21,12 +22,11 @@ export async function getAnalysis(input: AnalyzePetFoodIngredientsInput): Promis
     console.log("[AI Analysis] Successfully generated report.");
     return { data: result };
   } catch (e: any) {
-    // 서버 로그에 구체적인 에러 내용을 남깁니다. (Schema validation error 등 확인용)
-    console.error("Critical AI Analysis Error:", e);
+    // 상세 에러를 서버 로그에 남겨 디버깅을 지원합니다.
+    console.error("Critical AI Analysis Error Details:", e);
     
-    // 사용자에게는 번역 가능한 에러 키를 반환합니다.
     return { 
-      error: 'homePage.aiError', 
+      error: 'scannerHome.aiError', 
       details: e.message || 'An unexpected error occurred during AI generation.'
     };
   }

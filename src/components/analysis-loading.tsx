@@ -13,10 +13,10 @@ export default function AnalysisLoading() {
   useEffect(() => {
     const timer = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 95) return prev;
+        if (prev >= 99) return prev;
         return prev + Math.floor(Math.random() * 5) + 1;
       });
-    }, 500);
+    }, 100);
 
     return () => clearInterval(timer);
   }, []);

@@ -14,7 +14,7 @@ import {
   Zap, ThumbsUp, ThumbsDown, 
   Sparkles, Dna, Calculator, Utensils, 
   PieChart, Factory, UserCircle, Truck,
-  CheckCircle2, Info, Calendar
+  CheckCircle2, Info
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -41,8 +41,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     const calc = result.calculatorData;
     const ratio = amount / calc.defaultAmount;
     
-    // V14.0 Strict Math: (Amount * Ingredient_%) / 100
-    // calculatorData already provides mass for 1 unit/100g
     return {
       kcal: ratio * calc.kcalPerUnit,
       protein: ratio * calc.nutrientsPerUnit.protein,

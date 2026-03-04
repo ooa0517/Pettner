@@ -48,7 +48,8 @@
     "genderLabel": "성별 및 중성화",
     "bcsLabel": "아이의 체형과 가장 비슷한 그림을 골라주세요.",
     "allergyLabel": "피해야 하는 성분(알러지)",
-    "noneOrUnknown": "없음 / 모름"
+    "noneOrUnknown": "없음 / 모름",
+    "aiError": "AI 분석 중 오류가 발생했습니다. 잠시 후 다시 시도하거나, 다른 사진을 사용해 보세요."
   },
   "analysisLoading": {
     "titleV2": "맞춤 리포트 생성 중",
