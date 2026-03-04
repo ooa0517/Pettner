@@ -49,7 +49,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Pet",
       "type": "object",
-      "description": "Represents a pet profile belonging to a user.",
+      "description": "Represents a pet profile with deep medical data for nutrition analysis.",
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
@@ -57,9 +57,16 @@
         "breed": { "type": "string" },
         "age": { "type": "number" },
         "weight": { "type": "number" },
+        "neutered": { "type": "string", "enum": ["yes", "no"] },
         "bcs": { "type": "string" },
+        "activityLevel": { "type": "string", "enum": ["LOW", "NORMAL", "HIGH", "VERY_HIGH"] },
+        "weightChange": { "type": "string" },
         "healthConditions": { "type": "array", "items": { "type": "string" } },
         "allergies": { "type": "array", "items": { "type": "string" } },
+        "currentDietType": { "type": "string" },
+        "waterIntake": { "type": "string" },
+        "stoolCondition": { "type": "string" },
+        "medications": { "type": "string" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "type", "breed"]

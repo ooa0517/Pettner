@@ -1,10 +1,11 @@
+
 'use server';
 
 /**
- * @fileOverview [Pettner V15.0 - Global Scientific & Corporate Audit Engine]
+ * @fileOverview [Pettner V16.0 - Hyper-Personalized Veterinary Audit Engine]
  * - Dog vs Cat: Logic based on NRC/AAFCO research papers.
- * - Corporate Audit: Deep dive into ESG, Manufacturing (OEM/In-house), Sourcing.
- * - Invariant: Sum of nutrients <= Total mass.
+ * - NEW: Incorporates Activity Level, Allergies, Water Intake, and Stool Condition.
+ * - Genetic & Life-stage Precision matching.
  */
 
 import {ai} from '@/ai/genkit';
@@ -25,14 +26,19 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
     weight: z.number().optional(),
     neutered: z.boolean().optional(),
     bcs: z.string().optional(),
+    activityLevel: z.string().optional(),
+    weightChange: z.string().optional(),
     healthConditions: z.array(z.string()).optional(),
     allergies: z.array(z.string()).optional(),
+    waterIntake: z.string().optional(),
+    stoolCondition: z.string().optional(),
+    medications: z.string().optional(),
   }).optional(),
 });
 
 export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngredientsInputSchema>;
 
-// 2. 출력 데이터 규격 (V15.0)
+// 2. 출력 데이터 규격
 const AnalyzePetFoodIngredientsOutputSchema = z.object({
   status: z.enum(['success', 'error']),
   productIdentity: z.object({
@@ -44,26 +50,26 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       reason: z.string()
     }),
     manufacturingAudit: z.object({
-      productionType: z.string(), // 자사/OEM/ODM
-      facilitySafety: z.string(), // HACCP/ISO 인증 등
-      sourcingOrigin: z.string()  // 원료 수급지
+      productionType: z.string(),
+      facilitySafety: z.string(),
+      sourcingOrigin: z.string()
     })
   }),
-  scoreCard: z.object({
+  scoreCard: {
     totalScore: z.number().min(0).max(100),
     headline: z.string(),
     statusTags: z.array(z.string()),
     grade: z.string().optional()
-  }),
+  },
   scientificAnalysis: z.object({
     catSpecific: z.object({
       taurineCheck: z.string().optional(),
       arginineCheck: z.string().optional(),
-      animalProteinRatio: z.string().optional()
+      kidneyHealthMatching: z.string().optional(), // Water intake consideration
     }).optional(),
     dogSpecific: z.object({
       omnivorousBalance: z.string().optional(),
-      breedRiskMatching: z.string().optional()
+      jointHealthMatching: z.string().optional(), // Activity/BCS consideration
     }).optional(),
     nutrientMass: z.object({
       protein_g: z.number(),
@@ -77,46 +83,48 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     corporateEthics: z.string(),
     recallHistory: z.string()
   }),
-  veterinaryAdvice: z.string()
+  veterinaryAdvice: z.string(),
+  allergyWarning: z.string().optional().describe('알러지 성분 포함 여부 및 경고')
 });
 
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
 
-// 3. AI 시스템 프롬프트 (JSON 강제 및 V15.0 로직)
+// 3. AI 시스템 프롬프트
 const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `You are the Pettner V15.0 Global Scientific AI Auditor.
-Response MUST be in pure JSON format ONLY. No markdown tags.
+  prompt: `You are the Pettner V16.0 Global Scientific AI Auditor.
+Response MUST be in pure JSON format ONLY.
 
-# [V15.0 Mandatory Scientific Protocols]
+# [V16.0 Hyper-Personalization Protocol]
 
-## 1. Species-Specific Analysis (Scientific Papers Based)
-- IF petType === 'cat': Apply "Obligate Carnivore" logic. Focus on Taurine, Arginine, and high animal protein bioavailability. 
-- IF petType === 'dog': Apply "Facultative Omnivore" logic. Focus on complete amino acid profiles and breed-specific risk matching.
+## 1. Species-Specific Nutrition
+- IF petType === 'cat': Critical focus on Arginine/Taurine and moisture balance. If waterIntake is 'LOW', emphasize wet food or hydration-friendly ingredients.
+- IF petType === 'dog': Balance amino acids with activity levels. High activity requires higher caloric density and joint support (Glucosamine/Chondroitin).
 
-## 2. Mathematical Integrity (Strict)
-- Nutrient mass (g) = (Total_Unit_Mass * Ingredient_%) / 100.
-- THE SUM OF (Protein + Fat + Carbs) MUST NOT EXCEED THE TOTAL UNIT MASS (100g or 1 unit).
+## 2. Advanced Profile Integration
+- **Activity Level:** Adjust kcal recommendations and nutrient density based on activity (Sedentary vs Active).
+- **Allergies:** Cross-check the ingredient list with provided allergies ({{{petProfile.allergies}}}). If a match is found, flag it in 'allergyWarning' and lower the score.
+- **Stool/Digestion:** If stoolCondition is 'SOFT' or 'DIARRHEA', audit for high fiber or probiotics.
+- **BCS & Weight:** If BCS is 4 or 5, audit for low glycemic index (GI) ingredients and higher protein/fiber to fat ratio.
 
-## 3. Corporate ESG Audit (Deep Search)
-- Identify if it is In-house, OEM, or ODM.
-- Track Origin (Origin) for top 10 ingredients.
-- Report Recall History (last 5 years), Environmental impact, and Corporate Ethics.
+## 3. Mathematical Integrity
+- Formula: Nutrient(g) = (Total_Daily_Amount * %) / 100.
+- Sum of (P+F+C) must NOT exceed total mass.
 
-## 4. Compliance Check
-- Set 'isCompliant' to true ONLY if it meets Pettner's "Zero-Toxic, High Bioavailability" veterinary standards.
+## 4. ESG & Corporate Audit
+- Trace manufacturing origin and recall history.
 
 Language: {{{language}}} (ALL text must be in this language)
 Pet: {{{petType}}}, Mode: {{{analysisMode}}}
-Product: {{{productName}}}
+Profile: {{{petProfile.name}}}, Breed: {{{petProfile.breed}}}, Age: {{{petProfile.age}}}, Weight: {{{petProfile.weight}}}kg
+Activity: {{{petProfile.activityLevel}}}, BCS: {{{petProfile.bcs}}}, Allergies: {{{petProfile.allergies}}}
 {{#if photoDataUri}}
-- Analysis based on provided photo (OCR).
+- Perform OCR on the provided image to extract ingredients and guaranteed analysis.
 {{/if}}`
 });
 
-// 4. 실행 흐름 정의
 const analyzePetFoodIngredientsFlow = ai.defineFlow(
   {
     name: 'analyzePetFoodIngredientsFlow',
@@ -125,18 +133,9 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
   },
   async (input) => {
     const response = await analyzePetFoodIngredientsPrompt(input);
-
     if (!response || !response.output) {
       throw new Error('AI failed to return valid analysis JSON.');
     }
-
-    // 수학적 무결성 최종 검증 (영양소 합이 단위를 초과하지 않는지)
-    const n = response.output.scientificAnalysis.nutrientMass;
-    if (n.protein_g + n.fat_g + n.carbs_g > 100) {
-       // 비정상적인 수치일 경우 비율 조정 (단위가 100g 기준일 때)
-       console.warn("Nutrient mass exceeded unit. Auto-adjusting logic applied.");
-    }
-
     return { ...response.output, status: 'success' as const };
   }
 );
