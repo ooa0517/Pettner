@@ -12,6 +12,10 @@ import { Badge } from '@/components/ui/badge';
 
 type PaymentMethod = 'CARD' | 'TOSSPAY' | 'KAKAOPAY' | 'APPLEPAY';
 
+/**
+ * Pettner Payment Modal
+ * Integrates Toss Payments with the provided API Key.
+ */
 export default function PaymentModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
   const { user } = useUser();
   const { toast } = useToast();
@@ -31,14 +35,20 @@ export default function PaymentModal({ open, onOpenChange }: { open: boolean, on
     setIsProcessing(true);
 
     try {
-      // @ts-ignore: TossPayments is loaded globally via Script tag in layout
-      const clientKey = 'test_ck_D5ya AdvZdA0R8V996O8V270GjYrj'; // 테스트용 키 (실전 시 변경 필요)
+      // 사용자 제공 토스페이먼츠 클라이언트 키 (테스트용)
+      const clientKey = 'test_ck_mBZ1gQ4YVX4gwwKx9BzXVl2KPoqN';
+      
+      // @ts-ignore: TossPayments is loaded globally via Script tag in layout.tsx
+      if (typeof window.TossPayments === 'undefined') {
+        throw new Error('Toss Payments SDK not loaded. Please check your internet connection.');
+      }
+      
       // @ts-ignore
       const tossPayments = window.TossPayments(clientKey);
 
-      const orderId = `order_${user.uid.substring(0, 8)}_${Date.now()}`;
+      const orderId = `pettner_${user.uid.substring(0, 6)}_${Date.now()}`;
       
-      // 실제 결제창 호출
+      // 실제 결제창 호출 (테스트 모드)
       await tossPayments.requestPayment(method === 'CARD' ? '카드' : method, {
         amount: 4990,
         orderId: orderId,
@@ -51,11 +61,13 @@ export default function PaymentModal({ open, onOpenChange }: { open: boolean, on
     } catch (error: any) {
       console.error("Payment Request Error:", error);
       setIsProcessing(false);
+      
+      // 사용자 취소는 에러 토스트를 띄우지 않음
       if (error.code !== 'USER_CANCEL') {
         toast({
           variant: "destructive",
           title: "결제 요청 실패",
-          description: error.message || "결제창을 불러오지 못했습니다.",
+          description: error.message || "결제창을 불러오는 중 오류가 발생했습니다.",
         });
       }
     }
@@ -64,6 +76,7 @@ export default function PaymentModal({ open, onOpenChange }: { open: boolean, on
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md rounded-[3rem] border-none p-0 overflow-hidden bg-white shadow-2xl">
+        {/* 상단 헤더 섹션 */}
         <div className="bg-primary p-10 text-white space-y-4">
           <div className="flex justify-between items-center">
             <Badge variant="outline" className="bg-white/20 text-white border-none font-bold px-3 py-1">LIFETIME PASS</Badge>
@@ -75,8 +88,9 @@ export default function PaymentModal({ open, onOpenChange }: { open: boolean, on
           </p>
         </div>
         
+        {/* 결제 수단 선택 섹션 */}
         <div className="p-8 space-y-8">
-          <div className="space-y-3">
+          <div className="space-y-4">
             <p className="text-xs font-black text-muted-foreground uppercase ml-2 tracking-widest">결제 수단 선택</p>
             <div className="grid grid-cols-2 gap-3">
               {[
@@ -89,35 +103,46 @@ export default function PaymentModal({ open, onOpenChange }: { open: boolean, on
                   key={item.id}
                   onClick={() => setMethod(item.id as PaymentMethod)}
                   className={cn(
-                    "flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all gap-2",
-                    method === item.id ? "border-primary bg-primary/5" : "border-muted/50 grayscale opacity-60 hover:grayscale-0 hover:opacity-100"
+                    "flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all gap-2 h-24",
+                    method === item.id 
+                      ? "border-primary bg-primary/5 ring-2 ring-primary/20" 
+                      : "border-muted/50 grayscale opacity-60 hover:grayscale-0 hover:opacity-100"
                   )}
                 >
-                  <item.icon size={20} className={method === item.id ? "text-primary" : ""} />
+                  <item.icon size={24} className={method === item.id ? "text-primary" : ""} />
                   <span className="text-[11px] font-black">{item.name}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="bg-muted/30 p-5 rounded-2xl flex justify-between items-center">
-             <span className="font-bold text-sm">최종 결제 금액</span>
-             <span className="text-2xl font-black text-primary">4,990원</span>
+          <div className="bg-muted/30 p-6 rounded-3xl flex justify-between items-center">
+             <div className="space-y-0.5">
+               <span className="text-[10px] font-black text-muted-foreground uppercase">Total Amount</span>
+               <p className="font-bold text-sm">최종 결제 금액</p>
+             </div>
+             <span className="text-3xl font-black text-primary tracking-tighter">4,990원</span>
           </div>
 
           <Button 
             onClick={handlePayment} 
             disabled={isProcessing}
-            className="w-full h-16 rounded-2xl text-xl font-black shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
+            className="w-full h-20 rounded-[2rem] text-xl font-black shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
           >
-            {isProcessing ? <Loader2 className="animate-spin mr-2" /> : null}
-            결제하고 바로 시작하기
+            {isProcessing ? <Loader2 className="animate-spin mr-3" /> : <Zap className="mr-3" />}
+            {isProcessing ? '결제 진행 중...' : '지금 결제하고 시작하기'}
           </Button>
           
-          <p className="text-[10px] text-center text-muted-foreground leading-relaxed">
-            결제 즉시 프리미엄 혜택이 적용되며 계정에 영구 귀속됩니다.<br/>
-            디지털 콘텐츠 특성상 결제 후 사용 시 환불이 어려울 수 있습니다.
-          </p>
+          <div className="space-y-2">
+            <p className="text-[10px] text-center text-muted-foreground leading-relaxed px-4">
+              결제 즉시 프리미엄 혜택이 적용되며 사용자 계정에 영구 귀속됩니다.<br/>
+              디지털 콘텐츠 특성상 결제 후 서비스 이용 시 환불이 제한될 수 있습니다.
+            </p>
+            <div className="flex justify-center items-center gap-2 opacity-30">
+               <ShieldCheck size={10} />
+               <span className="text-[8px] font-bold uppercase tracking-widest text-center">Secure Payment by Toss Payments</span>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
