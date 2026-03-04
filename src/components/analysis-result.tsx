@@ -12,7 +12,8 @@ import {
   ShieldAlert, Microscope, 
   Zap, 
   PieChart, Factory, Truck,
-  Leaf, Gavel, History, Image as ImageIcon
+  Leaf, Gavel, History, Scale,
+  TrendingDown, CheckCircle2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -58,12 +59,11 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
      );
   }
 
-  const { productIdentity, scoreCard, scientificAnalysis, esgReport } = result;
+  const { productIdentity, scoreCard, scientificAnalysis, esgReport, weightDiagnosis, dietRoadmap } = result;
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-48 max-w-4xl mx-auto px-4">
       
-      {/* 리포트 상단 광고 지면 */}
       <AdBanner position="top" />
 
       {/* 1. Header & Summary Card */}
@@ -77,7 +77,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   {productIdentity.pettnerCompliance.isCompliant ? 'PETTNER COMPLIANT' : 'NON-COMPLIANT'}
                 </Badge>
                 <Badge variant="outline" className="px-3 py-1 rounded-full text-[10px] font-black border-primary text-primary">
-                  V15.0 SCIENTIFIC ENGINE
+                  V17.0 MEDICAL AUDIT
                 </Badge>
               </div>
               <h1 className="text-3xl font-black tracking-tighter pt-2 leading-tight">
@@ -95,30 +95,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-5 bg-muted/10 rounded-[2rem] flex items-center gap-4">
-               <div className="p-3 bg-white rounded-2xl shadow-sm text-primary"><Factory size={20}/></div>
-               <div>
-                  <p className="text-[10px] font-black opacity-50 uppercase">Manufacturing</p>
-                  <p className="text-xs font-bold">{productIdentity.manufacturingAudit.productionType}</p>
-               </div>
-            </div>
-            <div className="p-5 bg-muted/10 rounded-[2rem] flex items-center gap-4">
-               <div className="p-3 bg-white rounded-2xl shadow-sm text-primary"><ShieldAlert size={20}/></div>
-               <div>
-                  <p className="text-[10px] font-black opacity-50 uppercase">Safety Certs</p>
-                  <p className="text-xs font-bold truncate max-w-[120px]">{productIdentity.manufacturingAudit.facilitySafety}</p>
-               </div>
-            </div>
-            <div className="p-5 bg-muted/10 rounded-[2rem] flex items-center gap-4">
-               <div className="p-3 bg-white rounded-2xl shadow-sm text-primary"><Truck size={20}/></div>
-               <div>
-                  <p className="text-[10px] font-black opacity-50 uppercase">Sourcing Origin</p>
-                  <p className="text-xs font-bold">{productIdentity.manufacturingAudit.sourcingOrigin}</p>
-               </div>
-            </div>
-          </div>
-
           <div className="p-8 rounded-[2.5rem] border-l-8 border-primary bg-primary/5">
              <h3 className="text-xl font-black flex items-center gap-2 mb-4">
                <Stethoscope className="text-primary" size={20}/> 
@@ -131,10 +107,66 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </CardContent>
       </Card>
 
-      {/* 리포트 중간 광고 지면 */}
+      {/* 2. Weight & Breed Diagnosis (AI Correction) */}
+      {weightDiagnosis && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 px-2">
+            <Scale className="text-primary w-6 h-6" />
+            <h2 className="text-2xl font-black font-headline tracking-tight">{isEn ? 'Weight Analysis' : '체형 및 품종 표준 진단'}</h2>
+          </div>
+          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
+            <CardContent className="p-8 space-y-8">
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center p-6 bg-muted/20 rounded-3xl">
+                     <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Standard Range</p>
+                     <p className="text-xl font-black">{weightDiagnosis.breedStandardRange}</p>
+                     <p className="text-[10px] font-bold text-primary mt-1">{input.petProfile?.breed} 평균</p>
+                  </div>
+                  <div className="text-center p-6 bg-primary text-white rounded-3xl shadow-xl shadow-primary/20">
+                     <p className="text-[10px] font-black opacity-60 uppercase mb-1">Current Weight</p>
+                     <p className="text-3xl font-black">{weightDiagnosis.currentWeight}kg</p>
+                     <Badge className="bg-white/20 text-white border-none mt-2">
+                        {weightDiagnosis.overweightPercentage > 0 ? `상위 ${weightDiagnosis.overweightPercentage}%` : '표준 범위'}
+                     </Badge>
+                  </div>
+                  <div className="text-center p-6 bg-success/10 rounded-3xl">
+                     <p className="text-[10px] font-black text-success uppercase mb-1">Ideal Weight</p>
+                     <p className="text-xl font-black text-success">{weightDiagnosis.idealWeight}kg</p>
+                     <p className="text-[10px] font-bold text-success mt-1">AI 권장 목표</p>
+                  </div>
+               </div>
+               
+               <div className="p-6 bg-muted/10 rounded-[2rem] border-2 border-dashed border-muted-foreground/20">
+                  <p className="text-sm font-bold leading-relaxed text-muted-foreground">
+                     <AlertCircle className="inline-block mr-2 h-4 w-4 text-primary" />
+                     {weightDiagnosis.verdict}
+                  </p>
+               </div>
+
+               {dietRoadmap && (
+                 <div className="space-y-4">
+                    <h4 className="font-black text-sm flex items-center gap-2">
+                      <TrendingDown size={16} className="text-primary"/> 감량 및 건강 관리 로드맵
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                       {dietRoadmap.map((step, i) => (
+                         <div key={i} className="p-4 bg-muted/5 rounded-2xl flex flex-col items-center">
+                            <span className="text-[10px] font-black text-muted-foreground mb-2 uppercase">{step.phase}</span>
+                            <p className="font-black text-lg">{step.weight}kg</p>
+                            <Badge variant="outline" className="mt-1 border-primary text-primary font-bold">{step.grams}g 급여</Badge>
+                         </div>
+                       ))}
+                    </div>
+                 </div>
+               )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       <AdBanner position="middle" />
 
-      {/* 2. Scientific Deep Dive */}
+      {/* 3. Scientific Deep Dive */}
       <div className="space-y-6">
         <div className="flex items-center gap-2 px-2">
           <Microscope className="text-primary w-6 h-6" />
@@ -171,24 +203,25 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </h4>
             <div className="space-y-4">
                {isCat ? (
-                 <>
-                   <div className="p-4 bg-muted/5 rounded-2xl">
-                     <p className="text-[10px] font-black opacity-50">Taurine Check</p>
-                     <p className="text-sm font-bold mt-1">{scientificAnalysis.catSpecific?.taurineCheck || 'Verified'}</p>
-                   </div>
-                 </>
+                 <div className="p-4 bg-muted/5 rounded-2xl">
+                   <p className="text-[10px] font-black opacity-50">Taurine Check</p>
+                   <p className="text-sm font-bold mt-1">{scientificAnalysis.catSpecific?.taurineCheck || 'Verified'}</p>
+                 </div>
                ) : (
                  <div className="p-4 bg-muted/5 rounded-2xl">
-                   <p className="text-[10px] font-black opacity-50">Breed Matching</p>
+                   <p className="text-[10px] font-black opacity-50">Genetic Risk Matching</p>
                    <p className="text-sm font-bold mt-1">{scientificAnalysis.dogSpecific?.breedRiskMatching || 'Optimal'}</p>
                  </div>
                )}
+               <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                  <p className="text-[10px] font-black text-primary uppercase">Veterinary Advice</p>
+                  <p className="text-xs font-bold mt-1 leading-relaxed">{result.veterinaryAdvice}</p>
+               </div>
             </div>
           </Card>
         </div>
       </div>
 
-      {/* 3. ESG & Safety */}
       <div className="space-y-6">
         <div className="flex items-center gap-2 px-2">
           <Gavel className="text-primary w-6 h-6" />
@@ -221,10 +254,8 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </Accordion>
       </div>
 
-      {/* 리포트 하단 광고 지면 */}
       <AdBanner position="bottom" />
 
-      {/* Floating Footer */}
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-2xl border-t z-50 flex justify-center shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
         <div className="w-full max-w-4xl flex gap-4">
           <Button onClick={onReset} variant="outline" className="flex-1 h-16 rounded-2xl border-2 font-black text-primary"><Zap size={20} className="mr-2" /> {resetButtonText || 'New Scan'}</Button>
