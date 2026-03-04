@@ -2,27 +2,24 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Smartphone, CheckCircle2, Loader2, ShieldCheck, Zap } from 'lucide-react';
-import { useUser, useFirestore } from '@/firebase';
-import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
+import { useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
-type PaymentMethod = 'card' | 'toss' | 'kakao' | 'apple';
+type PaymentMethod = 'CARD' | 'TOSSPAY' | 'KAKAOPAY' | 'APPLEPAY';
 
 export default function PaymentModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
   const { user } = useUser();
-  const db = useFirestore();
   const { toast } = useToast();
-  const [method, setMethod] = useState<PaymentMethod>('card');
+  const [method, setMethod] = useState<PaymentMethod>('CARD');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
 
   const handlePayment = async () => {
-    if (!user || !db) {
+    if (!user) {
       toast({
         variant: "destructive",
         title: "로그인이 필요합니다",
@@ -30,73 +27,39 @@ export default function PaymentModal({ open, onOpenChange }: { open: boolean, on
       });
       return;
     }
-    
-    setIsProcessing(true);
-    
-    // [시뮬레이션] 실제 환경에서는 여기서 토스페이먼츠/포트원 SDK를 호출합니다.
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    try {
-      const userDocRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userDocRef);
 
-      if (userSnap.exists()) {
-        // 기존 유저 정보 업데이트
-        await updateDoc(userDocRef, { 
-          isPremium: true,
-          updatedAt: new Date().toISOString()
-        });
-      } else {
-        // 유저 문서가 없는 경우 생성 (UserProfileSyncer가 실패했을 경우 대비)
-        await setDoc(userDocRef, {
-          id: user.uid,
-          email: user.email,
-          name: user.displayName || 'Pettner User',
-          isPremium: true,
-          dailyUsageCount: 0,
-          createdAt: new Date().toISOString()
+    setIsProcessing(true);
+
+    try {
+      // @ts-ignore: TossPayments is loaded globally via Script tag in layout
+      const clientKey = 'test_ck_D5ya AdvZdA0R8V996O8V270GjYrj'; // 테스트용 키 (실전 시 변경 필요)
+      // @ts-ignore
+      const tossPayments = window.TossPayments(clientKey);
+
+      const orderId = `order_${user.uid.substring(0, 8)}_${Date.now()}`;
+      
+      // 실제 결제창 호출
+      await tossPayments.requestPayment(method === 'CARD' ? '카드' : method, {
+        amount: 4990,
+        orderId: orderId,
+        orderName: 'Pettner 평생 무제한 패스',
+        customerName: user.displayName || 'Pettner User',
+        successUrl: `${window.location.origin}/payment/success`,
+        failUrl: `${window.location.origin}/payment/fail`,
+      });
+      
+    } catch (error: any) {
+      console.error("Payment Request Error:", error);
+      setIsProcessing(false);
+      if (error.code !== 'USER_CANCEL') {
+        toast({
+          variant: "destructive",
+          title: "결제 요청 실패",
+          description: error.message || "결제창을 불러오지 못했습니다.",
         });
       }
-      
-      setIsSuccess(true);
-      toast({
-        title: "평생권 활성화 완료!",
-        description: "이제 Pettner의 모든 기능을 광고 없이 무제한으로 이용하실 수 있습니다.",
-      });
-      
-      // 결제 성공 후 2초 뒤 모달을 닫고 상태 반영을 위해 페이지 새로고침 제안
-      setTimeout(() => {
-        onOpenChange(false);
-        window.location.reload(); 
-      }, 2000);
-    } catch (error) {
-      console.error("Payment update error:", error);
-      toast({
-        variant: "destructive",
-        title: "권한 업데이트 실패",
-        description: "결제는 완료되었으나 계정 정보 업데이트에 실패했습니다. 고객센터로 문의해주세요.",
-      });
-    } finally {
-      setIsProcessing(false);
     }
   };
-
-  if (isSuccess) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md rounded-[2.5rem] p-12 text-center space-y-6 border-none shadow-2xl">
-           <div className="bg-success/10 w-24 h-24 rounded-full flex items-center justify-center mx-auto text-success animate-bounce">
-             <CheckCircle2 size={48} />
-           </div>
-           <div className="space-y-2">
-             <h2 className="text-3xl font-black">환영합니다!</h2>
-             <p className="font-bold text-muted-foreground">평생 무제한 패스가 성공적으로 활성화되었습니다.</p>
-           </div>
-           <p className="text-sm text-muted-foreground animate-pulse">잠시 후 리포트로 돌아갑니다...</p>
-        </DialogContent>
-      </Dialog>
-    );
-  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -117,10 +80,10 @@ export default function PaymentModal({ open, onOpenChange }: { open: boolean, on
             <p className="text-xs font-black text-muted-foreground uppercase ml-2 tracking-widest">결제 수단 선택</p>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { id: 'card', name: '신용/체크카드', icon: CreditCard },
-                { id: 'toss', name: '토스페이', icon: Zap },
-                { id: 'kakao', name: '카카오페이', icon: Smartphone },
-                { id: 'apple', name: '애플페이', icon: Smartphone },
+                { id: 'CARD', name: '신용/체크카드', icon: CreditCard },
+                { id: 'TOSSPAY', name: '토스페이', icon: Zap },
+                { id: 'KAKAOPAY', name: '카카오페이', icon: Smartphone },
+                { id: 'APPLEPAY', name: '애플페이', icon: Smartphone },
               ].map((item) => (
                 <button
                   key={item.id}
