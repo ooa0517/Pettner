@@ -7,7 +7,7 @@ import {
   CheckCircle2, Database, Activity,
   HeartPulse, Scale,
   Dna, AlertCircle, Info, Stethoscope, Footprints, Droplets, UtensilsCrossed, Pill,
-  ChevronDown, Search
+  ChevronDown, Search, HelpCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -100,17 +100,17 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
       foodType: 'dry',
       petProfile: {
         name: '',
-        breed: '',
-        age: '',
-        weight: '',
+        breed: '믹스/기타',
+        age: '0',
+        weight: '0',
         neutered: true,
         bcs: '3',
-        activityLevel: 'NORMAL',
+        activityLevel: 'UNKNOWN',
         weightChange: 'none',
         healthConditions: [],
         allergies: [],
-        waterIntake: 'NORMAL',
-        stoolCondition: 'GOOD',
+        waterIntake: 'UNKNOWN',
+        stoolCondition: 'UNKNOWN',
         medications: '',
       }
     },
@@ -121,9 +121,9 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
   const selectedHealth = form.watch('petProfile.healthConditions') || [];
   const selectedAllergies = form.watch('petProfile.allergies') || [];
 
-  const dogConditions = ['슬개골 탈구', '관절염', '피부 알러지', '눈물 자국', '심장 질환', '소화 불량', '췌장염', '신장 질환'];
-  const catConditions = ['방광염/요로결석', '헤어볼', '신장 질환', '구강 건강', '심부전', '피부 건강', '당뇨'];
-  const allergyList = ['닭고기', '소고기', '돼지고기', '연어', '곡물(그레인)', '계란', '유제품'];
+  const dogConditions = ['슬개골 탈구', '관절염', '피부 알러지', '눈물 자국', '심장 질환', '소화 불량', '췌장염', '신장 질환', '기타(메모 입력)'];
+  const catConditions = ['방광염/요로결석', '헤어볼', '신장 질환', '구강 건강', '심부전', '피부 건강', '당뇨', '기타(메모 입력)'];
+  const allergyList = ['닭고기', '소고기', '돼지고기', '연어', '곡물(그레인)', '계란', '유제품', '없음/모름'];
 
   const selectSavedPet = (pet: any) => {
     form.reset({
@@ -131,17 +131,17 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
       petType: pet.petType,
       petProfile: {
         name: pet.name,
-        breed: pet.breed,
-        age: pet.age.toString(),
-        weight: pet.weight.toString(),
+        breed: pet.breed || '믹스/기타',
+        age: pet.age?.toString() || '0',
+        weight: pet.weight?.toString() || '0',
         neutered: pet.neutered === 'yes',
         bcs: pet.bcs || '3',
-        activityLevel: pet.activityLevel || 'NORMAL',
+        activityLevel: pet.activityLevel || 'UNKNOWN',
         weightChange: pet.weightChange || 'none',
         healthConditions: pet.healthConditions || [],
         allergies: pet.allergies || [],
-        waterIntake: pet.waterIntake || 'NORMAL',
-        stoolCondition: pet.stoolCondition || 'GOOD',
+        waterIntake: pet.waterIntake || 'UNKNOWN',
+        stoolCondition: pet.stoolCondition || 'UNKNOWN',
         medications: pet.medications || '',
       }
     });
@@ -223,21 +223,22 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                       <FormItem><FormLabel className="font-bold ml-2">이름</FormLabel><FormControl><Input placeholder="아이 이름" className="rounded-2xl h-12 bg-muted/10 border-none px-4" {...field} /></FormControl></FormItem>
                     )}/>
                     <FormField control={form.control} name="petProfile.breed" render={({ field }) => (
-                      <FormItem><FormLabel className="font-bold ml-2">품종</FormLabel><FormControl><Input placeholder="예: 말티즈" className="rounded-2xl h-12 bg-muted/10 border-none px-4" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="font-bold ml-2">품종 (모를 경우 믹스)</FormLabel><FormControl><Input placeholder="예: 말티푸" className="rounded-2xl h-12 bg-muted/10 border-none px-4" {...field} /></FormControl></FormItem>
                     )}/>
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
                     <FormField control={form.control} name="petProfile.age" render={({ field }) => (
-                      <FormItem><FormLabel className="font-bold ml-2 text-xs">나이(살)</FormLabel><FormControl><Input type="number" step="0.1" className="rounded-2xl h-12 bg-muted/10 border-none px-4" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="font-bold ml-2 text-xs">나이(살/모르면 0)</FormLabel><FormControl><Input type="number" step="0.1" className="rounded-2xl h-12 bg-muted/10 border-none px-4" {...field} /></FormControl></FormItem>
                     )}/>
                     <FormField control={form.control} name="petProfile.weight" render={({ field }) => (
-                      <FormItem><FormLabel className="font-bold ml-2 text-xs">체중(kg)</FormLabel><FormControl><Input type="number" step="0.1" className="rounded-2xl h-12 bg-muted/10 border-none px-4" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="font-bold ml-2 text-xs">체중(kg/모르면 0)</FormLabel><FormControl><Input type="number" step="0.1" className="rounded-2xl h-12 bg-muted/10 border-none px-4" {...field} /></FormControl></FormItem>
                     )}/>
                     <FormField control={form.control} name="petProfile.activityLevel" render={({ field }) => (
                       <FormItem><FormLabel className="font-bold ml-2 text-xs">활동량</FormLabel>
                         <FormControl>
                           <select className="w-full h-12 rounded-2xl bg-muted/10 border-none px-4 text-xs font-bold appearance-none" {...field}>
+                            <option value="UNKNOWN">잘 모르겠음</option>
                             <option value="LOW">낮음</option>
                             <option value="NORMAL">보통</option>
                             <option value="HIGH">높음</option>
@@ -256,7 +257,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                 </CardHeader>
                 <CardContent className="p-10 space-y-8">
                   <div className="space-y-4">
-                    <Label className="font-black text-lg ml-2 flex items-center gap-2"><AlertCircle className="text-destructive" size={18}/> 알러지 성분</Label>
+                    <Label className="font-black text-lg ml-2 flex items-center gap-2"><AlertCircle className="text-destructive" size={18}/> 알러지 성분 (없으면 '없음/모름' 선택)</Label>
                     <div className="flex flex-wrap gap-2">
                       {allergyList.map(a => (
                         <button 
@@ -267,7 +268,12 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                           )} 
                           onClick={() => {
                             const cur = [...selectedAllergies];
-                            form.setValue('petProfile.allergies', cur.includes(a) ? cur.filter(x => x !== a) : [...cur, a]);
+                            if (a === '없음/모름') {
+                                form.setValue('petProfile.allergies', ['없음/모름']);
+                                return;
+                            }
+                            const filtered = cur.filter(x => x !== '없음/모름');
+                            form.setValue('petProfile.allergies', filtered.includes(a) ? filtered.filter(x => x !== a) : [...filtered, a]);
                           }}
                         >
                           {a}
@@ -277,7 +283,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                   </div>
 
                   <div className="space-y-4">
-                    <Label className="font-black text-lg ml-2 flex items-center gap-2"><HeartPulse className="text-primary" size={18}/> 주요 건강 고민</Label>
+                    <Label className="font-black text-lg ml-2 flex items-center gap-2"><HeartPulse className="text-primary" size={18}/> 주요 건강 고민 (없으면 선택 안함)</Label>
                     <div className="flex flex-wrap gap-2">
                       {(selectedPet === 'dog' ? dogConditions : catConditions).map(c => (
                         <button 

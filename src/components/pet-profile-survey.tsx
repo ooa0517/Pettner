@@ -11,7 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { 
   Activity, HeartPulse, ClipboardCheck, ArrowRight, ArrowLeft, Dog, Cat, 
-  Info, Calendar, Footprints, Droplets, Pill, Loader2, Utensils, AlertTriangle, Scale
+  Info, Calendar, Footprints, Droplets, Pill, Loader2, Utensils, AlertTriangle, Scale,
+  HelpCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore } from '@/firebase';
@@ -21,18 +22,18 @@ import { useToast } from '@/hooks/use-toast';
 const petProfileSchema = z.object({
   petType: z.enum(['dog', 'cat']),
   name: z.string().min(1, '이름을 입력해주세요'),
-  breed: z.string().min(1, '품종을 입력해주세요'),
-  age: z.number().min(0, '나이를 입력해주세요'),
-  weight: z.number().min(0.1, '몸무게를 입력해주세요'),
-  neutered: z.enum(['yes', 'no']),
+  breed: z.string().default('믹스/기타'),
+  age: z.number().min(0, '나이를 입력해주세요').optional().default(0),
+  weight: z.number().min(0.1, '몸무게를 입력해주세요').optional().default(0),
+  neutered: z.enum(['yes', 'no', 'unknown']).default('unknown'),
   bcs: z.string().default('3'),
-  activityLevel: z.enum(['LOW', 'NORMAL', 'HIGH', 'VERY_HIGH']).default('NORMAL'),
-  weightChange: z.enum(['none', 'gain', 'loss']).default('none'),
+  activityLevel: z.enum(['LOW', 'NORMAL', 'HIGH', 'VERY_HIGH', 'UNKNOWN']).default('UNKNOWN'),
+  weightChange: z.enum(['none', 'gain', 'loss', 'not_sure']).default('none'),
   healthConditions: z.array(z.string()).default([]),
   allergies: z.array(z.string()).default([]),
   currentDietType: z.string().default('DRY'),
-  waterIntake: z.enum(['LOW', 'NORMAL', 'HIGH']).default('NORMAL'),
-  stoolCondition: z.enum(['GOOD', 'SOFT', 'HARD', 'DIARRHEA']).default('GOOD'),
+  waterIntake: z.enum(['LOW', 'NORMAL', 'HIGH', 'UNKNOWN']).default('UNKNOWN'),
+  stoolCondition: z.enum(['GOOD', 'SOFT', 'HARD', 'DIARRHEA', 'UNKNOWN']).default('UNKNOWN'),
   medications: z.string().optional(),
 });
 
@@ -49,15 +50,16 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
     resolver: zodResolver(petProfileSchema),
     defaultValues: {
       petType: 'dog',
-      neutered: 'yes',
+      neutered: 'unknown',
       healthConditions: [],
       allergies: [],
-      activityLevel: 'NORMAL',
+      activityLevel: 'UNKNOWN',
       bcs: '3',
       weightChange: 'none',
       currentDietType: 'DRY',
-      waterIntake: 'NORMAL',
-      stoolCondition: 'GOOD',
+      waterIntake: 'UNKNOWN',
+      stoolCondition: 'UNKNOWN',
+      breed: '',
     }
   });
 
@@ -67,9 +69,9 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
   const currentActivity = watch('activityLevel');
   const currentBCS = watch('bcs');
 
-  const dogConditions = ['슬개골 탈구', '관절염', '피부 알러지', '눈물 자국', '심장 질환', '소화 불량', '췌장염', '신장 질환'];
-  const catConditions = ['방광염/요로결석', '신장 질환', '헤어볼', '구강 건강', '심부전', '피부 건강', '당뇨'];
-  const allergyList = ['닭고기', '소고기', '돼지고기', '연어', '곡물(그레인)', '계란', '유제품'];
+  const dogConditions = ['슬개골 탈구', '관절염', '피부 알러지', '눈물 자국', '심장 질환', '소화 불량', '췌장염', '신장 질환', '기타(메모 입력)'];
+  const catConditions = ['방광염/요로결석', '신장 질환', '헤어볼', '구강 건강', '심부전', '피부 건강', '당뇨', '기타(메모 입력)'];
+  const allergyList = ['닭고기', '소고기', '돼지고기', '연어', '곡물(그레인)', '계란', '유제품', '없음/모름'];
 
   const conditions = selectedPetType === 'dog' ? dogConditions : catConditions;
 
@@ -113,7 +115,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
           ))}
         </div>
         <CardTitle className="text-2xl font-black">초정밀 메디컬 프로필 V2</CardTitle>
-        <CardDescription>정교한 분석을 위해 아이의 세부 상태를 입력해주세요.</CardDescription>
+        <CardDescription>정교한 분석을 위해 아이의 세부 상태를 입력해주세요. (모르는 항목은 건너뛰어도 됩니다.)</CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -136,17 +138,17 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                   <Input placeholder="아이 이름" {...register('name')} className="rounded-xl h-12 bg-muted/20 border-none" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-bold ml-1">품종</Label>
+                  <Label className="font-bold ml-1">품종 (모를 경우 '믹스')</Label>
                   <Input placeholder="예: 말티푸" {...register('breed')} className="rounded-xl h-12 bg-muted/20 border-none" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="font-bold ml-1">나이 (살)</Label>
+                  <Label className="font-bold ml-1">나이 (모를 경우 0 입력)</Label>
                   <Input type="number" step="0.1" {...register('age', { valueAsNumber: true })} className="rounded-xl h-12 bg-muted/20 border-none" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="font-bold ml-1">체중 (kg)</Label>
+                  <Label className="font-bold ml-1">체중 (모를 경우 0 입력)</Label>
                   <Input type="number" step="0.1" {...register('weight', { valueAsNumber: true })} className="rounded-xl h-12 bg-muted/20 border-none" />
                 </div>
               </div>
@@ -164,7 +166,8 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                     { id: 'LOW', label: '거의 안움직임' },
                     { id: 'NORMAL', label: '평범함' },
                     { id: 'HIGH', label: '활발함' },
-                    { id: 'VERY_HIGH', label: '매우 활동적' }
+                    { id: 'VERY_HIGH', label: '매우 활동적' },
+                    { id: 'UNKNOWN', label: '잘 모르겠음' }
                   ].map(v => (
                     <div key={v.id} onClick={() => setValue('activityLevel', v.id as any)} className={cn("p-4 border-2 rounded-2xl cursor-pointer text-center font-bold text-sm", currentActivity === v.id ? "border-primary bg-primary/5 text-primary" : "border-muted text-muted-foreground")}>
                       {v.label}
@@ -184,7 +187,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                     </div>
                   ))}
                 </div>
-                <p className="text-[11px] text-muted-foreground text-center font-medium">1: 매우 마름 ~ 3: 이상적 ~ 5: 고도 비만</p>
+                <p className="text-[11px] text-muted-foreground text-center font-medium">1: 매우 마름 ~ 3: 이상적 ~ 5: 고도 비만 (모를 경우 3 선택)</p>
               </div>
             </div>
           )}
@@ -199,7 +202,12 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                   {allergyList.map(a => (
                     <div key={a} onClick={() => {
                       const cur = selectedAllergies;
-                      setValue('allergies', cur.includes(a) ? cur.filter(x => x !== a) : [...cur, a]);
+                      if (a === '없음/모름') {
+                        setValue('allergies', ['없음/모름']);
+                        return;
+                      }
+                      const filtered = cur.filter(x => x !== '없음/모름');
+                      setValue('allergies', filtered.includes(a) ? filtered.filter(x => x !== a) : [...filtered, a]);
                     }} className={cn("px-4 py-2 rounded-full text-xs font-bold border-2 cursor-pointer transition-all", selectedAllergies.includes(a) ? "bg-destructive text-white border-destructive" : "bg-white border-muted text-muted-foreground")}>
                       {a}
                     </div>
@@ -209,7 +217,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
 
               <div className="space-y-4">
                 <Label className="font-black text-lg flex items-center gap-2">
-                  <HeartPulse size={20} className="text-primary" /> 관리 중인 건강 고민
+                  <HeartPulse size={20} className="text-primary" /> 관리 중인 건강 고민 (중복 선택)
                 </Label>
                 <div className="flex flex-wrap gap-2">
                   {conditions.map(c => (
@@ -220,6 +228,9 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                       {c}
                     </div>
                   ))}
+                  <div onClick={() => setValue('healthConditions', [])} className={cn("px-4 py-2 rounded-full text-xs font-bold border-2 cursor-pointer transition-all", selectedConditions.length === 0 ? "bg-muted text-muted-foreground border-muted" : "bg-white border-muted text-muted-foreground")}>
+                    해당 없음
+                  </div>
                 </div>
               </div>
             </div>
@@ -235,8 +246,8 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                    <div className="p-4 bg-muted/10 rounded-2xl space-y-3">
                       <Label className="text-xs font-bold text-muted-foreground">음수량</Label>
                       <div className="flex gap-2">
-                        {['적음', '보통', '많음'].map((v, i) => (
-                          <div key={v} onClick={() => setValue('waterIntake', i === 0 ? 'LOW' : i === 1 ? 'NORMAL' : 'HIGH')} className={cn("flex-1 text-center py-2 rounded-xl text-xs font-bold border-2 cursor-pointer", watch('waterIntake') === (i === 0 ? 'LOW' : i === 1 ? 'NORMAL' : 'HIGH') ? "bg-blue-500 text-white border-blue-500" : "bg-white border-muted")}>
+                        {['적음', '보통', '많음', '모름'].map((v, i) => (
+                          <div key={v} onClick={() => setValue('waterIntake', i === 0 ? 'LOW' : i === 1 ? 'NORMAL' : i === 2 ? 'HIGH' : 'UNKNOWN')} className={cn("flex-1 text-center py-2 rounded-xl text-xs font-bold border-2 cursor-pointer", watch('waterIntake') === (i === 0 ? 'LOW' : i === 1 ? 'NORMAL' : i === 2 ? 'HIGH' : 'UNKNOWN') ? "bg-blue-500 text-white border-blue-500" : "bg-white border-muted")}>
                             {v}
                           </div>
                         ))}
@@ -249,7 +260,8 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                           { id: 'GOOD', label: '건강함' },
                           { id: 'SOFT', label: '묽은 변' },
                           { id: 'HARD', label: '딱딱함' },
-                          { id: 'DIARRHEA', label: '설사' }
+                          { id: 'DIARRHEA', label: '설사' },
+                          { id: 'UNKNOWN', label: '잘 모르겠음' }
                         ].map(v => (
                           <div key={v.id} onClick={() => setValue('stoolCondition', v.id as any)} className={cn("text-center py-2 rounded-xl text-xs font-bold border-2 cursor-pointer", watch('stoolCondition') === v.id ? "bg-amber-700 text-white border-amber-700" : "bg-white border-muted")}>
                             {v.label}
@@ -260,8 +272,8 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                 </div>
               </div>
               <div className="space-y-2">
-                <Label className="font-bold ml-1">기타 참고사항 (복용 약물 등)</Label>
-                <Input placeholder="예: 심장약 복용 중, 가금류 알러지 의심" {...register('medications')} className="rounded-xl h-12 bg-muted/20 border-none" />
+                <Label className="font-bold ml-1">기타 참고사항 (직접 입력 가능)</Label>
+                <Input placeholder="예: 심장약 복용 중, 가금류 알러지 의심, 입이 짧음" {...register('medications')} className="rounded-xl h-12 bg-muted/20 border-none" />
               </div>
             </div>
           )}
