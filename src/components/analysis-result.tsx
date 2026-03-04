@@ -9,10 +9,10 @@ import { Badge } from '@/components/ui/badge';
 import { 
   ShoppingBag, AlertCircle, 
   Stethoscope, BarChart3, 
-  Award, ShieldAlert, Microscope, 
+  ShieldAlert, Microscope, 
   Zap, 
   PieChart, Factory, Truck,
-  Info, Leaf, Gavel, History, Image as ImageIcon
+  Leaf, Gavel, History, Image as ImageIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/accordion";
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import AdBanner from '@/components/ad-banner';
 
 type AnalysisResultProps = {
   result: AnalyzePetFoodIngredientsOutput;
@@ -62,6 +63,9 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-48 max-w-4xl mx-auto px-4">
       
+      {/* 리포트 상단 광고 지면 */}
+      <AdBanner position="top" />
+
       {/* 1. Header & Summary Card */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
         <CardContent className="p-10 space-y-8">
@@ -91,7 +95,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </div>
           </div>
 
-          {/* 주요 팩트 체크 */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="p-5 bg-muted/10 rounded-[2rem] flex items-center gap-4">
                <div className="p-3 bg-white rounded-2xl shadow-sm text-primary"><Factory size={20}/></div>
@@ -128,16 +131,8 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </CardContent>
       </Card>
 
-      {/* 광고 섹션 - 프리미엄 아닐 때만 노출 */}
-      {!isPremium && (
-        <Card className="border-none shadow-md rounded-[2rem] bg-muted/30 p-4 overflow-hidden text-center flex flex-col items-center justify-center min-h-[120px]">
-           <div className="text-[10px] font-black text-muted-foreground opacity-50 mb-2 uppercase tracking-widest">Sponsored</div>
-           <div className="flex items-center gap-2 text-muted-foreground">
-             <ImageIcon size={20} />
-             <span className="text-sm font-medium">Google AdSense/AdMob Placeholder</span>
-           </div>
-        </Card>
-      )}
+      {/* 리포트 중간 광고 지면 */}
+      <AdBanner position="middle" />
 
       {/* 2. Scientific Deep Dive */}
       <div className="space-y-6">
@@ -226,12 +221,8 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </Accordion>
       </div>
 
-      {/* 광고 섹션 - 하단 광고 */}
-      {!isPremium && (
-        <Card className="border-none shadow-md rounded-[2rem] bg-muted/30 p-10 text-center flex items-center justify-center">
-           <span className="text-xs font-black text-muted-foreground opacity-30">AD UNIT: LOWER_BANNER</span>
-        </Card>
-      )}
+      {/* 리포트 하단 광고 지면 */}
+      <AdBanner position="bottom" />
 
       {/* Floating Footer */}
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-2xl border-t z-50 flex justify-center shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">

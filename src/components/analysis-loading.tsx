@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { PawPrint } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useLanguage } from '@/contexts/language-context';
+import AdBanner from '@/components/ad-banner';
 
 export default function AnalysisLoading() {
   const { t } = useLanguage();
@@ -36,6 +37,11 @@ export default function AnalysisLoading() {
       <div className="w-full max-w-xs space-y-2 pt-4">
         <Progress value={progress} className="h-3" />
         <p className="text-sm font-bold text-primary animate-pulse">{progress}% 분석 중...</p>
+      </div>
+
+      {/* 로딩 중 지루함을 수익으로 전환하는 광고 지면 */}
+      <div className="w-full max-w-sm pt-8">
+        <AdBanner position="loading" />
       </div>
     </div>
   );

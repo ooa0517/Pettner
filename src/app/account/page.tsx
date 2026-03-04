@@ -19,7 +19,8 @@ import { Badge } from '@/components/ui/badge';
 import PetProfileSurvey from '@/components/pet-profile-survey';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
+import PaymentModal from '@/components/payment-modal';
 
 export default function AccountPage() {
   const { user, isUserLoading } = useUser();
@@ -28,6 +29,7 @@ export default function AccountPage() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [showSurvey, setShowSurvey] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
@@ -60,20 +62,6 @@ export default function AccountPage() {
     return email ? email.substring(0, 2).toUpperCase() : '..';
   }
 
-  const handleUpgrade = async () => {
-    if (!db || !user) return;
-    
-    // 시뮬레이션 결제 완료 처리
-    const userDocRef = doc(db, 'users', user.uid);
-    await updateDoc(userDocRef, { isPremium: true });
-    setIsPremium(true);
-    
-    toast({
-      title: "결제 완료! 평생 무제한 패스 활성화",
-      description: "이제 광고 없이 무제한으로 AI 분석을 이용하실 수 있습니다.",
-    });
-  };
-
   return (
     <div className="flex-grow p-4 md:p-8 bg-muted/20">
       <div className="max-w-4xl mx-auto space-y-8 pb-20">
@@ -84,7 +72,6 @@ export default function AccountPage() {
           </Badge>
         </div>
         
-        {/* 사용자 프로필 카드 */}
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <CardHeader className="flex flex-row items-center gap-6 p-8 space-y-0">
             <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
@@ -98,9 +85,8 @@ export default function AccountPage() {
           </CardHeader>
         </Card>
 
-        {/* 구독 관리 섹션 - 평생권 판매 유도 */}
         {!isPremium && (
-          <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden border-2 border-primary/20">
+          <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden border-2 border-primary/20 animate-in zoom-in-95 duration-500">
             <CardHeader className="p-8 border-b bg-primary/5">
               <div className="flex justify-between items-center">
                  <CardTitle className="flex items-center gap-2 text-xl font-black">
@@ -122,7 +108,7 @@ export default function AccountPage() {
                  </div>
                  <div className="text-center md:text-right space-y-2">
                     <p className="text-3xl font-black text-primary">4,990원</p>
-                    <Button onClick={handleUpgrade} size="lg" className="rounded-2xl h-14 px-8 font-black text-lg shadow-lg hover:scale-105 transition-transform">
+                    <Button onClick={() => setShowPayment(true)} size="lg" className="rounded-2xl h-14 px-8 font-black text-lg shadow-lg hover:scale-105 transition-transform">
                       지금 구매하기
                     </Button>
                  </div>
@@ -145,7 +131,6 @@ export default function AccountPage() {
           </Card>
         )}
 
-        {/* 반려동물 프로필 섹션 */}
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <CardHeader className="p-8">
             <CardTitle className="flex items-center gap-2 text-xl font-black">
@@ -171,7 +156,6 @@ export default function AccountPage() {
           </CardContent>
         </Card>
 
-        {/* 하단 퀵 메뉴 */}
         <div className="grid grid-cols-2 gap-4 pb-12">
            <Button variant="ghost" className="justify-between h-16 bg-white shadow-xl rounded-2xl border-none p-6 group overflow-hidden" onClick={() => router.push('/history')}>
               <span className="flex items-center gap-3 font-black text-lg"><ClipboardCheck className="w-6 h-6 text-primary"/> 분석 기록</span>
@@ -183,6 +167,8 @@ export default function AccountPage() {
            </Button>
         </div>
       </div>
+
+      <PaymentModal open={showPayment} onOpenChange={setShowPayment} />
     </div>
   );
 }
