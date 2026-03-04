@@ -45,6 +45,25 @@
         "createdAt"
       ]
     },
+    "Pet": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Pet",
+      "type": "object",
+      "description": "Represents a pet profile belonging to a user.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["dog", "cat"] },
+        "breed": { "type": "string" },
+        "age": { "type": "number" },
+        "weight": { "type": "number" },
+        "bcs": { "type": "string" },
+        "healthConditions": { "type": "array", "items": { "type": "string" } },
+        "allergies": { "type": "array", "items": { "type": "string" } },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "type", "breed"]
+    },
     "AnalysisHistory": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AnalysisHistory",
@@ -81,43 +100,17 @@
     ]
   },
   "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profile data and usage limits.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "Firebase Auth UID."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/analysisHistory/{analysisId}",
-        "definition": {
-          "entityName": "AnalysisHistory",
-          "schema": {
-            "$ref": "#/backend/entities/AnalysisHistory"
-          },
-          "description": "Stores the history of analyses for a specific user.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The owner of the history."
-            },
-            {
-              "name": "analysisId",
-              "description": "The unique ID of the analysis record."
-            }
-          ]
-        }
-      }
-    ]
+    "/users/{userId}": {
+      "schema": { "$ref": "#/backend/entities/User" },
+      "description": "Stores user profile data and usage limits."
+    },
+    "/users/{userId}/pets/{petId}": {
+      "schema": { "$ref": "#/backend/entities/Pet" },
+      "description": "Stores profiles of the user's pets."
+    },
+    "/users/{userId}/analysisHistory/{analysisId}": {
+      "schema": { "$ref": "#/backend/entities/AnalysisHistory" },
+      "description": "Stores the history of analyses for a specific user."
+    }
   }
 }

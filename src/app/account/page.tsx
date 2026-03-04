@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -13,13 +13,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PlusCircle, Loader2, ChevronRight, HeartPulse, ClipboardCheck, CreditCard, Crown, Sparkles, Zap, ShieldCheck } from 'lucide-react';
+import { PlusCircle, Loader2, ChevronRight, HeartPulse, ClipboardCheck, CreditCard, Crown, Sparkles, Zap, ShieldCheck, Cat, Dog, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/contexts/language-context';
 import { Badge } from '@/components/ui/badge';
 import PetProfileSurvey from '@/components/pet-profile-survey';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, deleteDoc } from 'firebase/firestore';
 import PaymentModal from '@/components/payment-modal';
 
 export default function AccountPage() {
@@ -30,7 +30,14 @@ export default function AccountPage() {
   const { toast } = useToast();
   const [showSurvey, setShowSurvey] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+
+  const petsQuery = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return collection(db, 'users', user.uid, 'pets');
+  }, [db, user]);
+
+  const { data: pets, isLoading: isPetsLoading } = useCollection(petsQuery);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -40,15 +47,23 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (user && db) {
-      const fetchUserData = async () => {
-        const snap = await getDoc(doc(db, 'users', user.uid));
-        if (snap.exists()) {
-          setIsPremium(snap.data().isPremium || false);
-        }
-      };
-      fetchUserData();
+      getDoc(doc(db, 'users', user.uid)).then(snap => {
+        if (snap.exists()) setUserData(snap.data());
+      });
     }
   }, [user, db]);
+
+  const handleDeletePet = async (petId: string) => {
+    if (!db || !user) return;
+    if (!confirm("정말 이 프로필을 삭제하시겠습니까?")) return;
+
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'pets', petId));
+      toast({ title: "프로필 삭제 완료" });
+    } catch (e) {
+      toast({ variant: "destructive", title: "삭제 실패" });
+    }
+  };
 
   if (isUserLoading || !user) {
     return (
@@ -57,11 +72,9 @@ export default function AccountPage() {
       </div>
     );
   }
-  
-  const getInitials = (email: string | null) => {
-    return email ? email.substring(0, 2).toUpperCase() : '..';
-  }
 
+  const isPremium = userData?.isPremium || false;
+  
   return (
     <div className="flex-grow p-4 md:p-8 bg-muted/20">
       <div className="max-w-4xl mx-auto space-y-8 pb-20">
@@ -76,7 +89,7 @@ export default function AccountPage() {
           <CardHeader className="flex flex-row items-center gap-6 p-8 space-y-0">
             <Avatar className="h-24 w-24 border-4 border-white shadow-lg">
               <AvatarImage src={user.photoURL || ''} />
-              <AvatarFallback className="bg-primary/10 text-primary text-2xl font-black">{getInitials(user.email)}</AvatarFallback>
+              <AvatarFallback className="bg-primary/10 text-primary text-2xl font-black">{user.email?.substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="space-y-1">
               <CardTitle className="text-3xl font-black tracking-tight">{user.displayName || 'Pettner User'}</CardTitle>
@@ -85,76 +98,68 @@ export default function AccountPage() {
           </CardHeader>
         </Card>
 
-        {!isPremium && (
-          <Card className="border-none shadow-2xl rounded-[2.5rem] bg-white overflow-hidden border-2 border-primary/20 animate-in zoom-in-95 duration-500">
-            <CardHeader className="p-8 border-b bg-primary/5">
-              <div className="flex justify-between items-center">
-                 <CardTitle className="flex items-center gap-2 text-xl font-black">
-                   <Crown className="text-amber-500"/>
-                   한정 특가: 평생 무제한 패스
-                 </CardTitle>
-                 <Badge variant="outline" className="font-bold border-amber-500 text-amber-500">-50% OFF</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="p-8 space-y-6">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                 <div className="space-y-2">
-                    <p className="text-lg font-bold">4,990원으로 누리는 수의사의 눈</p>
-                    <ul className="text-sm text-muted-foreground space-y-1 font-medium">
-                      <li className="flex items-center gap-2"><Sparkles size={14} className="text-primary"/> AI 무제한 정밀 분석</li>
-                      <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-primary"/> 모든 분석 광고 제거</li>
-                      <li className="flex items-center gap-2"><Zap size={14} className="text-primary"/> 가장 빠른 최신 모델 분석 적용</li>
-                    </ul>
-                 </div>
-                 <div className="text-center md:text-right space-y-2">
-                    <p className="text-3xl font-black text-primary">4,990원</p>
-                    <Button onClick={() => setShowPayment(true)} size="lg" className="rounded-2xl h-14 px-8 font-black text-lg shadow-lg hover:scale-105 transition-transform">
-                      지금 구매하기
-                    </Button>
-                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {isPremium && (
-          <Card className="border-none shadow-xl rounded-[2.5rem] bg-gradient-to-br from-amber-50 to-white overflow-hidden border-2 border-amber-200">
-            <CardContent className="p-10 flex flex-col items-center text-center space-y-4">
-               <div className="bg-amber-100 p-4 rounded-full text-amber-600">
-                 <Crown size={40} />
-               </div>
-               <div>
-                 <h3 className="text-2xl font-black text-amber-800">Premium Member</h3>
-                 <p className="text-amber-700/70 font-bold">평생 무제한 패스를 이용 중입니다.</p>
-               </div>
-            </CardContent>
-          </Card>
-        )}
-
         <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
-          <CardHeader className="p-8">
+          <CardHeader className="p-8 flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-xl font-black">
               <HeartPulse className="text-primary"/>
-              나의 반려동물 정밀 프로필
+              나의 반려동물 프로필
             </CardTitle>
+            <Dialog open={showSurvey} onOpenChange={setShowSurvey}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="rounded-xl border-primary text-primary font-bold">
+                  <PlusCircle className="mr-2 h-4 w-4" /> 추가
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl p-0 overflow-hidden border-none bg-white rounded-[2.5rem]">
+                <PetProfileSurvey onComplete={() => setShowSurvey(false)} />
+              </DialogContent>
+            </Dialog>
           </CardHeader>
           <CardContent className="p-8 pt-0">
-            <div className="border-[3px] border-dashed border-muted rounded-[2rem] p-12 text-center bg-muted/5">
-                <p className="text-muted-foreground font-bold mb-6 text-lg">아직 등록된 반려동물이 없습니다.</p>
-                <Dialog open={showSurvey} onOpenChange={setShowSurvey}>
-                  <DialogTrigger asChild>
-                    <Button size="lg" variant="outline" className="rounded-2xl h-14 px-8 font-black border-2 border-primary text-primary hover:bg-primary/5 transition-all">
-                      <PlusCircle className="mr-2 h-5 w-5" />
-                      정밀 설문 시작하기
+            {isPetsLoading ? (
+              <div className="flex justify-center p-8"><Loader2 className="animate-spin text-primary"/></div>
+            ) : pets && pets.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {pets.map(pet => (
+                  <div key={pet.id} className="p-6 bg-muted/30 rounded-3xl flex items-center justify-between group">
+                    <div className="flex items-center gap-4">
+                      <div className="p-3 bg-white rounded-2xl shadow-sm">
+                        {pet.petType === 'cat' ? <Cat className="text-primary"/> : <Dog className="text-primary"/>}
+                      </div>
+                      <div>
+                        <p className="font-black text-lg">{pet.name}</p>
+                        <p className="text-xs text-muted-foreground font-bold">{pet.breed} · {pet.age}살 · {pet.weight}kg</p>
+                      </div>
+                    </div>
+                    <Button size="icon" variant="ghost" className="opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10" onClick={() => handleDeletePet(pet.id)}>
+                      <Trash2 size={18}/>
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-3xl p-0 overflow-hidden border-none bg-transparent shadow-none">
-                    <PetProfileSurvey onComplete={() => setShowSurvey(false)} />
-                  </DialogContent>
-                </Dialog>
-            </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="border-[3px] border-dashed border-muted rounded-[2rem] p-12 text-center bg-muted/5">
+                <p className="text-muted-foreground font-bold mb-4">등록된 반려동물이 없습니다.</p>
+                <p className="text-xs text-muted-foreground">아이의 정보를 미리 저장하고 1초 만에 분석을 받아보세요.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        {!isPremium && (
+          <Card className="border-none shadow-2xl rounded-[2.5rem] bg-gradient-to-br from-primary/5 to-white overflow-hidden border-2 border-primary/10">
+            <CardContent className="p-10 flex flex-col md:flex-row items-center justify-between gap-8">
+               <div className="space-y-4 text-center md:text-left">
+                  <Badge className="bg-amber-500 text-white font-black">LIFETIME OFFER</Badge>
+                  <h3 className="text-3xl font-black leading-tight">평생 무제한 패스<br/>지금 4,990원</h3>
+                  <p className="text-muted-foreground font-medium">광고 제거 + 무제한 분석 + 정밀 영양 리포트 저장</p>
+               </div>
+               <Button onClick={() => setShowPayment(true)} size="lg" className="rounded-2xl h-16 px-10 font-black text-xl shadow-xl hover:scale-105 transition-transform">
+                 지금 구매하기
+               </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-2 gap-4 pb-12">
            <Button variant="ghost" className="justify-between h-16 bg-white shadow-xl rounded-2xl border-none p-6 group overflow-hidden" onClick={() => router.push('/history')}>
@@ -162,7 +167,7 @@ export default function AccountPage() {
               <ChevronRight className="w-5 h-5 opacity-30 group-hover:opacity-100 group-hover:translate-x-1 transition-all"/>
            </Button>
            <Button variant="ghost" className="justify-between h-16 bg-white shadow-xl rounded-2xl border-none p-6 group overflow-hidden">
-              <span className="flex items-center gap-3 font-black text-lg"><CreditCard className="w-6 h-6 text-primary"/> 결제 수단</span>
+              <span className="flex items-center gap-3 font-black text-lg"><CreditCard className="w-6 h-6 text-primary"/> 결제 관리</span>
               <ChevronRight className="w-5 h-5 opacity-30 group-hover:opacity-100 group-hover:translate-x-1 transition-all"/>
            </Button>
         </div>

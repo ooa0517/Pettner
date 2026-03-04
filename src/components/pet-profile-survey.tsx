@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -9,10 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Activity, HeartPulse, ClipboardCheck, ArrowRight, ArrowLeft, Dog, Cat, Info, Calendar, Footprints, Droplets, Pill } from 'lucide-react';
+import { Activity, HeartPulse, ClipboardCheck, ArrowRight, ArrowLeft, Dog, Cat, Info, Calendar, Footprints, Droplets, Pill, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useUser, useFirestore } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 const petProfileSchema = z.object({
   petType: z.enum(['dog', 'cat']),
@@ -35,9 +37,13 @@ const petProfileSchema = z.object({
 
 type PetProfileValues = z.infer<typeof petProfileSchema>;
 
-export default function PetProfileSurvey({ onComplete }: { onComplete: (data: PetProfileValues) => void }) {
+export default function PetProfileSurvey({ onComplete }: { onComplete: () => void }) {
+  const { user } = useUser();
+  const db = useFirestore();
+  const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [petType, setPetType] = useState<'dog' | 'cat'>('dog');
+  const [isSaving, setIsSaving] = useState(false);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<PetProfileValues>({
     resolver: zodResolver(petProfileSchema),
@@ -56,24 +62,41 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
   });
 
   const selectedConditions = watch('healthConditions');
-  const selectedAllergies = watch('allergies');
+  const selectedPetType = watch('petType');
 
   const dogConditions = ['슬개골 탈구', '관절염', '피부 알러지', '눈물 자국', '심장 질환', '소화 불량', '췌장염'];
   const catConditions = ['방광염/요로결석', '신장 질환', '헤어볼', '구강 건강', '심부전', '당뇨'];
 
-  const conditions = petType === 'dog' ? dogConditions : catConditions;
-  const allergyList = ['닭고기', '소고기', '연어', '양고기', '곡물', '달걀'];
+  const conditions = selectedPetType === 'dog' ? dogConditions : catConditions;
 
-  const onSubmit = (data: PetProfileValues) => {
-    onComplete(data);
+  const onSubmit = async (data: PetProfileValues) => {
+    if (!user || !db) {
+      toast({ variant: "destructive", title: "로그인 필요", description: "프로필을 저장하려면 로그인이 필요합니다." });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const petsRef = collection(db, 'users', user.uid, 'pets');
+      await addDoc(petsRef, {
+        ...data,
+        updatedAt: serverTimestamp(),
+      });
+      toast({ title: "프로필 등록 완료", description: `${data.name}의 정보가 안전하게 저장되었습니다.` });
+      onComplete();
+    } catch (error) {
+      console.error("Error saving pet profile:", error);
+      toast({ variant: "destructive", title: "저장 실패", description: "프로필 저장 중 오류가 발생했습니다." });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const nextStep = () => setStep(s => s + 1);
   const prevStep = () => setStep(s => s - 1);
 
   return (
-    <TooltipProvider>
-    <Card className="w-full max-w-2xl mx-auto shadow-2xl border-none bg-white rounded-[2.5rem] overflow-hidden">
+    <Card className="w-full max-w-2xl mx-auto shadow-none border-none bg-white rounded-none overflow-hidden h-full md:h-auto">
       <CardHeader className="text-center bg-muted/30 p-8 border-b">
         <div className="flex justify-center mb-6">
           {[1, 2, 3, 4].map(i => (
@@ -94,14 +117,12 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
           {step === 1 && (
             <div className="space-y-6 animate-in fade-in">
               <div className="grid grid-cols-2 gap-4">
-                <Label htmlFor="dog-s" className={cn("flex flex-col items-center p-6 border-2 rounded-2xl cursor-pointer", watch('petType') === 'dog' ? "border-primary bg-primary/5" : "border-muted")}>
-                  <RadioGroupItem value="dog" id="dog-s" className="sr-only" onClick={() => { setPetType('dog'); setValue('petType', 'dog'); }} />
+                <div onClick={() => { setPetType('dog'); setValue('petType', 'dog'); }} className={cn("flex flex-col items-center p-6 border-2 rounded-2xl cursor-pointer transition-all", watch('petType') === 'dog' ? "border-primary bg-primary/5" : "border-muted opacity-50")}>
                   <Dog className="w-10 h-10 mb-2"/> 강아지
-                </Label>
-                <Label htmlFor="cat-s" className={cn("flex flex-col items-center p-6 border-2 rounded-2xl cursor-pointer", watch('petType') === 'cat' ? "border-primary bg-primary/5" : "border-muted")}>
-                  <RadioGroupItem value="cat" id="cat-s" className="sr-only" onClick={() => { setPetType('cat'); setValue('petType', 'cat'); }} />
+                </div>
+                <div onClick={() => { setPetType('cat'); setValue('petType', 'cat'); }} className={cn("flex flex-col items-center p-6 border-2 rounded-2xl cursor-pointer transition-all", watch('petType') === 'cat' ? "border-primary bg-primary/5" : "border-muted opacity-50")}>
                   <Cat className="w-10 h-10 mb-2"/> 고양이
-                </Label>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <Input placeholder="이름" {...register('name')} className="rounded-xl h-12" />
@@ -120,23 +141,13 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
               <div className="space-y-4">
                 <div className="p-4 bg-muted/20 rounded-2xl">
                   <Label className="text-xs font-bold mb-2 block">최근 3개월 체중 변화</Label>
-                  <RadioGroup defaultValue="none" onValueChange={v => setValue('weightChange', v)} className="flex gap-2">
+                  <div className="flex gap-2">
                     {['변화없음', '찜', '빠짐'].map((v, i) => (
-                      <Label key={v} className={cn("flex-1 text-center p-2 border rounded-xl text-xs cursor-pointer", watch('weightChange') === (i===0?'none':i===1?'gain':'loss') ? "bg-primary text-white" : "bg-white")}>
-                        <RadioGroupItem value={i===0?'none':i===1?'gain':'loss'} className="sr-only"/> {v}
-                      </Label>
+                      <div key={v} onClick={() => setValue('weightChange', i===0?'none':i===1?'gain':'loss')} className={cn("flex-1 text-center p-2 border rounded-xl text-xs cursor-pointer", watch('weightChange') === (i===0?'none':i===1?'gain':'loss') ? "bg-primary text-white" : "bg-white")}>
+                        {v}
+                      </div>
                     ))}
-                  </RadioGroup>
-                </div>
-                <div className="p-4 bg-muted/20 rounded-2xl">
-                  <Label className="text-xs font-bold mb-2 block">평소 변 상태</Label>
-                  <RadioGroup defaultValue="GOOD" onValueChange={v => setValue('stoolCondition', v)} className="flex gap-2">
-                    {['딱딱', '촉촉', '설사'].map((v, i) => (
-                      <Label key={v} className={cn("flex-1 text-center p-2 border rounded-xl text-xs cursor-pointer", watch('stoolCondition') === (i===0?'DRY':i===1?'GOOD':'SOFT') ? "bg-primary text-white" : "bg-white")}>
-                        <RadioGroupItem value={i===0?'DRY':i===1?'GOOD':'SOFT'} className="sr-only"/> {v}
-                      </Label>
-                    ))}
-                  </RadioGroup>
+                  </div>
                 </div>
               </div>
             </div>
@@ -146,14 +157,14 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
             <div className="space-y-6 animate-in fade-in">
               <Label className="font-bold">라이프스타일 및 행동</Label>
               <div className="space-y-3">
-                <Label className="text-xs font-bold">{petType === 'dog' ? '산책 빈도' : '고양이 환경'}</Label>
-                <RadioGroup onValueChange={v => setValue('lifestyle', v)} className="grid gap-2">
-                  {(petType === 'dog' ? ['안함', '30분 미만', '1시간 내외', '활발함'] : ['실내묘', '산책묘', '외출묘']).map(v => (
-                    <Label key={v} className={cn("p-4 border rounded-2xl cursor-pointer text-sm font-bold", watch('lifestyle') === v ? "border-primary bg-primary/5" : "border-muted")}>
-                      <RadioGroupItem value={v} className="sr-only"/> {v}
-                    </Label>
+                <Label className="text-xs font-bold">{selectedPetType === 'dog' ? '산책 빈도' : '고양이 환경'}</Label>
+                <div className="grid gap-2">
+                  {(selectedPetType === 'dog' ? ['안함', '30분 미만', '1시간 내외', '활발함'] : ['실내묘', '산책묘', '외출묘']).map(v => (
+                    <div key={v} onClick={() => setValue('lifestyle', v)} className={cn("p-4 border rounded-2xl cursor-pointer text-sm font-bold", watch('lifestyle') === v ? "border-primary bg-primary/5" : "border-muted")}>
+                      {v}
+                    </div>
                   ))}
-                </RadioGroup>
+                </div>
               </div>
             </div>
           )}
@@ -163,24 +174,29 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: (data: Pe
               <Label className="font-bold">질환 및 병력 관리</Label>
               <div className="flex flex-wrap gap-2">
                 {conditions.map(c => (
-                  <Badge key={c} variant={selectedConditions.includes(c) ? "default" : "outline"} className="cursor-pointer px-4 py-2" onClick={() => {
+                  <div key={c} className={cn("cursor-pointer px-4 py-2 rounded-full text-xs font-bold border transition-all", selectedConditions.includes(c) ? "bg-primary text-white border-primary" : "bg-white border-muted")} onClick={() => {
                     const cur = selectedConditions;
                     setValue('healthConditions', cur.includes(c) ? cur.filter(x => x !== c) : [...cur, c]);
-                  }}>{c}</Badge>
+                  }}>{c}</div>
                 ))}
               </div>
               <Input placeholder="복용 중인 약물 직접 기입" {...register('medications')} className="rounded-xl h-12 mt-4" />
-              <Input placeholder="기타 건강 고민 직접 기입" {...register('customHealthNote')} className="rounded-xl h-12" />
             </div>
           )}
         </CardContent>
 
         <CardFooter className="flex justify-between border-t p-8 bg-muted/10">
           {step > 1 ? <Button type="button" variant="ghost" onClick={prevStep}><ArrowLeft className="mr-2 h-4 w-4"/> 이전</Button> : <div/>}
-          {step < 4 ? <Button type="button" onClick={nextStep}>다음 <ArrowRight className="ml-2 h-4 w-4"/></Button> : <Button type="submit">프로필 등록 완료</Button>}
+          {step < 4 ? (
+            <Button type="button" onClick={nextStep} className="font-black">다음 <ArrowRight className="ml-2 h-4 w-4"/></Button>
+          ) : (
+            <Button type="submit" disabled={isSaving} className="font-black">
+              {isSaving ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : null}
+              프로필 등록 완료
+            </Button>
+          )}
         </CardFooter>
       </form>
     </Card>
-    </TooltipProvider>
   );
 }

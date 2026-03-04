@@ -1,16 +1,7 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    /**
-     * PETTNER INGREDIENT ANALYZER SECURITY RULES
-     * 
-     * Core Philosophy:
-     * This ruleset implements a strict User-Ownership model for personal profiles and a 
-     * Community-Shared access model for product analysis results.
-     */
-
-    // --- Helper Functions ---
 
     function isSignedIn() {
       return request.auth != null;
@@ -20,35 +11,22 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isExistingOwner(userId) {
-      return resource != null && isOwner(userId);
-    }
-
-    // --- Collection Rules ---
-
-    /**
-     * @description Rules for the User collection and its subcollections.
-     */
     match /users/{userId} {
       allow get, list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
 
-      /**
-       * @description 분석 히스토리 서브컬렉션 규칙. 
-       * 사용자는 본인의 기록만 읽고 생성하고 삭제할 수 있습니다.
-       * 기록의 무결성을 위해 업데이트는 금지합니다.
-       */
+      match /pets/{petId} {
+        allow read, write: if isOwner(userId);
+      }
+
       match /analysisHistory/{analysisId} {
         allow read, create, delete: if isOwner(userId);
         allow update: if false;
       }
     }
 
-    /**
-     * @description Rules for the Product collection.
-     */
     match /products/{productId} {
       allow get, list: if isSignedIn();
       allow create: if isSignedIn();
