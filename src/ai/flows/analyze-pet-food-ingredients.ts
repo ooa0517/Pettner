@@ -1,10 +1,10 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v14.0 - Professional Life-stage & Genetic Matching]
- * - Mathematical Integrity: (Dosage * %) / 100.
- * - Genetic Engine: Breed-specific risk matching.
- * - Life-cycle: Puppy/Adult/Senior precision nutrition.
+ * @fileOverview [Pettner Core Engine v15.0 - Scientific Paper Based & Corporate ESG Audit]
+ * - Cat vs Dog: Distinct physiological logic based on NRC/AAFCO papers.
+ * - Corporate Audit: Deep dive into Manufacturing (OEM/In-house), Sourcing, and ESG.
+ * - Pettner Compliance: Automated verification of Pettner's nutritional standards.
  */
 
 import {ai} from '@/ai/genkit';
@@ -32,7 +32,7 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
 
 export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngredientsInputSchema>;
 
-// 프롬프트용 확장 스키마 (Handlebars eq 헬퍼 에러 방지를 위해 불리언 플래그 사용)
+// 프롬프트용 확장 스키마
 const PromptInputSchema = AnalyzePetFoodIngredientsInputSchema.extend({
   isModeA: z.boolean().describe('제품 감사 모드 여부'),
   isModeB: z.boolean().describe('맞춤 컨설팅 모드 여부'),
@@ -45,73 +45,54 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     name: z.string().describe('Identified product name'),
     brand: z.string().describe('Brand name'),
     category: z.string().describe('Category'),
-    targetAudience: z.object({
-      lifeStage: z.string().describe('Recommended life stage (Puppy/Adult/Senior)'),
-      recommendedBreeds: z.string().describe('Optimal breeds'),
-    }).optional(),
-    manufacturingDetails: z.object({
-      productionType: z.string().describe('In-house/OEM/ODM'),
-      facilityInfo: z.string().describe('Safety certifications'),
-      sourcingOrigin: z.string().describe('Origin of primary ingredients')
-    }).optional()
+    pettnerCompliance: z.object({
+      isCompliant: z.boolean().describe('Pettner 분석법 부합 여부'),
+      reason: z.string().describe('부합/미달 사유 요약')
+    }),
+    manufacturingAudit: z.object({
+      productionType: z.string().describe('자사생산/OEM/ODM'),
+      facilitySafety: z.string().describe('HACCP/ISO 등 인증 상태'),
+      sourcingOrigin: z.string().describe('주요 원료 수급 국가 (Deep Search 결과)')
+    })
   }),
   scoreCard: z.object({
-    totalScore: z.number().min(0).max(100).describe('Total score'),
-    headline: z.string().describe('Core diagnostic headline'),
-    statusTags: z.array(z.string()).describe('Status tags'),
-    grade: z.string().optional().describe('Display grade (e.g., A+, B)')
+    totalScore: z.number().min(0).max(100),
+    headline: z.string(),
+    statusTags: z.array(z.string()),
+    grade: z.string().optional()
   }),
-  calculatorData: z.object({
-    unitName: z.string().describe('Unit (g, pill, piece)'),
-    defaultAmount: z.number().describe('Default amount for 1 unit or 100g'),
-    kcalPerUnit: z.number().describe('Calories per unit'),
-    nutrientsPerUnit: z.object({
-      protein: z.number().describe('Protein mass in grams'),
-      fat: z.number().describe('Fat mass in grams'),
-      carbs: z.number().describe('Carb mass in grams')
+  scientificAnalysis: z.object({
+    catSpecific: z.object({
+      taurineCheck: z.string().optional(),
+      arginineCheck: z.string().optional(),
+      animalProteinRatio: z.string().optional()
+    }).optional(),
+    dogSpecific: z.object({
+      omnivorousBalance: z.string().optional(),
+      breedRiskMatching: z.string().optional()
+    }).optional(),
+    nutrientMass: z.object({
+      protein_g: z.number(),
+      fat_g: z.number(),
+      carbs_g: z.number(),
+      kcal: z.number()
     })
-  }).optional(),
+  }),
+  esgReport: z.object({
+    environmental: z.string().describe('친환경 패키징 및 탄소 저감 지표'),
+    corporateEthics: z.string().describe('기업 윤리 및 사회 공헌'),
+    recallHistory: z.string().describe('최근 5년 내 리콜 이력 및 대응')
+  }),
   personalMatching: z.object({
     matches: z.array(z.object({ feature: z.string(), reason: z.string() })),
     mismatches: z.array(z.object({ feature: z.string(), reason: z.string() }))
   }).optional(),
-  weightDiagnosis: z.object({
-    currentWeight: z.number(),
-    idealWeight: z.number(),
-    weightGap: z.number(),
-    breedStandardRange: z.string().describe('Standard range for the breed'),
-    breedGeneticInsight: z.string().describe('Genetic vulnerability insight'),
-    overweightPercentage: z.number(),
-    verdict: z.string()
-  }).optional(),
-  deepDive: z.object({
-    ingredientAudit: z.object({
-      tiers: z.array(z.object({
-        level: z.string(),
-        ingredients: z.array(z.string()),
-        comment: z.string()
-      })),
-      giIndex: z.string(),
-      giComment: z.string()
-    }).optional(),
-    nutritionalEngineering: z.object({
-      ratios: z.object({
-        caPRatio: z.string(),
-        omega63Ratio: z.string(),
-        balanceVerdict: z.string()
-      })
-    }).optional(),
-    safetyToxicology: z.object({
-      checks: z.array(z.object({ label: z.string(), status: z.boolean() })),
-      recallHistory: z.string()
-    }).optional()
-  }).optional(),
   feedingSummary: z.object({
-    dailyAmount: z.string().describe('e.g., 230.2g'),
-    perMealAmount: z.string().describe('e.g., 115.1g'),
-    cupGuide: z.string().describe('e.g., 1.5 cups')
+    dailyAmount: z.string(),
+    perMealAmount: z.string(),
+    cupGuide: z.string()
   }).optional(),
-  veterinaryAdvice: z.string().describe('Final professional advice')
+  veterinaryAdvice: z.string()
 });
 
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
@@ -121,39 +102,34 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: PromptInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `You are the world's most advanced Veterinary Nutritionist and Product Auditor.
-Analyze the pet food product and provide a precision report in the TARGET LANGUAGE: {{{language}}}.
+  prompt: `You are the Pettner V15.0 AI Veterinary Scientist & Corporate Auditor.
+Analyze the pet food product with 99% accuracy and cross-verify with scientific papers (NRC, AAFCO).
 
-# [Pettner V14.0 Mandatory Execution: Strict Math & Logic]
+# [Pettner V15.0 Mandatory Scientific Protocols]
 
-## 1. Mathematical Integrity (STRICT)
-- Calculate nutrient masses (Protein, Fat, Carbs) in 'g' for the default unit (100g or 1 Piece/Pill).
-- Formula: (Unit_Amount * Ingredient_%) / 100.
-- THE SUM OF NUTRIENT MASSES MUST NOT EXCEED THE UNIT AMOUNT. 
-- Example: If defaultAmount is 100g, and Protein is 25%, Protein mass is 25g.
-- Ensure all numerical data are Number types.
+## 1. Species-Specific Scientific Logic
+- **IF petType === 'cat'**: Apply "Obligate Carnivore" logic. Focus on Taurine, Arginine, and Arachidonic Acid. Evaluate if animal protein is the primary source. Check for carbohydrate excess (DM > 10% is cautionary).
+- **IF petType === 'dog'**: Apply "Facultative Carnivore/Omnivore" logic. Focus on balanced amino acid profiles and breed-specific requirements (e.g., Maltipoo joints, Poodle skin).
 
-## 2. Professional Life-stage & Genetic Matching (Mode B - isModeB: true)
-- Only if isModeB is true:
-- **Life-stage:** Determine if the pet is Puppy, Adult, or Senior based on Age. Evaluate if the product meets specific nutritional guidelines.
-- **Breed Genetics:** Identify breed-specific risks (e.g., Maltipoo -> Patellar Luxation). Analyze if ingredients support these risks.
-- **Obesity Logic:** If BCS is 4 or 5, set 'idealWeight' to ~15-20% lower than current. Status must be 'Obese' or 'Overweight'.
+## 2. Corporate & ESG Audit (Deep Search Mode)
+- **Manufacturer Audit**: Identify if it's In-house, OEM, or ODM. Look for HACCP/ISO certifications.
+- **Sourcing Origin**: Track the origin of the top 10 ingredients (e.g., "Chicken from Brazil", "Rice from Korea").
+- **ESG Analysis**: Report on Environmental (packaging), Corporate Ethics, and Recall History.
 
-## 3. Product Specialist Audit (Mode A - isModeA: true)
-- Identify Manufacturer: In-house vs OEM/ODM.
-- Track Sourcing: Origin of top 10 ingredients (e.g., "Salmon from Norway").
-- ESG Audit: Brand recall history and corporate ethical standards.
+## 3. Pettner Method Compliance
+- Verify if the product meets Pettner's "Zero Toxic, High Bioavailability" standard.
+- Set 'isCompliant' to true ONLY if it meets professional veterinary standards.
 
-# [Data Integrity]
-- No Markdown. Pure JSON only.
-- Match Target Language: {{{language}}}.
+## 4. Mathematical Integrity
+- Formula: (100g or 1 Unit * Ingredient_%) / 100.
+- SUM OF NUTRIENTS (Protein + Fat + Carbs) MUST NOT EXCEED THE UNIT MASS.
 
-Input Context:
-- Mode A: {{{isModeA}}}, Mode B: {{{isModeB}}}
-- Pet: {{{petType}}}, Breed: {{{petProfile.breed}}}, Weight: {{{petProfile.weight}}}, BCS: {{{petProfile.bcs}}}, Age: {{{petProfile.age}}}
-- Product Name: {{{productName}}}
+Language: {{{language}}} (ALL output must be in this language)
+Context:
+- Pet: {{{petType}}}, Mode: {{{analysisMode}}}
+- Product: {{{productName}}}
 {{#if photoDataUri}}
-- Photo Data: {{media url=photoDataUri}}
+- OCR/Photo Data provided.
 {{/if}}`
 });
 
@@ -165,23 +141,17 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
     outputSchema: AnalyzePetFoodIngredientsOutputSchema,
   },
   async (input) => {
-    try {
-      const response = await analyzePetFoodIngredientsPrompt({
-        ...input,
-        isModeA: input.analysisMode === 'general',
-        isModeB: input.analysisMode === 'custom',
-      });
+    const response = await analyzePetFoodIngredientsPrompt({
+      ...input,
+      isModeA: input.analysisMode === 'general',
+      isModeB: input.analysisMode === 'custom',
+    });
 
-      if (!response || !response.output) {
-        throw new Error('AI failed to return analysis result.');
-      }
-
-      return { ...response.output, status: 'success' as const };
-
-    } catch (error: any) {
-      console.error("🔥 AI 분석 중 치명적 오류 발생:", error);
-      throw new Error(`분석 실패: ${error.message}`);
+    if (!response || !response.output) {
+      throw new Error('AI failed to return analysis result.');
     }
+
+    return { ...response.output, status: 'success' as const };
   }
 );
 
