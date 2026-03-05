@@ -138,6 +138,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
   const selectedCategory = form.watch('productCategory');
   const detailedType = form.watch('detailedProductType');
   const imageFile = form.watch('image');
+  const prescriptionFile = form.watch('prescriptionImage');
 
   useEffect(() => {
     if (detailedType === '기타(직접 입력)') {
