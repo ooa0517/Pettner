@@ -53,7 +53,9 @@ type AnalysisFormValues = {
     walkingTime: string;
     livingEnvironment: string;
     healthConditions: string[];
+    customHealthCondition: string;
     allergies: string[];
+    customAllergy: string;
     waterIntake: string;
     stoolCondition: string;
     medications: string;
@@ -66,9 +68,9 @@ const CATEGORY_OPTIONS = {
   supplement: ['관절 영양제', '피부/모질 영양제', '눈/눈물 영양제', '유산균', '심장/신장 영양제', '종합 비타민', '기타(직접 입력)']
 };
 
-const DOG_CONDITIONS = ['슬개골 탈구', '관절염', '피부 알러지', '눈물 자국', '심장 질환', '소화 불량', '췌장염', '신장 질환'];
-const CAT_CONDITIONS = ['방광염/요로결석', '신장 질환', '헤어볼', '구강 건강', '심부전', '피부 건강', '당뇨'];
-const ALLERGY_LIST = ['닭고기', '소고기', '돼지고기', '연어', '곡물(그레인)', '계란', '유제품'];
+const DOG_CONDITIONS = ['슬개골 탈구', '관절염', '피부 알러지', '눈물 자국', '심장 질환', '소화 불량', '췌장염', '신장 질환', '기타(직접 입력)'];
+const CAT_CONDITIONS = ['방광염/요로결석', '신장 질환', '헤어볼', '구강 건강', '심부전', '피부 건강', '당뇨', '기타(직접 입력)'];
+const ALLERGY_LIST = ['닭고기', '소고기', '돼지고기', '연어', '곡물(그레인)', '계란', '유제품', '기타(직접 입력)', '없음/모름'];
 
 const BCS_DESCRIPTIONS: Record<string, string> = {
   '1': '매우 마름 (갈비뼈가 드러나고 지방이 거의 없음)',
@@ -112,7 +114,9 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
       walkingTime: z.string().optional(),
       livingEnvironment: z.string().optional(),
       healthConditions: z.array(z.string()).optional(),
+      customHealthCondition: z.string().optional(),
       allergies: z.array(z.string()).optional(),
+      customAllergy: z.string().optional(),
       waterIntake: z.string().optional(),
       stoolCondition: z.string().optional(),
       medications: z.string().optional(),
@@ -140,7 +144,9 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
         walkingTime: 'UNKNOWN',
         livingEnvironment: 'UNKNOWN',
         healthConditions: [],
+        customHealthCondition: '',
         allergies: [],
+        customAllergy: '',
         waterIntake: 'UNKNOWN',
         stoolCondition: 'UNKNOWN',
         medications: '',
@@ -181,7 +187,9 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
         walkingTime: pet.walkingTime || 'UNKNOWN',
         livingEnvironment: pet.livingEnvironment || 'UNKNOWN',
         healthConditions: pet.healthConditions || [],
+        customHealthCondition: pet.customHealthCondition || '',
         allergies: pet.allergies || [],
+        customAllergy: pet.customAllergy || '',
         waterIntake: pet.waterIntake || 'UNKNOWN',
         stoolCondition: pet.stoolCondition || 'UNKNOWN',
         medications: pet.medications || '',
@@ -190,9 +198,24 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
   };
 
   const onSubmit = (data: AnalysisFormValues) => {
+    const finalHealthConditions = [...data.petProfile.healthConditions];
+    if (data.petProfile.customHealthCondition && finalHealthConditions.includes('기타(직접 입력)')) {
+      finalHealthConditions.push(`기타: ${data.petProfile.customHealthCondition}`);
+    }
+
+    const finalAllergies = [...data.petProfile.allergies];
+    if (data.petProfile.customAllergy && finalAllergies.includes('기타(직접 입력)')) {
+      finalAllergies.push(`기타: ${data.petProfile.customAllergy}`);
+    }
+
     const finalData = {
       ...data,
-      detailedProductType: data.detailedProductType === '기타(직접 입력)' ? data.manualProductType : data.detailedProductType
+      detailedProductType: data.detailedProductType === '기타(직접 입력)' ? data.manualProductType : data.detailedProductType,
+      petProfile: {
+        ...data.petProfile,
+        healthConditions: finalHealthConditions,
+        allergies: finalAllergies,
+      }
     };
     onAnalyze(finalData);
   };
@@ -210,13 +233,18 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
 
   const toggleAllergy = (allergy: string) => {
     const current = [...selectedAllergies];
-    const index = current.indexOf(allergy);
-    if (index > -1) {
-      current.splice(index, 1);
-    } else {
-      current.push(allergy);
+    if (allergy === '없음/모름') {
+      form.setValue('petProfile.allergies', ['없음/모름']);
+      return;
     }
-    form.setValue('petProfile.allergies', current);
+    const filtered = current.filter(x => x !== '없음/모름');
+    const index = filtered.indexOf(allergy);
+    if (index > -1) {
+      filtered.splice(index, 1);
+    } else {
+      filtered.push(allergy);
+    }
+    form.setValue('petProfile.allergies', filtered);
   };
 
   return (
@@ -518,6 +546,18 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                         </button>
                       ))}
                     </div>
+                    {selectedAllergies.includes('기타(직접 입력)') && (
+                      <div className="animate-in slide-in-from-top-2">
+                        <FormField control={form.control} name="petProfile.customAllergy" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs font-bold text-destructive ml-2">상세 알러지 내용</FormLabel>
+                            <FormControl>
+                              <Input placeholder="예: 오리고기, 특정 과일 등" className="rounded-xl h-11 bg-muted/10 border-none px-4" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}/>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-4">
@@ -529,6 +569,18 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                         </button>
                       ))}
                     </div>
+                    {selectedConditions.includes('기타(직접 입력)') && (
+                      <div className="animate-in slide-in-from-top-2">
+                        <FormField control={form.control} name="petProfile.customHealthCondition" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-xs font-bold text-primary ml-2">상세 건강 상태</FormLabel>
+                            <FormControl>
+                              <Input placeholder="예: 쿠싱 증후군, 수술 이력 등" className="rounded-xl h-11 bg-muted/10 border-none px-4" {...field} />
+                            </FormControl>
+                          </FormItem>
+                        )}/>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-4">

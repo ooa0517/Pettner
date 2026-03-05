@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { 
   Activity, HeartPulse, ArrowRight, ArrowLeft, Dog, Cat, 
   Calendar, Footprints, Droplets, Loader2, Scale,
-  AlertTriangle, Home, Clock, Pill
+  AlertTriangle, Home, Clock, Pill, Edit3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore } from '@/firebase';
@@ -40,7 +40,9 @@ const petProfileSchema = z.object({
   walkingTime: z.string().default('UNKNOWN'),
   livingEnvironment: z.enum(['INDOOR', 'OUTDOOR', 'BOTH', 'UNKNOWN']).default('UNKNOWN'),
   healthConditions: z.array(z.string()).default([]),
+  customHealthCondition: z.string().optional(),
   allergies: z.array(z.string()).default([]),
+  customAllergy: z.string().optional(),
   waterIntake: z.enum(['LOW', 'NORMAL', 'HIGH', 'UNKNOWN']).default('UNKNOWN'),
   stoolCondition: z.enum(['GOOD', 'SOFT', 'HARD', 'DIARRHEA', 'UNKNOWN']).default('UNKNOWN'),
   medications: z.string().default(''),
@@ -62,7 +64,9 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
       gender: 'unknown',
       neutered: 'unknown',
       healthConditions: [],
+      customHealthCondition: '',
       allergies: [],
+      customAllergy: '',
       activityLevel: 'UNKNOWN',
       walkingTime: 'UNKNOWN',
       livingEnvironment: 'UNKNOWN',
@@ -84,9 +88,9 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
   const currentNeutered = watch('neutered');
   const currentGender = watch('gender');
 
-  const dogConditions = ['슬개골 탈구', '관절염', '피부 알러지', '눈물 자국', '심장 질환', '소화 불량', '췌장염', '신장 질환', '기타(메모 입력)'];
-  const catConditions = ['방광염/요로결석', '신장 질환', '헤어볼', '구강 건강', '심부전', '피부 건강', '당뇨', '기타(메모 입력)'];
-  const allergyList = ['닭고기', '소고기', '돼지고기', '연어', '곡물(그레인)', '계란', '유제품', '없음/모름'];
+  const dogConditions = ['슬개골 탈구', '관절염', '피부 알러지', '눈물 자국', '심장 질환', '소화 불량', '췌장염', '신장 질환', '기타(직접 입력)'];
+  const catConditions = ['방광염/요로결석', '신장 질환', '헤어볼', '구강 건강', '심부전', '피부 건강', '당뇨', '기타(직접 입력)'];
+  const allergyList = ['닭고기', '소고기', '돼지고기', '연어', '곡물(그레인)', '계란', '유제품', '기타(직접 입력)', '없음/모름'];
 
   const conditions = selectedPetType === 'dog' ? dogConditions : catConditions;
 
@@ -99,8 +103,22 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
     setIsSaving(true);
     try {
       const petsRef = collection(db, 'users', user.uid, 'pets');
+      
+      // 기타 입력값 합치기
+      const finalHealthConditions = [...data.healthConditions];
+      if (data.customHealthCondition && finalHealthConditions.includes('기타(직접 입력)')) {
+        finalHealthConditions.push(`기타: ${data.customHealthCondition}`);
+      }
+      
+      const finalAllergies = [...data.allergies];
+      if (data.customAllergy && finalAllergies.includes('기타(직접 입력)')) {
+        finalAllergies.push(`기타: ${data.customAllergy}`);
+      }
+
       await addDoc(petsRef, {
         ...data,
+        healthConditions: finalHealthConditions,
+        allergies: finalAllergies,
         updatedAt: serverTimestamp(),
       });
       toast({ title: "프로필 등록 완료" });
@@ -283,6 +301,16 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                     </div>
                   ))}
                 </div>
+                {selectedAllergies.includes('기타(직접 입력)') && (
+                  <div className="animate-in slide-in-from-top-2">
+                    <Label className="text-xs font-bold text-destructive mb-1 block ml-2">상세 알러지 성분 입력</Label>
+                    <Input 
+                      placeholder="예: 오리고기, 칠면조, 특정 과일 등" 
+                      {...register('customAllergy')} 
+                      className="rounded-xl h-11 bg-muted/20 border-none"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">
@@ -299,6 +327,16 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                     </div>
                   ))}
                 </div>
+                {selectedConditions.includes('기타(직접 입력)') && (
+                  <div className="animate-in slide-in-from-top-2">
+                    <Label className="text-xs font-bold text-primary mb-1 block ml-2">상세 건강 상태 입력</Label>
+                    <Input 
+                      placeholder="예: 쿠싱 증후군, 특정 수술 이력 등" 
+                      {...register('customHealthCondition')} 
+                      className="rounded-xl h-11 bg-muted/20 border-none"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           )}
