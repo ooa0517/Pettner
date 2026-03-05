@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { 
   Camera, Sparkles, Dog, Cat, 
   Scale, Stethoscope, ChevronDown, Pill, 
-  ShoppingBag, Cookie, HeartPulse, Info
+  ShoppingBag, Cookie, HeartPulse, Edit3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +37,7 @@ type AnalysisFormValues = {
   productName: string;
   productCategory: 'food' | 'treat' | 'supplement';
   detailedProductType: string;
+  manualProductType: string;
   image?: FileList;
   prescriptionImage?: FileList;
   petProfile: {
@@ -58,10 +59,17 @@ type AnalysisFormValues = {
   };
 };
 
+const CATEGORY_OPTIONS = {
+  food: ['건식 사료', '습식 사료(캔/파우치)', '화식/생식', '동결건조 사료', '소프트 사료', '기타(직접 입력)'],
+  treat: ['껌/치과용 간식', '져키/트릿', '츄르/퓨레', '동결건조 간식', '비스킷/쿠키', '기타(직접 입력)'],
+  supplement: ['관절 영양제', '피부/모질 영양제', '눈/눈물 영양제', '유산균', '심장/신장 영양제', '종합 비타민', '기타(직접 입력)']
+};
+
 export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => void }) {
   const { t } = useLanguage();
   const { user } = useUser();
   const db = useFirestore();
+  const [showManualInput, setShowManualInput] = useState(false);
   
   const petsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
@@ -76,6 +84,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
     productName: z.string().optional(),
     productCategory: z.enum(['food', 'treat', 'supplement']),
     detailedProductType: z.string(),
+    manualProductType: z.string().optional(),
     image: z.any().optional(),
     prescriptionImage: z.any().optional(),
     petProfile: z.object({
@@ -105,6 +114,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
       productName: '',
       productCategory: 'food',
       detailedProductType: '건식 사료',
+      manualProductType: '',
       petProfile: {
         name: '',
         gender: 'unknown',
@@ -125,16 +135,17 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
     },
   });
 
-  const selectedPet = form.watch('petType');
   const selectedCategory = form.watch('productCategory');
+  const detailedType = form.watch('detailedProductType');
   const imageFile = form.watch('image');
-  const prescriptionFile = form.watch('prescriptionImage');
 
-  const categoryOptions = {
-    food: ['건식 사료', '습식 사료(캔/파우치)', '화식/생식', '동결건조 사료', '소프트 사료'],
-    treat: ['껌/치과용 간식', '져키/트릿', '츄르/퓨레', '동결건조 간식', '비스킷/쿠키'],
-    supplement: ['관절 영양제', '피부/모질 영양제', '눈/눈물 영양제', '유산균', '심장/신장 영양제', '종합 비타민']
-  };
+  useEffect(() => {
+    if (detailedType === '기타(직접 입력)') {
+      setShowManualInput(true);
+    } else {
+      setShowManualInput(false);
+    }
+  }, [detailedType]);
 
   const selectSavedPet = (pet: any) => {
     form.reset({
@@ -161,7 +172,12 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
   };
 
   const onSubmit = (data: AnalysisFormValues) => {
-    onAnalyze(data);
+    // 만약 직접 입력 모드라면 detailedProductType을 manualProductType으로 교체
+    const finalData = {
+      ...data,
+      detailedProductType: data.detailedProductType === '기타(직접 입력)' ? data.manualProductType : data.detailedProductType
+    };
+    onAnalyze(finalData);
   };
 
   return (
@@ -211,7 +227,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
               <FormField control={form.control} name="productCategory" render={({ field }) => (
                 <RadioGroup onValueChange={(val) => {
                   field.onChange(val);
-                  form.setValue('detailedProductType', categoryOptions[val as keyof typeof categoryOptions][0]);
+                  form.setValue('detailedProductType', CATEGORY_OPTIONS[val as keyof typeof CATEGORY_OPTIONS][0]);
                 }} value={field.value} className="grid grid-cols-3 gap-3">
                   {[
                     { id: 'food', label: '사료', icon: ShoppingBag },
@@ -233,20 +249,39 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
               <div className="space-y-4">
                 <Label className="font-bold text-sm ml-2">세부 유형 선택</Label>
                 <div className="flex flex-wrap gap-2">
-                  {categoryOptions[selectedCategory].map((opt) => (
+                  {CATEGORY_OPTIONS[selectedCategory].map((opt) => (
                     <button
                       key={opt}
                       type="button"
                       onClick={() => form.setValue('detailedProductType', opt)}
                       className={cn(
                         "px-4 py-2 rounded-full font-bold text-xs border-2 transition-all",
-                        form.watch('detailedProductType') === opt ? "bg-primary text-white border-primary" : "bg-white border-muted text-muted-foreground"
+                        detailedType === opt ? "bg-primary text-white border-primary" : "bg-white border-muted text-muted-foreground"
                       )}
                     >
                       {opt}
                     </button>
                   ))}
                 </div>
+                
+                {showManualInput && (
+                  <div className="animate-in slide-in-from-top-2 duration-300">
+                    <FormField control={form.control} name="manualProductType" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2 font-black text-xs text-primary ml-2">
+                          <Edit3 size={12} /> 세부 유형 직접 입력
+                        </FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="예: 수제 자연식, 동결건조 토핑 등" 
+                            className="rounded-2xl h-12 bg-primary/5 border-2 border-primary/20 px-4 font-bold" 
+                            {...field} 
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}/>
+                  </div>
+                )}
               </div>
 
               <FormField control={form.control} name="productName" render={({ field }) => (
