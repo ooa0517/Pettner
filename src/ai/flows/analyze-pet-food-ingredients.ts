@@ -2,9 +2,9 @@
 'use server';
 
 /**
- * @fileOverview [Pettner V17.0 - Intelligent Profile Correction Engine]
- * - Added: AI-driven weight/breed standard matching.
- * - Logic: If input is 'unknown' or '0', AI provides standard values based on breed database.
+ * @fileOverview [Pettner V18.0 - Precision Life Cycle Audit]
+ * - Added: Neutering status, walking time, and living environment metrics.
+ * - Logic: AI calculates RER (Resting Energy Requirement) adjustments based on neutering and lifestyle.
  */
 
 import {ai} from '@/ai/genkit';
@@ -23,14 +23,16 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
     breed: z.string().optional(),
     age: z.number().optional(),
     weight: z.number().optional(),
-    neutered: z.boolean().optional(),
+    neutered: z.enum(['yes', 'no', 'unknown']).optional().describe('중성화 여부'),
     bcs: z.string().optional(),
     activityLevel: z.string().optional(),
+    walkingTime: z.string().optional().describe('평균 산책 시간 (없음, 30분 미만, 30~60분, 1시간 이상)'),
+    livingEnvironment: z.enum(['INDOOR', 'OUTDOOR', 'BOTH', 'UNKNOWN']).optional().describe('생활 환경'),
     healthConditions: z.array(z.string()).optional(),
     allergies: z.array(z.string()).optional(),
     waterIntake: z.string().optional(),
     stoolCondition: z.string().optional(),
-    medications: z.string().optional(),
+    medications: z.string().optional().describe('복용 중인 약물'),
   }).optional(),
 });
 
@@ -63,7 +65,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     currentWeight: z.number().describe('입력된 체중'),
     idealWeight: z.number().describe('AI가 판단한 해당 품종/생애주기별 이상적 체중'),
     weightGap: z.number().describe('이상적 체중과의 차이'),
-    breedStandardRange: z.string().describe('해당 품종의 표준 체중 범위 (예: 3~5kg)'),
+    breedStandardRange: z.string().describe('해당 품종의 표준 체중 범위'),
     overweightPercentage: z.number().describe('과체중 정도 (%)'),
     verdict: z.string().describe('체중에 대한 수의학적 소견')
   }).optional(),
@@ -106,30 +108,26 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `You are the Pettner V17.0 Medical Diagnostic AI Auditor.
+  prompt: `You are the Pettner V18.0 Medical Diagnostic AI Auditor.
 Response MUST be in pure JSON format ONLY.
 
-# [V17.0 Profile Correction Protocol]
+# [V18.0 Precision Life Cycle Protocol]
 
-## 1. Intelligent Data Completion
-- IF weight is 0 or unknown, search your veterinary database for the standard weight of the breed ({{{petProfile.breed}}}) and age ({{{petProfile.age}}}). Use this as the basis for RER (Resting Energy Requirement) calculation.
-- IF breed is 'unknown', use 'Mixed Breed' standards.
+## 1. Energy Requirement (RER/DER) Calculation
+- IF neutered === 'yes', decrease calorie requirement by 15-20% as metabolic rate drops.
+- IF activityLevel is 'HIGH' and walkingTime is 'OVER_60', increase calorie requirement by 20%.
+- IF livingEnvironment is 'OUTDOOR', adjust for seasonal energy expenditure.
 
-## 2. Weight Diagnosis (Mandatory for Custom Mode)
-- Calculate 'idealWeight' based on breed standards and BCS ({{{petProfile.bcs}}}).
-- Provide 'breedStandardRange' to educate the user.
-- IF BCS is 4 or 5, generate a 'dietRoadmap' showing how many grams to feed as the pet loses weight.
+## 2. Medical Interaction Audit
+- Check if ingredients in the product conflict with the listed 'medications' ({{{petProfile.medications}}}).
+- Highlight if the food is suitable for the 'healthConditions' ({{{petProfile.healthConditions}}}).
 
-## 3. Species-Specific Nutrition
-- IF petType === 'cat': Focus on Arginine/Taurine and moisture.
-- IF petType === 'dog': Balance amino acids with activity levels.
-
-## 4. ESG & Corporate Audit
-- Trace manufacturing origin and recall history.
+## 3. Intelligent Data Completion
+- IF weight is 0 or unknown, search your veterinary database for the standard weight of the breed ({{{petProfile.breed}}}) and age ({{{petProfile.age}}}). 
 
 Language: {{{language}}} (ALL text must be in this language)
-Pet: {{{petType}}}, Breed: {{{petProfile.breed}}}, Age: {{{petProfile.age}}}, Weight: {{{petProfile.weight}}}kg, BCS: {{{petProfile.bcs}}}
-Allergies: {{{petProfile.allergies}}}
+Pet: {{{petType}}}, Breed: {{{petProfile.breed}}}, Neutered: {{{petProfile.neutered}}}, Walking: {{{petProfile.walkingTime}}}
+Allergies: {{{petProfile.allergies}}}, Medications: {{{petProfile.medications}}}
 {{#if photoDataUri}}
 - Perform OCR on the provided image to extract ingredients and guaranteed analysis.
 {{/if}}`
