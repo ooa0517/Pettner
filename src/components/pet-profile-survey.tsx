@@ -19,6 +19,14 @@ import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
+const BCS_DESCRIPTIONS: Record<string, string> = {
+  '1': '매우 마름 (지방 거의 없음)',
+  '2': '마름 (지방 적음)',
+  '3': '이상적 (적당한 체형)',
+  '4': '통통함 (약간의 과체중)',
+  '5': '비만 (심한 과체중)',
+};
+
 const petProfileSchema = z.object({
   petType: z.enum(['dog', 'cat']),
   name: z.string().min(1, '이름을 입력해주세요'),
@@ -235,12 +243,19 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                 <Label className="font-black text-lg flex items-center gap-2">
                   <Scale size={20} className="text-primary" /> BCS (체형 지수)
                 </Label>
-                <div className="flex gap-2">
-                  {['1', '2', '3', '4', '5'].map(v => (
-                    <div key={v} onClick={() => setValue('bcs', v)} className={cn("flex-1 h-12 border-2 rounded-xl flex items-center justify-center font-black cursor-pointer", currentBCS === v ? "border-primary bg-primary text-white" : "border-muted text-muted-foreground")}>
-                      {v}
-                    </div>
-                  ))}
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    {['1', '2', '3', '4', '5'].map(v => (
+                      <div key={v} onClick={() => setValue('bcs', v)} className={cn("flex-1 h-12 border-2 rounded-xl flex items-center justify-center font-black cursor-pointer transition-all", currentBCS === v ? "border-primary bg-primary text-white" : "border-muted text-muted-foreground")}>
+                        {v}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
+                    <p className="text-sm font-black text-primary text-center">
+                      {currentBCS ? BCS_DESCRIPTIONS[currentBCS] : '체형을 선택해주세요'}
+                    </p>
+                  </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground text-center font-medium">1: 마름 / 3: 이상적 / 5: 비만</p>
               </div>
