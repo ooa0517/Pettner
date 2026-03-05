@@ -5,7 +5,8 @@ import { useMemo, useState, useEffect } from 'react';
 import { 
   Camera, Sparkles, Dog, Cat, 
   Scale, Stethoscope, ChevronDown, Pill, 
-  ShoppingBag, Cookie, HeartPulse, Edit3
+  ShoppingBag, Cookie, HeartPulse, Edit3,
+  Clock, Home, Droplets, AlertTriangle, Footprints
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +15,7 @@ import { useLanguage } from '@/contexts/language-context';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -64,6 +65,10 @@ const CATEGORY_OPTIONS = {
   treat: ['껌/치과용 간식', '져키/트릿', '츄르/퓨레', '동결건조 간식', '비스킷/쿠키', '기타(직접 입력)'],
   supplement: ['관절 영양제', '피부/모질 영양제', '눈/눈물 영양제', '유산균', '심장/신장 영양제', '종합 비타민', '기타(직접 입력)']
 };
+
+const DOG_CONDITIONS = ['슬개골 탈구', '관절염', '피부 알러지', '눈물 자국', '심장 질환', '소화 불량', '췌장염', '신장 질환'];
+const CAT_CONDITIONS = ['방광염/요로결석', '신장 질환', '헤어볼', '구강 건강', '심부전', '피부 건강', '당뇨'];
+const ALLERGY_LIST = ['닭고기', '소고기', '돼지고기', '연어', '곡물(그레인)', '계란', '유제품'];
 
 export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => void }) {
   const { t } = useLanguage();
@@ -137,8 +142,11 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
 
   const selectedCategory = form.watch('productCategory');
   const detailedType = form.watch('detailedProductType');
+  const petType = form.watch('petType');
   const imageFile = form.watch('image');
   const prescriptionFile = form.watch('prescriptionImage');
+  const selectedConditions = form.watch('petProfile.healthConditions') || [];
+  const selectedAllergies = form.watch('petProfile.allergies') || [];
 
   useEffect(() => {
     if (detailedType === '기타(직접 입력)') {
@@ -173,12 +181,33 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
   };
 
   const onSubmit = (data: AnalysisFormValues) => {
-    // 만약 직접 입력 모드라면 detailedProductType을 manualProductType으로 교체
     const finalData = {
       ...data,
       detailedProductType: data.detailedProductType === '기타(직접 입력)' ? data.manualProductType : data.detailedProductType
     };
     onAnalyze(finalData);
+  };
+
+  const toggleCondition = (condition: string) => {
+    const current = [...selectedConditions];
+    const index = current.indexOf(condition);
+    if (index > -1) {
+      current.splice(index, 1);
+    } else {
+      current.push(condition);
+    }
+    form.setValue('petProfile.healthConditions', current);
+  };
+
+  const toggleAllergy = (allergy: string) => {
+    const current = [...selectedAllergies];
+    const index = current.indexOf(allergy);
+    if (index > -1) {
+      current.splice(index, 1);
+    } else {
+      current.push(allergy);
+    }
+    form.setValue('petProfile.allergies', current);
   };
 
   return (
@@ -335,20 +364,166 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                       <FormItem><FormLabel className="font-bold ml-2">품종</FormLabel><FormControl><Input placeholder="예: 말티푸" className="rounded-2xl h-12 bg-muted/10 border-none px-4" {...field} /></FormControl></FormItem>
                     )}/>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="petProfile.age" render={({ field }) => (
+                      <FormItem><FormLabel className="font-bold ml-2 text-xs">나이 (살)</FormLabel><FormControl><Input type="number" step="0.1" className="rounded-2xl h-12 bg-muted/10 border-none px-4" {...field} /></FormControl></FormItem>
+                    )}/>
+                    <FormField control={form.control} name="petProfile.weight" render={({ field }) => (
+                      <FormItem><FormLabel className="font-bold ml-2 text-xs">체중 (kg)</FormLabel><FormControl><Input type="number" step="0.1" className="rounded-2xl h-12 bg-muted/10 border-none px-4" {...field} /></FormControl></FormItem>
+                    )}/>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="petProfile.gender" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold ml-2">성별</FormLabel>
+                        <div className="flex gap-2">
+                          {['male', 'female'].map(v => (
+                            <button key={v} type="button" onClick={() => field.onChange(v)} className={cn("flex-1 h-12 rounded-xl border-2 font-bold", field.value === v ? "border-primary bg-primary/5 text-primary" : "border-muted text-muted-foreground")}>
+                              {v === 'male' ? '남아' : '여아'}
+                            </button>
+                          ))}
+                        </div>
+                      </FormItem>
+                    )}/>
+                    <FormField control={form.control} name="petProfile.neutered" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold ml-2">중성화</FormLabel>
+                        <div className="flex gap-2">
+                          {['yes', 'no'].map(v => (
+                            <button key={v} type="button" onClick={() => field.onChange(v)} className={cn("flex-1 h-12 rounded-xl border-2 font-bold", field.value === v ? "border-primary bg-primary/5 text-primary" : "border-muted text-muted-foreground")}>
+                              {v === 'yes' ? '완료' : '미완'}
+                            </button>
+                          ))}
+                        </div>
+                      </FormItem>
+                    )}/>
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label className="font-black text-lg ml-2 flex items-center gap-2"><Scale size={20} className="text-primary"/> BCS (체형 지수)</Label>
+                    <FormField control={form.control} name="petProfile.bcs" render={({ field }) => (
+                      <div className="flex gap-2">
+                        {['1', '2', '3', '4', '5'].map(v => (
+                          <button key={v} type="button" onClick={() => field.onChange(v)} className={cn("flex-1 h-14 rounded-2xl border-2 font-black", field.value === v ? "bg-primary text-white border-primary" : "bg-white border-muted text-muted-foreground")}>
+                            {v}
+                          </button>
+                        ))}
+                      </div>
+                    )}/>
+                    <p className="text-[10px] text-muted-foreground text-center">1: 마름 / 3: 이상적 / 5: 비만</p>
+                  </div>
                 </CardContent>
               </Card>
 
               <Card className="border-none shadow-2xl rounded-[3.5rem] overflow-hidden bg-white">
                 <CardHeader className="bg-muted/30 p-10 border-b">
-                  <CardTitle className="flex items-center gap-3 text-2xl font-black"><Stethoscope className="text-primary" size={28}/> 3. 정밀 메디컬 데이터</CardTitle>
+                  <CardTitle className="flex items-center gap-3 text-2xl font-black"><Clock className="text-primary" size={28}/> 3. 생활 습관 리포트</CardTitle>
                 </CardHeader>
-                <CardContent className="p-10 space-y-8">
+                <CardContent className="p-10 space-y-10">
+                  {petType === 'dog' ? (
+                    <FormField control={form.control} name="petProfile.walkingTime" render={({ field }) => (
+                      <FormItem className="space-y-4">
+                        <FormLabel className="font-black text-lg ml-2 flex items-center gap-2"><Clock size={20} className="text-primary"/> 일일 평균 산책 시간</FormLabel>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            { id: 'NONE', label: '안함' },
+                            { id: 'UNDER_30', label: '30분 미만' },
+                            { id: '30_60', label: '30분~1시간' },
+                            { id: 'OVER_60', label: '1시간 이상' }
+                          ].map(v => (
+                            <button key={v.id} type="button" onClick={() => field.onChange(v.id)} className={cn("h-14 rounded-2xl border-2 font-bold", field.value === v.id ? "border-primary bg-primary/5 text-primary" : "border-muted text-muted-foreground")}>
+                              {v.label}
+                            </button>
+                          ))}
+                        </div>
+                      </FormItem>
+                    )}/>
+                  ) : (
+                    <FormField control={form.control} name="petProfile.livingEnvironment" render={({ field }) => (
+                      <FormItem className="space-y-4">
+                        <FormLabel className="font-black text-lg ml-2 flex items-center gap-2"><Home size={20} className="text-primary"/> 생활 환경</FormLabel>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[
+                            { id: 'INDOOR', label: '실내 전용' },
+                            { id: 'OUTDOOR', label: '실외/마당' },
+                            { id: 'BOTH', label: '내외 병행' }
+                          ].map(v => (
+                            <button key={v.id} type="button" onClick={() => field.onChange(v.id)} className={cn("h-14 rounded-2xl border-2 font-bold", field.value === v.id ? "border-primary bg-primary/5 text-primary" : "border-muted text-muted-foreground")}>
+                              {v.label}
+                            </button>
+                          ))}
+                        </div>
+                      </FormItem>
+                    )}/>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <FormField control={form.control} name="petProfile.waterIntake" render={({ field }) => (
+                      <FormItem className="space-y-4">
+                        <FormLabel className="font-black text-lg ml-2 flex items-center gap-2"><Droplets size={20} className="text-blue-500"/> 평소 음수량</FormLabel>
+                        <div className="flex gap-2">
+                          {['LOW', 'NORMAL', 'HIGH'].map(v => (
+                            <button key={v} type="button" onClick={() => field.onChange(v)} className={cn("flex-1 h-12 rounded-xl border-2 font-bold text-xs", field.value === v ? "bg-blue-500 text-white border-blue-500" : "border-muted text-muted-foreground")}>
+                              {v === 'LOW' ? '적음' : v === 'NORMAL' ? '보통' : '많음'}
+                            </button>
+                          ))}
+                        </div>
+                      </FormItem>
+                    )}/>
+                    <FormField control={form.control} name="petProfile.stoolCondition" render={({ field }) => (
+                      <FormItem className="space-y-4">
+                        <FormLabel className="font-black text-lg ml-2 flex items-center gap-2"><Footprints size={20} className="text-amber-800"/> 배변 상태</FormLabel>
+                        <div className="flex gap-2">
+                          {['GOOD', 'SOFT', 'HARD'].map(v => (
+                            <button key={v} type="button" onClick={() => field.onChange(v)} className={cn("flex-1 h-12 rounded-xl border-2 font-bold text-xs", field.value === v ? "bg-amber-800 text-white border-amber-800" : "border-muted text-muted-foreground")}>
+                              {v === 'GOOD' ? '건강' : v === 'SOFT' ? '묽음' : '딱딱'}
+                            </button>
+                          ))}
+                        </div>
+                      </FormItem>
+                    )}/>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-none shadow-2xl rounded-[3.5rem] overflow-hidden bg-white">
+                <CardHeader className="bg-muted/30 p-10 border-b">
+                  <CardTitle className="flex items-center gap-3 text-2xl font-black"><Stethoscope className="text-primary" size={28}/> 4. 메디컬 히스토리</CardTitle>
+                </CardHeader>
+                <CardContent className="p-10 space-y-10">
                   <div className="space-y-4">
-                    <Label className="font-black text-lg ml-2 flex items-center gap-2">복용 약물 및 영양제 (OCR 지원)</Label>
+                    <Label className="font-black text-lg ml-2 flex items-center gap-2"><AlertTriangle size={20} className="text-destructive"/> 알러지 성분</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {ALLERGY_LIST.map(a => (
+                        <button key={a} type="button" onClick={() => toggleAllergy(a)} className={cn("px-4 py-2 rounded-full text-xs font-bold border-2", selectedAllergies.includes(a) ? "bg-destructive text-white border-destructive" : "bg-white border-muted")}>
+                          {a}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label className="font-black text-lg ml-2 flex items-center gap-2"><HeartPulse size={20} className="text-primary"/> 주요 건강 고민</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {(petType === 'dog' ? DOG_CONDITIONS : CAT_CONDITIONS).map(c => (
+                        <button key={c} type="button" onClick={() => toggleCondition(c)} className={cn("px-4 py-2 rounded-full text-xs font-bold border-2", selectedConditions.includes(c) ? "bg-primary text-white border-primary" : "bg-white border-muted")}>
+                          {c}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <Label className="font-black text-lg ml-2 flex items-center gap-2"><Pill size={20} className="text-amber-600"/> 복용 중인 약물 / 영양제 (OCR 지원)</Label>
+                    <FormField control={form.control} name="petProfile.medications" render={({ field }) => (
+                      <Input placeholder="직접 입력 또는 아래 사진 촬영" className="rounded-2xl h-14 bg-muted/10 border-none px-4" {...field} />
+                    )}/>
                     <FormField control={form.control} name="prescriptionImage" render={({ field: { onChange } }) => (
                       <div className={cn("relative w-full aspect-video border-4 border-dashed rounded-[2rem] flex flex-col justify-center items-center text-center cursor-pointer transition-all", prescriptionFile?.length ? "border-primary bg-primary/5" : "border-muted/30")}>
-                        <Pill className="h-12 w-12 text-primary mb-2 opacity-40" />
-                        <p className="text-sm font-black">{prescriptionFile?.length ? "사진 인식 준비 완료" : "처방전 사진 촬영 (선택)"}</p>
+                        <Camera className="h-12 w-12 text-primary mb-2 opacity-40" />
+                        <p className="text-sm font-black">{prescriptionFile?.length ? "사진 인식 준비 완료" : "처방전/영양제 라벨 촬영 (선택)"}</p>
                         <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => onChange(e.target.files)} />
                       </div>
                     )}/>
@@ -360,7 +535,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
 
           <Card className="border-none shadow-2xl rounded-[3.5rem] overflow-hidden bg-white">
             <CardHeader className="bg-primary p-12 text-white">
-              <CardTitle className="flex items-center gap-5 text-3xl font-black"><Camera size={36}/> 분석할 제품 라벨 촬영</CardTitle>
+              <CardTitle className="flex items-center gap-5 text-3xl font-black"><Camera size={36}/> 5. 분석할 제품 라벨 촬영</CardTitle>
             </CardHeader>
             <CardContent className="p-12 space-y-8">
               <FormField control={form.control} name="image" render={({ field: { onChange } }) => (
