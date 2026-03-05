@@ -29,6 +29,7 @@ export function saveAnalysisToHistory(
       brandName: analysisOutput.productIdentity?.brand || '',
       petProfile: userInput.petProfile ? {
         name: userInput.petProfile.name ?? null,
+        gender: userInput.petProfile.gender ?? 'unknown',
         breed: userInput.petProfile.breed ?? null,
         age: userInput.petProfile.age ?? null,
         weight: userInput.petProfile.weight ?? null,

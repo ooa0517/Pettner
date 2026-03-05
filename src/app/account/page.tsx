@@ -127,8 +127,15 @@ export default function AccountPage() {
                         {pet.petType === 'cat' ? <Cat className="text-primary"/> : <Dog className="text-primary"/>}
                       </div>
                       <div>
-                        <p className="font-black text-lg">{pet.name}</p>
-                        <p className="text-xs text-muted-foreground font-bold">{pet.breed} · {pet.age}살 · {pet.weight}kg</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-black text-lg">{pet.name}</p>
+                          <Badge variant="ghost" className="text-[10px] p-0 font-bold opacity-50">
+                            {pet.gender === 'male' ? '남아' : pet.gender === 'female' ? '여아' : ''}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground font-bold">
+                          {pet.breed} · {pet.age}살 · {pet.weight}kg · {pet.neutered === 'yes' ? '중성화O' : '중성화X'}
+                        </p>
                       </div>
                     </div>
                     <Button size="icon" variant="ghost" className="opacity-0 group-hover:opacity-100 text-destructive hover:bg-destructive/10" onClick={() => handleDeletePet(pet.id)}>

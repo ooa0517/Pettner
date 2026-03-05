@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 const petProfileSchema = z.object({
   petType: z.enum(['dog', 'cat']),
   name: z.string().min(1, '이름을 입력해주세요'),
+  gender: z.enum(['male', 'female', 'unknown']).default('unknown'),
   breed: z.string().default('믹스/기타'),
   age: z.number().min(0).optional().default(0),
   weight: z.number().min(0).optional().default(0),
@@ -50,6 +51,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
     resolver: zodResolver(petProfileSchema),
     defaultValues: {
       petType: 'dog',
+      gender: 'unknown',
       neutered: 'unknown',
       healthConditions: [],
       allergies: [],
@@ -72,6 +74,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
   const currentEnv = watch('livingEnvironment');
   const currentBCS = watch('bcs');
   const currentNeutered = watch('neutered');
+  const currentGender = watch('gender');
 
   const dogConditions = ['슬개골 탈구', '관절염', '피부 알러지', '눈물 자국', '심장 질환', '소화 불량', '췌장염', '신장 질환', '기타(메모 입력)'];
   const catConditions = ['방광염/요로결석', '신장 질환', '헤어볼', '구강 건강', '심부전', '피부 건강', '당뇨', '기타(메모 입력)'];
@@ -118,7 +121,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
             </React.Fragment>
           ))}
         </div>
-        <CardTitle className="text-2xl font-black">초정밀 메디컬 프로필 V3</CardTitle>
+        <CardTitle className="text-2xl font-black">초정밀 메디컬 프로필 V19.2</CardTitle>
         <CardDescription>아이의 생활 습관과 건강 상태를 꼼꼼히 체크합니다.</CardDescription>
       </CardHeader>
 
@@ -136,6 +139,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                   <span className="font-black">고양이</span>
                 </div>
               </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="font-bold ml-1">이름</Label>
@@ -146,20 +150,36 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                   <Input placeholder="예: 말티푸" {...register('breed')} className="rounded-xl h-12 bg-muted/20 border-none" />
                 </div>
               </div>
-              <div className="space-y-4">
-                <Label className="font-bold ml-1">중성화 여부</Label>
-                <div className="flex gap-2">
-                  {[
-                    { id: 'yes', label: '완료' },
-                    { id: 'no', label: '미완료' },
-                    { id: 'unknown', label: '모름' }
-                  ].map(v => (
-                    <div key={v.id} onClick={() => setValue('neutered', v.id as any)} className={cn("flex-1 text-center py-3 border-2 rounded-xl font-bold cursor-pointer transition-all", currentNeutered === v.id ? "border-primary bg-primary/5 text-primary" : "border-muted text-muted-foreground")}>
-                      {v.label}
-                    </div>
-                  ))}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <Label className="font-bold ml-1">성별</Label>
+                  <div className="flex gap-2">
+                    {[
+                      { id: 'male', label: '남아' },
+                      { id: 'female', label: '여아' }
+                    ].map(v => (
+                      <div key={v.id} onClick={() => setValue('gender', v.id as any)} className={cn("flex-1 text-center py-3 border-2 rounded-xl font-bold cursor-pointer transition-all", currentGender === v.id ? "border-primary bg-primary/5 text-primary" : "border-muted text-muted-foreground")}>
+                        {v.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <Label className="font-bold ml-1">중성화</Label>
+                  <div className="flex gap-2">
+                    {[
+                      { id: 'yes', label: '완료' },
+                      { id: 'no', label: '미완' }
+                    ].map(v => (
+                      <div key={v.id} onClick={() => setValue('neutered', v.id as any)} className={cn("flex-1 text-center py-3 border-2 rounded-xl font-bold cursor-pointer transition-all", currentNeutered === v.id ? "border-primary bg-primary/5 text-primary" : "border-muted text-muted-foreground")}>
+                        {v.label}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="font-bold ml-1 text-xs">나이 (살)</Label>

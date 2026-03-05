@@ -41,6 +41,7 @@ type AnalysisFormValues = {
   prescriptionImage?: FileList;
   petProfile: {
     name: string;
+    gender: 'male' | 'female' | 'unknown';
     breed: string;
     age: string;
     weight: string;
@@ -79,6 +80,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
     prescriptionImage: z.any().optional(),
     petProfile: z.object({
       name: z.string().optional(),
+      gender: z.enum(['male', 'female', 'unknown']).optional(),
       breed: z.string().optional(),
       age: z.string().optional(),
       weight: z.string().optional(),
@@ -105,6 +107,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
       detailedProductType: '건식 사료',
       petProfile: {
         name: '',
+        gender: 'unknown',
         breed: '믹스/기타',
         age: '0',
         weight: '0',
@@ -126,7 +129,6 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
   const selectedCategory = form.watch('productCategory');
   const imageFile = form.watch('image');
   const prescriptionFile = form.watch('prescriptionImage');
-  const selectedAllergies = form.watch('petProfile.allergies') || [];
 
   const categoryOptions = {
     food: ['건식 사료', '습식 사료(캔/파우치)', '화식/생식', '동결건조 사료', '소프트 사료'],
@@ -134,14 +136,13 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
     supplement: ['관절 영양제', '피부/모질 영양제', '눈/눈물 영양제', '유산균', '심장/신장 영양제', '종합 비타민']
   };
 
-  const allergyList = ['닭고기', '소고기', '돼지고기', '연어', '곡물(그레인)', '계란', '유제품', '없음/모름'];
-
   const selectSavedPet = (pet: any) => {
     form.reset({
       ...form.getValues(),
       petType: pet.petType,
       petProfile: {
         name: pet.name,
+        gender: pet.gender || 'unknown',
         breed: pet.breed || '믹스/기타',
         age: pet.age?.toString() || '0',
         weight: pet.weight?.toString() || '0',
@@ -167,7 +168,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
     <div className="space-y-12 max-w-2xl mx-auto pb-48 animate-in fade-in duration-700 px-4">
       <div className="text-center space-y-4 pt-10">
         <Badge className="bg-primary/10 text-primary border-none px-4 py-2 rounded-full font-black text-[10px] tracking-widest uppercase">
-          Veterinary Precision v19.1
+          Veterinary Precision v19.2
         </Badge>
         <h1 className="text-5xl md:text-6xl font-black font-headline tracking-tighter text-foreground leading-tight">
           Pettner Scan
@@ -200,7 +201,6 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
           
-          {/* 1. 제품 분류 섹션 (신설) */}
           <Card className="border-none shadow-2xl rounded-[3.5rem] overflow-hidden bg-white">
             <CardHeader className="bg-primary/5 p-10 border-b">
               <CardTitle className="flex items-center gap-3 text-2xl font-black">

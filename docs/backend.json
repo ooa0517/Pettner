@@ -54,6 +54,7 @@
         "id": { "type": "string" },
         "name": { "type": "string" },
         "type": { "type": "string", "enum": ["dog", "cat"] },
+        "gender": { "type": "string", "enum": ["male", "female", "unknown"] },
         "breed": { "type": "string" },
         "age": { "type": "number" },
         "weight": { "type": "number" },
