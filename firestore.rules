@@ -22,8 +22,10 @@ service cloud.firestore {
       }
 
       match /analysisHistory/{analysisId} {
+        // 소유자는 모든 권한, 외부인은 링크가 있을 경우(get)만 허용
         allow read, create, delete: if isOwner(userId);
-        allow update: if false;
+        allow get: if true; 
+        allow update: if isOwner(userId);
       }
     }
 

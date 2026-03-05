@@ -13,7 +13,8 @@ import {
   Zap, 
   PieChart, Factory, Truck,
   Leaf, Gavel, History, Scale,
-  TrendingDown, CheckCircle2
+  TrendingDown, CheckCircle2,
+  Share2, Link as LinkIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -23,22 +24,28 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { useUser, useFirestore } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import AdBanner from '@/components/ad-banner';
+import { useToast } from '@/hooks/use-toast';
+import { useParams } from 'next/navigation';
 
 type AnalysisResultProps = {
   result: AnalyzePetFoodIngredientsOutput;
   input: AnalyzePetFoodIngredientsInput;
   onReset: () => void;
   resetButtonText?: string;
+  isPublicView?: boolean;
 };
 
-export default function AnalysisResult({ result, input, onReset, resetButtonText }: AnalysisResultProps) {
+export default function AnalysisResult({ result, input, onReset, resetButtonText, isPublicView = false }: AnalysisResultProps) {
   const isEn = input.language === 'en';
   const isCat = input.petType === 'cat';
   const { user } = useUser();
   const db = useFirestore();
+  const { toast } = useToast();
+  const params = useParams();
   const [isPremium, setIsPremium] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     if (user && db) {
@@ -47,6 +54,36 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
       });
     }
   }, [user, db]);
+
+  const handleShare = async () => {
+    if (!user || !db) {
+       toast({ title: "로그인이 필요합니다", description: "리포트를 공유하려면 로그인이 필요합니다." });
+       return;
+    }
+
+    setIsSharing(true);
+    try {
+      // 현재 리포트의 ID를 찾기 위해 최근 기록 조회 (보통 상세 페이지나 분석 직후이므로 ID가 존재함)
+      // 여기서는 URL의 params나 상위에서 넘겨준 ID가 없으므로 현재 페이지 URL을 기반으로 하거나
+      // Web Share API를 사용합니다.
+      const shareUrl = window.location.href;
+      
+      if (navigator.share) {
+        await navigator.share({
+          title: `Pettner 분석 리포트: ${result.productIdentity.name}`,
+          text: `${input.petProfile?.name}를 위한 맞춤 영양 분석 결과입니다.`,
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({ title: "링크 복사 완료", description: "공유 링크가 클립보드에 복사되었습니다." });
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSharing(false);
+    }
+  };
 
   if (!result || !result.productIdentity || !result.scoreCard) {
      return (
@@ -64,7 +101,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-48 max-w-4xl mx-auto px-4">
       
-      <AdBanner position="top" />
+      {!isPublicView && <AdBanner position="top" />}
 
       {/* 1. Header & Summary Card */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
@@ -79,6 +116,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                 <Badge variant="outline" className="px-3 py-1 rounded-full text-[10px] font-black border-primary text-primary">
                   V17.0 MEDICAL AUDIT
                 </Badge>
+                {isPublicView && <Badge className="bg-amber-500 text-white font-black text-[10px]">SHARED REPORT</Badge>}
               </div>
               <h1 className="text-3xl font-black tracking-tighter pt-2 leading-tight">
                 {productIdentity.name}
@@ -104,6 +142,17 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                {scoreCard.headline}
              </p>
           </div>
+
+          {!isPublicView && (
+            <Button 
+              onClick={handleShare} 
+              variant="outline" 
+              className="w-full h-14 rounded-2xl border-2 border-dashed font-bold flex items-center justify-center gap-2 hover:bg-muted/50"
+            >
+              <Share2 size={18} />
+              이 리포트 공유하기
+            </Button>
+          )}
         </CardContent>
       </Card>
 
@@ -164,7 +213,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </div>
       )}
 
-      <AdBanner position="middle" />
+      {!isPublicView && <AdBanner position="middle" />}
 
       {/* 3. Scientific Deep Dive */}
       <div className="space-y-6">
@@ -254,7 +303,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </Accordion>
       </div>
 
-      <AdBanner position="bottom" />
+      {!isPublicView && <AdBanner position="bottom" />}
 
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-2xl border-t z-50 flex justify-center shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
         <div className="w-full max-w-4xl flex gap-4">
