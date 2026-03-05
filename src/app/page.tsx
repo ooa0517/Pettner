@@ -17,10 +17,6 @@ import { useLanguage } from '@/contexts/language-context';
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { useSearchParams } from 'next/navigation';
 
-function generateProductId(productName: string = ''): string {
-  return productName.trim().toLowerCase().replace(/[^a-z0-9가-힣]/g, '-').replace(/-+/g, '-');
-}
-
 function HomeContent() {
   const { language, t } = useLanguage();
   const { user } = useUser();
@@ -71,7 +67,8 @@ function HomeContent() {
         petType: formData.petType,
         analysisMode: formData.analysisMode,
         productName: formData.productName,
-        foodType: formData.foodType,
+        productCategory: formData.productCategory,
+        detailedProductType: formData.detailedProductType,
         language: language,
         petProfile: isCustom ? {
           name: formData.petProfile?.name,
@@ -97,7 +94,7 @@ function HomeContent() {
         });
       }
 
-      // 2. 처방전 이미지 처리 (추가)
+      // 2. 처방전 이미지 처리
       const prescriptionFile = formData.prescriptionImage?.[0];
       if (prescriptionFile) {
         const reader = new FileReader();

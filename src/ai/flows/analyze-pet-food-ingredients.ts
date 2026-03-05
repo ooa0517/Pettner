@@ -2,9 +2,9 @@
 'use server';
 
 /**
- * @fileOverview [Pettner V19.0 - Medication OCR & Interaction Audit]
- * - Added: prescriptionPhotoDataUri for medical document OCR.
- * - Logic: AI identifies medications from photos and audits interactions with food ingredients.
+ * @fileOverview [Pettner V19.1 - Detailed Product Categorization]
+ * - Added: productCategory and detailedProductType for better context.
+ * - Logic: AI uses categorization to apply different nutritional benchmarks (e.g., AAFCO for food vs. functional limits for supplements).
  */
 
 import {ai} from '@/ai/genkit';
@@ -15,7 +15,10 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
   petType: z.enum(['dog', 'cat']).describe('반려동물 종류'),
   analysisMode: z.enum(['general', 'custom']).describe('분석 모드'),
   productName: z.string().optional().describe('제품명'),
-  foodType: z.enum(['dry', 'wet', 'treat', 'supplement']).optional().describe('제품 유형'),
+  // 카테고리 체계 고도화
+  productCategory: z.enum(['food', 'treat', 'supplement']).describe('제품 대분류 (사료, 간식, 영양제)'),
+  detailedProductType: z.string().optional().describe('세부 유형 (건식, 습식, 껌, 유산균 등)'),
+  
   photoDataUri: z.string().optional().describe("사료 라벨 사진 데이터 URI"),
   prescriptionPhotoDataUri: z.string().optional().describe("처방전 또는 영양제 라벨 사진 데이터 URI"),
   language: z.string().optional().default('ko').describe("출력 언어 (ko, en)"),
@@ -76,7 +79,13 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       fat_g: z.number(),
       carbs_g: z.number(),
       kcal: z.number()
-    })
+    }),
+    catSpecific: z.object({
+      taurineCheck: z.string().optional(),
+    }).optional(),
+    dogSpecific: z.object({
+      breedRiskMatching: z.string().optional(),
+    }).optional()
   }),
   veterinaryAdvice: z.string(),
   esgReport: z.object({
@@ -93,28 +102,24 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `You are the Pettner V19.0 Medical Diagnostic AI Auditor.
+  prompt: `You are the Pettner V19.1 Medical Diagnostic AI Auditor.
 Response MUST be in pure JSON format ONLY.
 
-# [V19.0 Medication & Interaction Protocol]
+# [V19.1 Protocol: Categorical Context]
+- Category: {{{productCategory}}} (Sub-type: {{{detailedProductType}}})
+- Based on the category, adjust your nutritional benchmarks.
+- IF 'food': Focus on complete and balanced nutrition (AAFCO/NRC).
+- IF 'treat': Focus on calorie density and harmful additives.
+- IF 'supplement': Focus on functional efficacy and safe upper limits of vitamins/minerals.
 
-## 1. Multi-Image OCR Task
+# [Medication & Interaction Protocol]
 - IF photoDataUri is provided: Analyze the food ingredients and guaranteed analysis.
-- IF prescriptionPhotoDataUri is provided: 
-    1. Perform high-precision OCR on the prescription or supplement label.
-    2. Identify active pharmaceutical ingredients (APIs) or supplement active compounds.
-    3. Include these in the 'medicationAudit.identifiedMeds' field.
+- IF prescriptionPhotoDataUri is provided: Perform OCR on the prescription/supplement label. Identify APIs and audit interactions with the food ingredients.
 
-## 2. Interaction Audit (Food vs. Meds)
-- Compare the identified medications (from OCR or text input) with the food ingredients.
-- Check for contraindications (e.g., high calcium interfering with certain antibiotics, or high fat with pancreatitis meds).
-- Provide detailed 'medicationAudit.findings' in {{{language}}}.
+# [Energy Requirement]
+- Calculate based on breed ({{{petProfile.breed}}}), age ({{{petProfile.age}}}), weight ({{{petProfile.weight}}}), neutering ({{{petProfile.neutered}}}), and activity.
 
-## 3. Energy Requirement (RER/DER)
-- Calculate ideal weight based on breed ({{{petProfile.breed}}}) and age ({{{petProfile.age}}}).
-- Adjust for neutering ({{{petProfile.neutered}}}) and activity ({{{petProfile.walkingTime}}}).
-
-Language: {{{language}}} (ALL text must be in this language)
+Language: {{{language}}}
 {{#if photoDataUri}}Food Photo: {{media url=photoDataUri}}{{/if}}
 {{#if prescriptionPhotoDataUri}}Prescription Photo: {{media url=prescriptionPhotoDataUri}}{{/if}}`
 });
