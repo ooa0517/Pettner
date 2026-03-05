@@ -3,8 +3,8 @@
 
 import { useMemo } from 'react';
 import { 
-  Camera, Sparkles, Dog, Cat, Database, 
-  Scale, Stethoscope, ChevronDown
+  Camera, Sparkles, Dog, Cat, 
+  Scale, Stethoscope, ChevronDown, Pill
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,6 +36,7 @@ type AnalysisFormValues = {
   productName: string;
   foodType: 'dry' | 'wet' | 'treat' | 'supplement';
   image?: FileList;
+  prescriptionImage?: FileList;
   petProfile: {
     name: string;
     breed: string;
@@ -72,6 +73,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
     productName: z.string().optional(),
     foodType: z.enum(['dry', 'wet', 'treat', 'supplement']),
     image: z.any().optional(),
+    prescriptionImage: z.any().optional(),
     petProfile: z.object({
       name: z.string().optional(),
       breed: z.string().optional(),
@@ -118,6 +120,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
 
   const selectedPet = form.watch('petType');
   const imageFile = form.watch('image');
+  const prescriptionFile = form.watch('prescriptionImage');
   const selectedHealth = form.watch('petProfile.healthConditions') || [];
   const selectedAllergies = form.watch('petProfile.allergies') || [];
 
@@ -156,12 +159,12 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
     <div className="space-y-12 max-w-2xl mx-auto pb-48 animate-in fade-in duration-700 px-4">
       <div className="text-center space-y-4 pt-10">
         <Badge className="bg-primary/10 text-primary border-none px-4 py-2 rounded-full font-black text-[10px] tracking-widest uppercase">
-          Veterinary Precision v18.0
+          Veterinary Precision v19.0
         </Badge>
         <h1 className="text-5xl md:text-6xl font-black font-headline tracking-tighter text-foreground leading-tight">
           Pettner Scan
         </h1>
-        <p className="text-muted-foreground font-medium text-lg">메디컬 프로필을 기반으로 1:1 맞춤 영양 분석 🐾</p>
+        <p className="text-muted-foreground font-medium text-lg">처방전 OCR 및 맞춤 영양 분석 🐾</p>
       </div>
 
       {user && pets && pets.length > 0 && (
@@ -236,22 +239,6 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                       <FormItem><FormLabel className="font-bold ml-2 text-xs">체중 (kg)</FormLabel><FormControl><Input type="number" step="0.1" className="rounded-2xl h-12 bg-muted/10 border-none px-4" {...field} /></FormControl></FormItem>
                     )}/>
                   </div>
-
-                  <div className="space-y-2">
-                    <FormLabel className="font-bold ml-2">중성화 여부</FormLabel>
-                    <FormField control={form.control} name="petProfile.neutered" render={({ field }) => (
-                      <FormControl>
-                        <RadioGroup onValueChange={field.onChange} value={field.value} className="flex gap-2">
-                           {['yes', 'no', 'unknown'].map(v => (
-                             <Label key={v} className={cn("flex-1 text-center py-3 border-2 rounded-xl font-bold cursor-pointer transition-all", field.value === v ? "border-primary bg-primary/5 text-primary" : "border-muted opacity-40")}>
-                               <RadioGroupItem value={v} className="sr-only" />
-                               {v === 'yes' ? '완료' : v === 'no' ? '미완료' : '모름'}
-                             </Label>
-                           ))}
-                        </RadioGroup>
-                      </FormControl>
-                    )}/>
-                  </div>
                 </CardContent>
               </Card>
 
@@ -260,39 +247,24 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                   <CardTitle className="flex items-center gap-3 text-2xl font-black"><Stethoscope className="text-primary" size={28}/> 2. 건강 및 라이프스타일</CardTitle>
                 </CardHeader>
                 <CardContent className="p-10 space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="petProfile.walkingTime" render={({ field }) => (
-                      <FormItem><FormLabel className="font-bold ml-2 text-xs">일일 산책 시간</FormLabel>
-                        <FormControl>
-                          <select className="w-full h-12 rounded-2xl bg-muted/10 border-none px-4 text-xs font-bold" {...field}>
-                            <option value="UNKNOWN">모름/비정기적</option>
-                            <option value="NONE">안함</option>
-                            <option value="UNDER_30">30분 미만</option>
-                            <option value="30_60">30분~1시간</option>
-                            <option value="OVER_60">1시간 이상</option>
-                          </select>
-                        </FormControl>
-                      </FormItem>
-                    )}/>
-                    <FormField control={form.control} name="petProfile.livingEnvironment" render={({ field }) => (
-                      <FormItem><FormLabel className="font-bold ml-2 text-xs">생활 환경</FormLabel>
-                        <FormControl>
-                          <select className="w-full h-12 rounded-2xl bg-muted/10 border-none px-4 text-xs font-bold" {...field}>
-                            <option value="UNKNOWN">모름</option>
-                            <option value="INDOOR">실내 전용</option>
-                            <option value="OUTDOOR">실외/마당</option>
-                            <option value="BOTH">실내외 병행</option>
-                          </select>
-                        </FormControl>
-                      </FormItem>
+                  <div className="space-y-4">
+                    <Label className="font-black text-lg ml-2 flex items-center gap-2">직접 입력: 복용 약물 및 영양제</Label>
+                    <FormField control={form.control} name="petProfile.medications" render={({ field }) => (
+                       <FormControl><Input placeholder="직접 아는 성분만 적으셔도 됩니다." className="h-14 rounded-2xl bg-muted/10 border-none px-6 font-bold" {...field} /></FormControl>
                     )}/>
                   </div>
 
+                  {/* 처방전 사진 업로드 섹션 */}
                   <div className="space-y-4">
-                    <Label className="font-black text-lg ml-2 flex items-center gap-2">복용 약물 및 영양제</Label>
-                    <FormField control={form.control} name="petProfile.medications" render={({ field }) => (
-                       <FormControl><Input placeholder="복용 중인 약이나 영양제를 적어주세요." className="h-14 rounded-2xl bg-muted/10 border-none px-6 font-bold" {...field} /></FormControl>
+                    <Label className="font-black text-lg ml-2 flex items-center gap-2">AI 자동 인식: 처방전 또는 약 봉투 사진</Label>
+                    <FormField control={form.control} name="prescriptionImage" render={({ field: { onChange } }) => (
+                      <div className={cn("relative w-full aspect-video border-4 border-dashed rounded-[2rem] flex flex-col justify-center items-center text-center cursor-pointer transition-all", prescriptionFile?.length ? "border-primary bg-primary/5" : "border-muted/30")}>
+                        <Pill className="h-12 w-12 text-primary mb-2 opacity-40" />
+                        <p className="text-sm font-black">{prescriptionFile?.length ? "사진 인식 준비 완료" : "처방전 사진 추가 (선택)"}</p>
+                        <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => onChange(e.target.files)} />
+                      </div>
                     )}/>
+                    <p className="text-[10px] text-muted-foreground ml-2">약 이름을 모른다면 사진을 찍어주세요. AI가 자동으로 성분을 분석합니다.</p>
                   </div>
 
                   <div className="space-y-4">
@@ -320,27 +292,6 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                       ))}
                     </div>
                   </div>
-
-                  <div className="space-y-4">
-                    <Label className="font-black text-lg ml-2 flex items-center gap-2">주요 건강 고민</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {(selectedPet === 'dog' ? dogConditions : catConditions).map(c => (
-                        <button 
-                          key={c} 
-                          type="button"
-                          className={cn("px-4 py-2 rounded-full font-bold text-xs transition-all border-2", 
-                            selectedHealth.includes(c) ? "bg-primary text-white border-primary" : "bg-muted/30 border-transparent text-muted-foreground"
-                          )} 
-                          onClick={() => {
-                            const cur = [...selectedHealth];
-                            form.setValue('petProfile.healthConditions', cur.includes(c) ? cur.filter(x => x !== c) : [...cur, c]);
-                          }}
-                        >
-                          {c}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -354,7 +305,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
 
             <Card className="border-none shadow-2xl rounded-[3.5rem] overflow-hidden bg-white">
               <CardHeader className="bg-primary/5 p-12 border-b">
-                <CardTitle className="flex items-center gap-5 text-3xl font-black"><Camera className="text-primary" size={36}/> 제품 사진 촬영</CardTitle>
+                <CardTitle className="flex items-center gap-5 text-3xl font-black"><Camera className="text-primary" size={36}/> 분석할 제품 사진 (필수)</CardTitle>
               </CardHeader>
               <CardContent className="p-12 space-y-8">
                 <FormField control={form.control} name="image" render={({ field: { onChange } }) => (
@@ -363,12 +314,6 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                     <p className="text-2xl font-black">{imageFile?.length ? "사진이 준비되었습니다" : "성분표 촬영하기"}</p>
                     <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => onChange(e.target.files)} />
                   </div>
-                )}/>
-                <FormField control={form.control} name="productName" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-bold ml-2">제품명</FormLabel>
-                    <FormControl><Input placeholder="제품명을 입력해주세요." className="h-16 rounded-[2rem] bg-muted/10 border-none px-8 font-bold" {...field} /></FormControl>
-                  </FormItem>
                 )}/>
               </CardContent>
             </Card>

@@ -2,9 +2,9 @@
 'use server';
 
 /**
- * @fileOverview [Pettner V18.0 - Precision Life Cycle Audit]
- * - Added: Neutering status, walking time, and living environment metrics.
- * - Logic: AI calculates RER (Resting Energy Requirement) adjustments based on neutering and lifestyle.
+ * @fileOverview [Pettner V19.0 - Medication OCR & Interaction Audit]
+ * - Added: prescriptionPhotoDataUri for medical document OCR.
+ * - Logic: AI identifies medications from photos and audits interactions with food ingredients.
  */
 
 import {ai} from '@/ai/genkit';
@@ -16,7 +16,8 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
   analysisMode: z.enum(['general', 'custom']).describe('분석 모드'),
   productName: z.string().optional().describe('제품명'),
   foodType: z.enum(['dry', 'wet', 'treat', 'supplement']).optional().describe('제품 유형'),
-  photoDataUri: z.string().optional().describe("라벨 사진 데이터 URI"),
+  photoDataUri: z.string().optional().describe("사료 라벨 사진 데이터 URI"),
+  prescriptionPhotoDataUri: z.string().optional().describe("처방전 또는 영양제 라벨 사진 데이터 URI"),
   language: z.string().optional().default('ko').describe("출력 언어 (ko, en)"),
   petProfile: z.object({
     name: z.string().optional(),
@@ -26,13 +27,13 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
     neutered: z.enum(['yes', 'no', 'unknown']).optional().describe('중성화 여부'),
     bcs: z.string().optional(),
     activityLevel: z.string().optional(),
-    walkingTime: z.string().optional().describe('평균 산책 시간 (없음, 30분 미만, 30~60분, 1시간 이상)'),
+    walkingTime: z.string().optional().describe('평균 산책 시간'),
     livingEnvironment: z.enum(['INDOOR', 'OUTDOOR', 'BOTH', 'UNKNOWN']).optional().describe('생활 환경'),
     healthConditions: z.array(z.string()).optional(),
     allergies: z.array(z.string()).optional(),
     waterIntake: z.string().optional(),
     stoolCondition: z.string().optional(),
-    medications: z.string().optional().describe('복용 중인 약물'),
+    medications: z.string().optional().describe('복용 중인 약물 직접 입력'),
   }).optional(),
 });
 
@@ -49,11 +50,6 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       isCompliant: z.boolean(),
       reason: z.string()
     }),
-    manufacturingAudit: z.object({
-      productionType: z.string(),
-      facilitySafety: z.string(),
-      sourcingOrigin: z.string()
-    })
   }),
   scoreCard: z.object({
     totalScore: z.number().min(0).max(100),
@@ -62,29 +58,19 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     grade: z.string().optional()
   }),
   weightDiagnosis: z.object({
-    currentWeight: z.number().describe('입력된 체중'),
-    idealWeight: z.number().describe('AI가 판단한 해당 품종/생애주기별 이상적 체중'),
-    weightGap: z.number().describe('이상적 체중과의 차이'),
-    breedStandardRange: z.string().describe('해당 품종의 표준 체중 범위'),
-    overweightPercentage: z.number().describe('과체중 정도 (%)'),
-    verdict: z.string().describe('체중에 대한 수의학적 소견')
+    currentWeight: z.number(),
+    idealWeight: z.number(),
+    weightGap: z.number(),
+    breedStandardRange: z.string(),
+    overweightPercentage: z.number(),
+    verdict: z.string()
   }).optional(),
-  dietRoadmap: z.array(z.object({
-    weight: z.number(),
-    grams: z.number(),
-    phase: z.string()
-  })).optional().describe('목표 체중 도달을 위한 단계별 급여 로드맵'),
+  medicationAudit: z.object({
+    identifiedMeds: z.array(z.string()).describe('처방전/사진에서 인식된 약물 리스트'),
+    interactionRisk: z.enum(['NONE', 'LOW', 'MEDIUM', 'HIGH']),
+    findings: z.string().describe('약물과 사료 성분 간의 상호작용 분석 결과')
+  }).optional(),
   scientificAnalysis: z.object({
-    catSpecific: z.object({
-      taurineCheck: z.string().optional(),
-      arginineCheck: z.string().optional(),
-      kidneyHealthMatching: z.string().optional(),
-    }).optional(),
-    dogSpecific: z.object({
-      omnivorousBalance: z.string().optional(),
-      jointHealthMatching: z.string().optional(),
-      breedRiskMatching: z.string().optional(),
-    }).optional(),
     nutrientMass: z.object({
       protein_g: z.number(),
       fat_g: z.number(),
@@ -92,13 +78,12 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       kcal: z.number()
     })
   }),
+  veterinaryAdvice: z.string(),
   esgReport: z.object({
     environmental: z.string(),
     corporateEthics: z.string(),
     recallHistory: z.string()
-  }),
-  veterinaryAdvice: z.string(),
-  allergyWarning: z.string().optional()
+  })
 });
 
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
@@ -108,29 +93,30 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `You are the Pettner V18.0 Medical Diagnostic AI Auditor.
+  prompt: `You are the Pettner V19.0 Medical Diagnostic AI Auditor.
 Response MUST be in pure JSON format ONLY.
 
-# [V18.0 Precision Life Cycle Protocol]
+# [V19.0 Medication & Interaction Protocol]
 
-## 1. Energy Requirement (RER/DER) Calculation
-- IF neutered === 'yes', decrease calorie requirement by 15-20% as metabolic rate drops.
-- IF activityLevel is 'HIGH' and walkingTime is 'OVER_60', increase calorie requirement by 20%.
-- IF livingEnvironment is 'OUTDOOR', adjust for seasonal energy expenditure.
+## 1. Multi-Image OCR Task
+- IF photoDataUri is provided: Analyze the food ingredients and guaranteed analysis.
+- IF prescriptionPhotoDataUri is provided: 
+    1. Perform high-precision OCR on the prescription or supplement label.
+    2. Identify active pharmaceutical ingredients (APIs) or supplement active compounds.
+    3. Include these in the 'medicationAudit.identifiedMeds' field.
 
-## 2. Medical Interaction Audit
-- Check if ingredients in the product conflict with the listed 'medications' ({{{petProfile.medications}}}).
-- Highlight if the food is suitable for the 'healthConditions' ({{{petProfile.healthConditions}}}).
+## 2. Interaction Audit (Food vs. Meds)
+- Compare the identified medications (from OCR or text input) with the food ingredients.
+- Check for contraindications (e.g., high calcium interfering with certain antibiotics, or high fat with pancreatitis meds).
+- Provide detailed 'medicationAudit.findings' in {{{language}}}.
 
-## 3. Intelligent Data Completion
-- IF weight is 0 or unknown, search your veterinary database for the standard weight of the breed ({{{petProfile.breed}}}) and age ({{{petProfile.age}}}). 
+## 3. Energy Requirement (RER/DER)
+- Calculate ideal weight based on breed ({{{petProfile.breed}}}) and age ({{{petProfile.age}}}).
+- Adjust for neutering ({{{petProfile.neutered}}}) and activity ({{{petProfile.walkingTime}}}).
 
 Language: {{{language}}} (ALL text must be in this language)
-Pet: {{{petType}}}, Breed: {{{petProfile.breed}}}, Neutered: {{{petProfile.neutered}}}, Walking: {{{petProfile.walkingTime}}}
-Allergies: {{{petProfile.allergies}}}, Medications: {{{petProfile.medications}}}
-{{#if photoDataUri}}
-- Perform OCR on the provided image to extract ingredients and guaranteed analysis.
-{{/if}}`
+{{#if photoDataUri}}Food Photo: {{media url=photoDataUri}}{{/if}}
+{{#if prescriptionPhotoDataUri}}Prescription Photo: {{media url=prescriptionPhotoDataUri}}{{/if}}`
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(

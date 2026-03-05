@@ -41,33 +41,19 @@ function HomeContent() {
     }
   }, [searchParams]);
 
-  // 사용자의 결제 상태 및 오늘 이용 횟수 체크
   const checkUsageLimit = useCallback(async () => {
-    if (!user || !db) return true; // 비로그인 시에도 분석은 허용하되 저장은 안 됨 (사용성 고려)
-
+    if (!user || !db) return true;
     try {
       const userDocRef = doc(db, 'users', user.uid);
       const userSnap = await getDoc(userDocRef);
-      
       if (!userSnap.exists()) return true;
-
       const userData = userSnap.data();
-      
-      // [중요] 평생권(isPremium) 소지자는 모든 한도 체크를 건너뜁니다.
-      if (userData.isPremium === true) {
-        console.log("Premium User Detected: Bypassing limits.");
-        return true;
-      }
-
+      if (userData.isPremium === true) return true;
       const today = new Date().toISOString().split('T')[0];
-      // 무료 사용자는 하루 5회로 제한
-      if (userData.lastUsageDate === today && userData.dailyUsageCount >= 5) {
-        return false; 
-      }
+      if (userData.lastUsageDate === today && userData.dailyUsageCount >= 5) return false; 
       return true;
     } catch (e) {
-      console.error("Usage limit check error:", e);
-      return true; // 오류 발생 시 사용자 경험을 위해 허용
+      return true;
     }
   }, [user, db]);
 
@@ -96,76 +82,57 @@ function HomeContent() {
           bcs: formData.petProfile?.bcs,
           healthConditions: formData.petProfile?.healthConditions,
           allergies: formData.petProfile?.allergies,
+          medications: formData.petProfile?.medications,
         } : undefined
     };
 
     try {
-      const productId = generateProductId(analysisInput.productName);
-      let finalResult: AnalyzePetFoodIngredientsOutput | null = null;
-      let isCached = false;
-
-      // 일반 분석 모드일 때만 캐시 확인
-      if (db && productId && analysisInput.analysisMode === 'general') {
-        const productSnap = await getDoc(doc(db, 'products', productId));
-        if (productSnap.exists()) {
-          finalResult = productSnap.data() as AnalyzePetFoodIngredientsOutput;
-          isCached = true;
-        }
+      // 1. 사료 이미지 처리
+      const foodFile = formData.image?.[0];
+      if (foodFile) {
+        const reader = new FileReader();
+        analysisInput.photoDataUri = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(foodFile);
+        });
       }
 
-      if (!finalResult) {
-        const file = formData.image?.[0];
-        if (file) {
-          const reader = new FileReader();
-          const base64Promise = new Promise<string>((resolve) => {
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          });
-          analysisInput.photoDataUri = await base64Promise;
-        }
-        
-        const actionResponse = await getAnalysis(analysisInput);
-        if (actionResponse.error) {
-           throw new Error(t(String(actionResponse.error)));
-        }
-        finalResult = actionResponse.data || null;
-
-        // 결과 캐싱 (일반 모드인 경우)
-        if (finalResult && db && productId && analysisInput.analysisMode === 'general') {
-           setDoc(doc(db, 'products', productId), finalResult).catch(console.error);
-        }
+      // 2. 처방전 이미지 처리 (추가)
+      const prescriptionFile = formData.prescriptionImage?.[0];
+      if (prescriptionFile) {
+        const reader = new FileReader();
+        analysisInput.prescriptionPhotoDataUri = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(prescriptionFile);
+        });
       }
+      
+      const actionResponse = await getAnalysis(analysisInput);
+      if (actionResponse.error) {
+         throw new Error(t(String(actionResponse.error)));
+      }
+      const finalResult = actionResponse.data || null;
 
       if (finalResult) {
         setAnalysisResult(finalResult);
         setResultInput(analysisInput);
         
-        // 데이터베이스 업데이트 (기록 저장 및 카운트)
         if (user && db) {
           saveAnalysisToHistory(db, user.uid, analysisInput, finalResult);
-          
           const today = new Date().toISOString().split('T')[0];
           const userDocRef = doc(db, 'users', user.uid);
           const userSnap = await getDoc(userDocRef);
-          
-          if (userSnap.exists()) {
-            const userData = userSnap.data();
-            // 프리미엄 유저가 아닐 때만 카운트를 올립니다.
-            if (!userData.isPremium) {
-              if (userData.lastUsageDate === today) {
-                updateDoc(userDocRef, { dailyUsageCount: increment(1) });
-              } else {
-                updateDoc(userDocRef, { lastUsageDate: today, dailyUsageCount: 1 });
-              }
+          if (userSnap.exists() && !userSnap.data().isPremium) {
+            if (userSnap.data().lastUsageDate === today) {
+              updateDoc(userDocRef, { dailyUsageCount: increment(1) });
+            } else {
+              updateDoc(userDocRef, { lastUsageDate: today, dailyUsageCount: 1 });
             }
           }
         }
-
         setStep('result');
-        toast({ title: isCached ? "검증 데이터 로드 완료" : t('homePage.analysisCompleteTitle') });
       }
     } catch (error: any) {
-      console.error(error);
       setStep('input');
       toast({ variant: "destructive", title: t('homePage.analysisFailedTitle'), description: error.message });
     }
