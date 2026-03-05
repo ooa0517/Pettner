@@ -8,6 +8,7 @@ import { FirestorePermissionError } from '@/firebase/errors';
 
 /**
  * 분석 결과를 Firebase Firestore에 저장합니다.
+ * 모든 상세 설문 데이터를 포함하여 저장하도록 업데이트되었습니다.
  */
 export function saveAnalysisToHistory(
     db: Firestore, 
@@ -31,16 +32,18 @@ export function saveAnalysisToHistory(
         name: userInput.petProfile.name ?? null,
         gender: userInput.petProfile.gender ?? 'unknown',
         breed: userInput.petProfile.breed ?? null,
-        age: userInput.petProfile.age ?? null,
-        weight: userInput.petProfile.weight ?? null,
-        neutered: userInput.petProfile.neutered ?? null,
-        bcs: userInput.petProfile.bcs ?? null,
-        activityLevel: userInput.petProfile.activityLevel ?? null,
+        age: userInput.petProfile.age ?? 0,
+        weight: userInput.petProfile.weight ?? 0,
+        neutered: userInput.petProfile.neutered ?? 'unknown',
+        bcs: userInput.petProfile.bcs ?? '3',
+        activityLevel: userInput.petProfile.activityLevel ?? 'UNKNOWN',
+        walkingTime: userInput.petProfile.walkingTime ?? 'UNKNOWN',
+        livingEnvironment: userInput.petProfile.livingEnvironment ?? 'UNKNOWN',
         healthConditions: userInput.petProfile.healthConditions ?? [],
         allergies: userInput.petProfile.allergies ?? [],
-        waterIntake: userInput.petProfile.waterIntake ?? null,
-        stoolCondition: userInput.petProfile.stoolCondition ?? null,
-        medications: userInput.petProfile.medications ?? null,
+        waterIntake: userInput.petProfile.waterIntake ?? 'UNKNOWN',
+        stoolCondition: userInput.petProfile.stoolCondition ?? 'UNKNOWN',
+        medications: userInput.petProfile.medications ?? '',
       } : null,
       photoProvided: !!userInput.photoDataUri,
       prescriptionProvided: !!userInput.prescriptionPhotoDataUri,

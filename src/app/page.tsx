@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { saveAnalysisToHistory } from '@/lib/history';
 import { useLanguage } from '@/contexts/language-context';
-import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { useSearchParams } from 'next/navigation';
 
 function HomeContent() {
@@ -72,15 +72,21 @@ function HomeContent() {
         language: language,
         petProfile: isCustom ? {
           name: formData.petProfile?.name,
+          gender: formData.petProfile?.gender,
           breed: formData.petProfile?.breed,
-          age: parseFloat(formData.petProfile?.age) || undefined,
-          weight: parseFloat(formData.petProfile?.weight) || undefined,
+          age: parseFloat(formData.petProfile?.age) || 0,
+          weight: parseFloat(formData.petProfile?.weight) || 0,
           neutered: formData.petProfile?.neutered,
           bcs: formData.petProfile?.bcs,
+          activityLevel: formData.petProfile?.activityLevel,
+          walkingTime: formData.petProfile?.walkingTime,
+          livingEnvironment: formData.petProfile?.livingEnvironment,
           healthConditions: formData.petProfile?.healthConditions,
           allergies: formData.petProfile?.allergies,
+          waterIntake: formData.petProfile?.waterIntake,
+          stoolCondition: formData.petProfile?.stoolCondition,
           medications: formData.petProfile?.medications,
-        } : undefined
+        } : { gender: 'unknown', neutered: 'unknown' }
     };
 
     try {
