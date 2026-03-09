@@ -2,7 +2,7 @@
 {
   "name": "Pettner - AI 반려동물 먹거리 분석기",
   "short_name": "Pettner",
-  "description": "수의 영양학 기반 반려동물 사료, 간식, 영양제 성분 분석 서비스",
+  "description": "수의 영양학 기반 반려동물 식품, 간식, 영양제 성분 분석 서비스",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

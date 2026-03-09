@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
@@ -14,13 +15,14 @@ import { useUser, useFirestore } from '@/firebase';
 import { saveAnalysisToHistory } from '@/lib/history';
 import { useLanguage } from '@/contexts/language-context';
 import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 function HomeContent() {
   const { language, t } = useLanguage();
   const { user } = useUser();
   const db = useFirestore();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { toast } = useToast();
   
   const [step, setStep] = useState<'landing' | 'survey' | 'input' | 'loading' | 'result'>('landing');
@@ -29,18 +31,37 @@ function HomeContent() {
   const [showLimitModal, setShowLimitModal] = useState(false);
 
   useEffect(() => {
-    if (searchParams.get('reset') === 'true') {
-      setStep('landing');
+    const resetParam = searchParams.get('reset');
+    if (resetParam === 'true') {
+      setStep(user ? 'input' : 'landing');
       setAnalysisResult(null);
       setResultInput(null);
+      return;
     }
-  }, [searchParams]);
+
+    // 로그인 상태라면 랜딩 페이지를 건너뛰고 바로 입력 화면으로 이동 (초기 진입 시)
+    if (user && step === 'landing') {
+      setStep('input');
+    }
+  }, [user, searchParams]); // step 의존성 제거하여 무한 루프 및 강제 리셋 방지
 
   const checkUsageLimit = useCallback(async () => {
-    return true;
+    // 실제 운영 시에는 여기서 Firestore 데이터를 조회하여 일일 사용량을 체크합니다.
+    return true; 
   }, []);
 
   const handleAnalysis = async (formData: any) => {
+    // 분석 실행 시점에 로그인이 안 되어 있다면 로그인 페이지로 유도
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "로그인이 필요합니다.",
+        description: "분석 결과를 저장하고 확인하려면 먼저 로그인해주세요.",
+      });
+      router.push('/login');
+      return;
+    }
+
     const canAnalyze = await checkUsageLimit();
     if (!canAnalyze) {
       setShowLimitModal(true);
@@ -87,14 +108,6 @@ function HomeContent() {
           reader.readAsDataURL(formData.image[0]);
         });
       }
-
-      if (formData.prescriptionImage?.[0]) {
-        const reader = new FileReader();
-        analysisInput.prescriptionPhotoDataUri = await new Promise<string>((resolve) => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(formData.prescriptionImage[0]);
-        });
-      }
       
       const actionResponse = await getAnalysis(analysisInput);
       if (actionResponse.error) {
@@ -120,11 +133,19 @@ function HomeContent() {
           }
         }
         setStep('result');
+      } else {
+         throw new Error("Analysis returned no result.");
       }
     } catch (error: any) {
       setStep('input');
       toast({ variant: "destructive", title: t('homePage.analysisFailedTitle'), description: error.message });
     }
+  };
+  
+  const handleReset = () => {
+    setStep(user ? 'input' : 'landing');
+    setAnalysisResult(null);
+    setResultInput(null);
   };
   
   return (
@@ -135,7 +156,7 @@ function HomeContent() {
         {step === 'input' && <ScannerHome onAnalyze={handleAnalysis} />}
         {step === 'loading' && <AnalysisLoading />}
         {step === 'result' && analysisResult && resultInput && (
-          <AnalysisResult result={analysisResult} input={resultInput} onReset={() => setStep('input')} />
+          <AnalysisResult result={analysisResult} input={resultInput} onReset={handleReset} />
         )}
       </div>
       <UsageLimitModal open={showLimitModal} onOpenChange={setShowLimitModal} />

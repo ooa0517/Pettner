@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   Search,
   Factory,
-  Target
+  Target,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -53,7 +54,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     if (user && db) {
       getDoc(doc(db, 'users', user.uid)).then(snap => {
         if (snap.exists()) {
-          // 프리미엄 상태에 따라 추가 기능을 제공할 수 있습니다.
+          // Premium status can be used for additional features.
         }
       });
     }
@@ -67,68 +68,73 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     );
   }, [result.ingredientAnalysis, ingSearch]);
 
-  if (!result || !result.productIdentity) {
+  if (!result || !result.productIdentity || !result.scientificAnalysis) {
      return (
         <div className="space-y-8 py-20 text-center">
           <AlertCircle className="w-20 h-20 text-destructive mx-auto opacity-30"/>
-          <h1 className="text-3xl font-black">분석 오류</h1>
-          <p className="text-muted-foreground">AI가 리포트를 생성하는 데 실패했습니다. 다시 시도해 주세요.</p>
+          <h1 className="text-3xl font-black">분석 데이터 오류</h1>
+          <p className="text-muted-foreground">AI 리포트의 필수 데이터가 누락되었습니다. 이미지나 입력값을 변경하여 다시 시도해 주세요.</p>
           <button onClick={onReset} className="text-primary font-bold underline">다시 시도</button>
         </div>
      );
   }
 
   const { productIdentity, scoreCard, scientificAnalysis, esgReport, feedingGuide, matchingReport } = result;
+  const displayedProductName = input.productName || productIdentity.name;
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-48 max-w-4xl mx-auto px-4">
       
       {!isPublicView && <AdBanner position="top" />}
 
-      {/* 1. TOP SCORE CARD / MATCH CARD */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
         <CardContent className="p-10 space-y-8">
-          <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-            <div className="space-y-4 flex-1">
-              <div className="flex flex-wrap gap-2">
-                <Badge className={cn("px-4 py-1.5 rounded-full text-[10px] font-black", 
-                  productIdentity.pettnerCompliance.isCompliant ? "bg-success" : "bg-destructive")}>
-                  {productIdentity.pettnerCompliance.isCompliant ? 'PETTNER 인증 적합' : '안전 주의 필요'}
-                </Badge>
-                <Badge variant="outline" className="px-4 py-1.5 rounded-full text-[10px] font-black border-primary text-primary uppercase">
-                  {isCustom ? 'V21.0 Pet Matching' : 'V21.0 Product Audit'}
-                </Badge>
+          <div className="flex flex-col md:flex-row gap-8">
+            {input.photoDataUri && (
+              <div className="w-full md:w-1/3">
+                <img src={input.photoDataUri} alt={displayedProductName} className="rounded-3xl w-full h-auto object-cover aspect-[3/4] shadow-lg"/>
               </div>
-              <h1 className="text-4xl font-black tracking-tighter leading-tight">
-                {productIdentity.name}
-              </h1>
-              <p className="text-lg text-muted-foreground font-bold">{productIdentity.brand} · {productIdentity.category}</p>
-            </div>
+            )}
+            <div className="flex flex-col justify-between flex-1">
+                <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                        <Badge className={cn("px-4 py-1.5 rounded-full text-[10px] font-black", productIdentity?.pettnerCompliance?.isCompliant ? "bg-success" : "bg-destructive")}>
+                            {productIdentity?.pettnerCompliance?.isCompliant ? 'PETTNER 인증 적합' : '안전 주의 필요'}
+                        </Badge>
+                        <Badge variant="outline" className="px-4 py-1.5 rounded-full text-[10px] font-black border-primary text-primary uppercase">
+                            {isCustom ? 'V21.0 Pet Matching' : 'V21.0 Product Audit'}
+                        </Badge>
+                    </div>
+                    <h1 className="text-4xl font-black tracking-tighter leading-tight">
+                        {displayedProductName}
+                    </h1>
+                    <p className="text-lg text-muted-foreground font-bold">{productIdentity?.brand} · {productIdentity?.category}</p>
+                </div>
 
-            <div className="shrink-0 flex flex-col items-center md:items-end gap-4">
-               <div className="relative flex items-center justify-center">
-                  <svg className="w-32 h-32 transform -rotate-90">
-                    <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-muted/30" />
-                    <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="12" fill="transparent" 
-                      strokeDasharray={364} strokeDashoffset={364 - (364 * (isCustom ? (matchingReport?.matchScore || 0) : scoreCard.totalScore)) / 100}
-                      className={cn("transition-all duration-1000", isCustom ? "text-primary" : "text-success")} />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className={cn("text-4xl font-black", isCustom ? "text-primary" : "text-success")}>
-                      {isCustom ? matchingReport?.matchScore : scoreCard.totalScore}
-                    </span>
-                    <span className="text-[10px] font-black text-muted-foreground uppercase">{isCustom ? '매칭률 %' : '종합 점수'}</span>
-                  </div>
-               </div>
-               <Badge className={cn("font-black px-6 py-2 rounded-full text-lg border-none", 
-                 isCustom ? "bg-primary/10 text-primary" : "bg-success/10 text-success")}>
-                 {isCustom ? '개인 맞춤 분석 결과' : `${scoreCard.grade} 등급`}
-               </Badge>
+                <div className="shrink-0 flex flex-row-reverse md:flex-col items-center md:items-end gap-4 mt-6 md:mt-0">
+                   <div className="relative flex items-center justify-center">
+                      <svg className="w-32 h-32 transform -rotate-90">
+                        <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="12" fill="transparent" className="text-muted/30" />
+                        <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="12" fill="transparent" 
+                          strokeDasharray={364} strokeDashoffset={364 - (364 * (isCustom ? (matchingReport?.matchScore || 0) : (scoreCard?.totalScore || 0))) / 100}
+                          className={cn("transition-all duration-1000", isCustom ? "text-primary" : "text-success")} />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className={cn("text-4xl font-black", isCustom ? "text-primary" : "text-success")}>
+                          {isCustom ? (matchingReport?.matchScore ?? 'N/A') : (scoreCard?.totalScore ?? 'N/A')}
+                        </span>
+                        <span className="text-[10px] font-black text-muted-foreground uppercase">{isCustom ? '매칭률 %' : '종합 점수'}</span>
+                      </div>
+                   </div>
+                   <Badge className={cn("font-black px-6 py-2 rounded-full text-lg border-none", isCustom ? "bg-primary/10 text-primary" : "bg-success/10 text-success")}>
+                     {isCustom ? '개인 맞춤 분석 결과' : `${scoreCard?.grade ?? 'N/A'} 등급`}
+                   </Badge>
+                </div>
             </div>
           </div>
 
           {isCustom && matchingReport && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6">
               <div className="p-6 rounded-3xl bg-success/5 border border-success/20 space-y-3">
                 <h4 className="font-black text-sm text-success flex items-center gap-2">
                   <CheckCircle2 size={16} /> {input.petProfile?.name}에게 좋은 점
@@ -156,13 +162,13 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </div>
           )}
 
-          <div className={cn("p-8 rounded-[2.5rem] border-l-8", isCustom ? "border-primary bg-primary/5" : "border-success bg-success/5")}>
+          <div className={cn("p-8 rounded-[2.5rem] border-l-8 mt-6", isCustom ? "border-primary bg-primary/5" : "border-success bg-success/5")}>
              <h3 className="text-xl font-black flex items-center gap-2 mb-4">
                {isCustom ? <Target className="text-primary" size={24}/> : <Stethoscope className="text-success" size={24}/>}
                {isCustom ? `${input.petProfile?.name}을 위한 맞춤 소견` : '수의 영양학적 정밀 진단'}
              </h3>
              <p className="text-lg font-bold leading-relaxed break-keep">
-               {isCustom ? matchingReport?.suitabilityVerdict : scoreCard.headline}
+               {isCustom ? matchingReport?.suitabilityVerdict : scoreCard?.headline}
              </p>
           </div>
         </CardContent>
@@ -170,7 +176,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
 
       <Accordion type="multiple" defaultValue={["ing-audit", "nut-audit", "feeding-guide"]} className="space-y-6">
         
-        {/* 2. INGREDIENT AUDIT */}
         <AccordionItem value="ing-audit" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <AccordionTrigger className="px-8 py-8 hover:no-underline">
             <div className="flex items-center gap-4">
@@ -212,7 +217,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </AccordionContent>
         </AccordionItem>
 
-        {/* 3. NUTRITIONAL AUDIT */}
         <AccordionItem value="nut-audit" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <AccordionTrigger className="px-8 py-8 hover:no-underline">
             <div className="flex items-center gap-4">
@@ -225,7 +229,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </AccordionTrigger>
           <AccordionContent className="px-8 pb-10 pt-4 space-y-10">
             <div className="grid gap-12">
-              {scientificAnalysis.comparativeChart.map((item, i) => {
+              {scientificAnalysis?.comparativeChart?.map((item, i) => {
                 const maxVal = Math.max(item.productValue, item.standardMax || 50);
                 const productPct = Math.min((item.productValue / maxVal) * 100, 100);
                 const minPct = (item.standardMin / maxVal) * 100;
@@ -246,20 +250,18 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                     </div>
                   </div>
                   <div className="relative h-6 w-full bg-muted rounded-full overflow-hidden">
-                    {/* 표준 범위 가이드 영역 */}
                     <div className="absolute h-full bg-primary/10 border-x border-primary/20 z-0" style={{ left: `${minPct}%`, width: `${Math.max(5, maxRangePct - minPct)}%` }} />
-                    {/* 실제 제품 함량 바 */}
                     <div className={cn("absolute h-full transition-all duration-1000 z-10", 
                         item.productValue < item.standardMin ? "bg-orange-500" : "bg-primary"
                       )} style={{ width: `${productPct}%` }} />
                   </div>
                 </div>
-              )})}
+              )})
+              }
             </div>
           </AccordionContent>
         </AccordionItem>
 
-        {/* 4. FEEDING GUIDE */}
         <AccordionItem value="feeding-guide" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <AccordionTrigger className="px-8 py-8 hover:no-underline">
             <div className="flex items-center gap-4">
@@ -274,9 +276,9 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <div className="p-8 bg-primary/5 rounded-[2.5rem] border border-primary/10 text-center space-y-2">
                <span className="text-[10px] font-black uppercase tracking-widest text-primary">에너지 밀도 (Energy Density)</span>
                <p className="text-4xl font-black text-primary tracking-tighter">
-                 {scientificAnalysis.nutrientMass.kcal} <span className="text-sm font-bold">kcal/kg</span>
+                 {scientificAnalysis?.nutrientMass?.kcal ?? 'N/A'} <span className="text-sm font-bold">kcal/kg</span>
                </p>
-               <p className="text-xs text-muted-foreground font-medium">이 제품은 {feedingGuide.productPurpose}</p>
+               <p className="text-xs text-muted-foreground font-medium">이 제품은 {feedingGuide?.productPurpose ?? '정보 없음'}</p>
             </div>
 
             <div className="rounded-[2rem] border-2 border-muted overflow-hidden bg-white">
@@ -302,16 +304,16 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                       </TableCell>
                     </TableRow>
                   ) : (
-                    feedingGuide.feedingTable?.map((row, i) => (
+                    feedingGuide?.feedingTable?.map((row, i) => (
                       <TableRow key={i} className="h-20">
                         <TableCell className="text-center font-bold">{row.weightRange}</TableCell>
                         <TableCell className="text-center">
                           <p className="font-bold">{row.lowActivityGrams}</p>
-                          <p className="text-[10px] font-medium text-muted-foreground">약 {Math.round(parseInt(row.lowActivityGrams) * (scientificAnalysis.nutrientMass.kcal / 1000))} kcal</p>
+                          <p className="text-[10px] font-medium text-muted-foreground">약 {Math.round(parseInt(row.lowActivityGrams) * ((scientificAnalysis?.nutrientMass?.kcal ?? 0) / 1000))} kcal</p>
                         </TableCell>
                         <TableCell className="text-center">
                           <p className="font-black text-primary">{row.highActivityGrams}</p>
-                          <p className="text-[10px] font-bold text-primary">약 {Math.round(parseInt(row.highActivityGrams) * (scientificAnalysis.nutrientMass.kcal / 1000))} kcal</p>
+                          <p className="text-[10px] font-bold text-primary">약 {Math.round(parseInt(row.highActivityGrams) * ((scientificAnalysis?.nutrientMass?.kcal ?? 0) / 1000))} kcal</p>
                         </TableCell>
                       </TableRow>
                     ))
@@ -323,7 +325,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </AccordionContent>
         </AccordionItem>
 
-        {/* 5. CORPORATE AUDIT */}
+        {esgReport && (
         <AccordionItem value="corporate-audit" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <AccordionTrigger className="px-8 py-8 hover:no-underline">
             <div className="flex items-center gap-4">
@@ -337,10 +339,10 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           <AccordionContent className="px-8 pb-10 pt-4 space-y-8">
             <div className="flex flex-wrap gap-3">
               <Badge className={cn("px-6 py-3 rounded-2xl text-sm font-black border-none shadow-sm", 
-                esgReport.transparencyStatus === 'DIRECT' ? "bg-success text-white" : "bg-orange-500 text-white")}>
-                {esgReport.transparencyStatus === 'DIRECT' ? '✓ 직접 원료 소싱 및 생산' : '⚠ 위탁(OEM) 생산 방식'}
+                esgReport?.transparencyStatus === 'DIRECT' ? "bg-success text-white" : "bg-orange-500 text-white")}>
+                {esgReport?.transparencyStatus === 'DIRECT' ? '✓ 직접 원료 소싱 및 생산' : '⚠ 위탁(OEM) 생산 방식'}
               </Badge>
-              {esgReport.certifications.map((cert, i) => (
+              {esgReport?.certifications?.map((cert, i) => (
                 <Badge key={i} variant="outline" className="px-6 py-3 rounded-2xl text-sm font-black border-2 border-primary text-primary">
                   {cert} 국제 인증 획득
                 </Badge>
@@ -348,16 +350,17 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </div>
             <div className="p-6 bg-muted/20 rounded-2xl space-y-2">
                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">품질 감사 요약</p>
-               <p className="text-sm font-bold leading-relaxed">{esgReport.recallHistory}</p>
+               <p className="text-sm font-bold leading-relaxed">{esgReport?.recallHistory ?? '이력 정보 없음'}</p>
             </div>
           </AccordionContent>
         </AccordionItem>
+        )}
       </Accordion>
 
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-2xl border-t z-50 flex justify-center shadow-2xl">
         <div className="w-full max-w-4xl flex gap-4">
           <Button onClick={onReset} variant="outline" className="flex-1 h-16 rounded-2xl border-2 font-black text-primary">새로운 분석 시작</Button>
-          <Button onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(productIdentity.name)}`, '_blank')} className="flex-[2] h-16 rounded-2xl text-xl font-black shadow-xl"><ShoppingBag size={24} className="mr-3" /> 최저가 구매하기</Button>
+          <Button onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(displayedProductName)}`, '_blank')} className="flex-[2] h-16 rounded-2xl text-xl font-black shadow-xl"><ShoppingBag size={24} className="mr-3" /> 최저가 구매하기</Button>
         </div>
       </div>
     </div>

@@ -36,6 +36,7 @@ type AnalysisFormValues = {
   productName: string;
   productCategory: 'food' | 'treat' | 'supplement';
   detailedProductType: string;
+  customDetailedProductType: string;
   image?: FileList;
   petProfile: {
     name: string;
@@ -59,7 +60,7 @@ type AnalysisFormValues = {
 };
 
 const CATEGORY_OPTIONS = {
-  food: ['건식 사료', '습식 사료(캔/파우치)', '화식/생식', '동결건조 사료', '소프트 사료', '기타(직접 입력)'],
+  food: ['건식', '습식(캔/파우치)', '화식/생식', '동결건조', '소프트', '기타(직접 입력)'],
   treat: ['껌/치과용 간식', '져키/트릿', '츄르/퓨레', '동결건조 간식', '비스킷/쿠키', '기타(직접 입력)'],
   supplement: ['관절 영양제', '피부/모질 영양제', '눈/눈물 영양제', '유산균', '심장/신장 영양제', '종합 비타민', '기타(직접 입력)']
 };
@@ -93,6 +94,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
     productName: z.string().optional(),
     productCategory: z.enum(['food', 'treat', 'supplement']),
     detailedProductType: z.string(),
+    customDetailedProductType: z.string().optional(),
     image: z.any().optional(),
     petProfile: z.object({
       name: z.string().optional(),
@@ -122,7 +124,8 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
       analysisMode: 'custom',
       productName: '',
       productCategory: 'food',
-      detailedProductType: '건식 사료',
+      detailedProductType: '건식',
+      customDetailedProductType: '',
       petProfile: {
         name: '', gender: 'unknown', breed: '', age: '0', weight: '0', neutered: 'unknown', bcs: '3',
         activityLevel: 'UNKNOWN', walkingTime: 'UNKNOWN', livingEnvironment: 'UNKNOWN', healthConditions: [], customHealthCondition: '', allergies: [], customAllergy: '', waterIntake: 'UNKNOWN', stoolCondition: 'UNKNOWN', medications: '',
@@ -135,7 +138,8 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
   const imageFile = form.watch('image');
   const analysisMode = form.watch('analysisMode');
   const selectedPetType = form.watch('petType');
-  const currentPetProfile = form.watch('petProfile');
+  const healthConditions = form.watch('petProfile.healthConditions') || [];
+  const allergies = form.watch('petProfile.allergies') || [];
 
   const conditions = selectedPetType === 'dog' ? dogConditions : catConditions;
 
@@ -200,7 +204,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                <FormField control={form.control} name="productCategory" render={({ field }) => (
                   <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-3 gap-3">
                     {[
-                      { id: 'food', label: '사료', icon: ShoppingBag },
+                      { id: 'food', label: '식품', icon: ShoppingBag },
                       { id: 'treat', label: '간식', icon: Cookie },
                       { id: 'supplement', label: '영양제', icon: HeartPulse },
                     ].map((cat) => (
@@ -225,6 +229,13 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                       </button>
                     ))}
                   </div>
+                  {detailedType === '기타(직접 입력)' && (
+                     <FormField control={form.control} name="customDetailedProductType" render={({ field }) => (
+                        <FormControl>
+                          <Input {...field} placeholder="제품의 세부 유형을 직접 입력해주세요." className="mt-2 rounded-2xl h-12 bg-muted/10 border-none px-4" />
+                        </FormControl>
+                      )}/>
+                  )}
                 </div>
 
                 <FormField control={form.control} name="productName" render={({ field }) => (
@@ -240,7 +251,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
             <div className="p-6 bg-primary/5 rounded-[2rem] border border-primary/20 flex items-start gap-4 animate-in fade-in slide-in-from-top-4">
               <div className="p-2 bg-primary rounded-xl text-white"><Info size={20}/></div>
               <p className="text-sm font-bold text-primary leading-relaxed">
-                아이의 건강 상태와 알레르기 정보를 입력하시면, AI가 사료 성분과의 상성을 1:1로 매칭해 드립니다.
+                아이의 건강 상태와 알레르기 정보를 입력하시면, AI가 제품 성분과의 상성을 1:1로 매칭해 드립니다.
               </p>
             </div>
 
@@ -268,7 +279,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                 <CardTitle className="flex items-center gap-3 text-2xl font-black"><Stethoscope className="text-primary" size={28}/> 2. 아이 상세 메디컬 프로필</CardTitle>
               </CardHeader>
               <CardContent className="p-10 space-y-12">
-                {/* 1단계: 기본 정보 */}
+                
                 <div className="space-y-8">
                   <h3 className="text-lg font-black flex items-center gap-2 border-b pb-2"><Info className="text-primary" size={20}/> 기본 정보</h3>
                   <FormField control={form.control} name="petType" render={({ field }) => (
@@ -334,7 +345,6 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
 
                 <Separator />
 
-                {/* 2단계: 신체 및 환경 */}
                 <div className="space-y-8">
                   <h3 className="text-lg font-black flex items-center gap-2 border-b pb-2"><Home className="text-primary" size={20}/> 생활 및 환경</h3>
                   <FormField control={form.control} name="petProfile.walkingTime" render={({ field }) => (
@@ -376,7 +386,6 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
 
                 <Separator />
 
-                {/* 3단계: 건강 고민 및 알러지 */}
                 <div className="space-y-8">
                   <h3 className="text-lg font-black flex items-center gap-2 border-b pb-2"><HeartPulse className="text-primary" size={20}/> 건강 고민 및 알러지</h3>
                   <FormField control={form.control} name="petProfile.allergies" render={({ field }) => (
@@ -397,6 +406,13 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                           </div>
                         ))}
                       </div>
+                      {allergies.includes('기타(직접 입력)') &&
+                        <FormField control={form.control} name="petProfile.customAllergy" render={({ field }) => (
+                          <FormControl>
+                            <Input {...field} placeholder="주의 성분을 직접 입력해주세요 (쉼표로 구분)" className="mt-2 rounded-2xl h-12 bg-muted/10 border-none px-4" />
+                          </FormControl>
+                        )}/>
+                      }
                     </FormItem>
                   )}/>
 
@@ -413,13 +429,19 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
                           </div>
                         ))}
                       </div>
+                      {healthConditions.includes('기타(직접 입력)') &&
+                        <FormField control={form.control} name="petProfile.customHealthCondition" render={({ field }) => (
+                          <FormControl>
+                            <Input {...field} placeholder="건강 고민을 직접 입력해주세요." className="mt-2 rounded-2xl h-12 bg-muted/10 border-none px-4" />
+                          </FormControl>
+                        )}/>
+                      }
                     </FormItem>
                   )}/>
                 </div>
 
                 <Separator />
 
-                {/* 4단계: 기타 습관 */}
                 <div className="space-y-8">
                   <h3 className="text-lg font-black flex items-center gap-2 border-b pb-2"><Footprints className="text-primary" size={20}/> 기타 생활 습관</h3>
                   <div className="grid grid-cols-2 gap-4">

@@ -33,7 +33,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
     {
       icon: <Scale className="text-primary" />,
       title: "개인화된 영양 매칭",
-      desc: "아이의 건강 상태(예: 노령견 관절)에 맞춰 사료의 성분 매칭 점수를 산출합니다."
+      desc: "아이의 건강 상태(예: 노령견 관절)에 맞춰 제품의 성분 매칭 점수를 산출합니다."
     },
     {
       icon: <ShieldCheck className="text-success" />,
@@ -55,7 +55,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
   const screenshots = [
     { url: "https://picsum.photos/seed/screen1/600/1000", caption: "초정밀 프로필 입력" },
     { url: "https://picsum.photos/seed/screen2/600/1000", caption: "AI 매칭 분석 결과" },
-    { url: "https://picsum.photos/seed/screen3/600/1000", caption: "맞춤 사료 추천 리스트" },
+    { url: "https://picsum.photos/seed/screen3/600/1000", caption: "맞춤 제품 추천 리스트" },
     { url: "https://picsum.photos/seed/screen4/600/1000", caption: "상세 영양 비교 그래프" },
     { url: "https://picsum.photos/seed/screen5/600/1000", caption: "제조사 신뢰도 감사" }
   ];
@@ -73,7 +73,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
             우리 아이를 위한<br/><span className="text-primary">1:1 맞춤 영양</span> 매칭
           </h1>
           <p className="text-xl text-muted-foreground font-medium leading-relaxed max-w-2xl mx-auto">
-            단순히 좋은 사료가 아니라, **우리 아이에게** 좋은 사료인지 수의학 데이터로 판별합니다.
+            단순히 좋은 제품이 아니라, **우리 아이에게** 좋은 제품인지 수의학 데이터로 판별합니다.
           </p>
         </div>
 
@@ -100,9 +100,9 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
             </div>
             <h2 className="text-4xl font-black tracking-tight">AI 1:1 정밀 매칭</h2>
             <p className="text-lg text-muted-foreground font-medium leading-relaxed">
-              아이의 알레르기, 질환, 활동량을 분석하여 사료와의 상성을 점수화합니다. 
+              아이의 알레르기, 질환, 활동량을 분석하여 제품과의 상성을 점수화합니다. 
               <br/><br/>
-              <span className="text-foreground font-bold">"초코에게 이 사료는 92% 적합합니다. 관절 건강을 돕는 글루코사민 함량이 매우 우수합니다."</span>
+              <span className="text-foreground font-bold">"초코에게 이 제품은 92% 적합합니다. 관절 건강을 돕는 글루코사민 함량이 매우 우수합니다."</span>
             </p>
           </div>
           
@@ -165,7 +165,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
             </div>
             <h2 className="text-4xl font-black tracking-tight">개인별 맞춤 권장 조언</h2>
             <p className="text-lg text-muted-foreground font-medium leading-relaxed">
-              단순 성분 나열이 아닙니다. <span className="text-primary font-bold">"비만 고양이인 '라떼'에게는 이 사료가 지방이 많으니 15% 줄여서 급여하세요"</span>와 같은 실제적인 가이드를 제공합니다.
+              단순 성분 나열이 아닙니다. <span className="text-primary font-bold">"비만 고양이인 '라떼'에게는 이 식품이 지방이 많으니 15% 줄여서 급여하세요"</span>와 같은 실제적인 가이드를 제공합니다.
             </p>
           </div>
           <div className="flex-1 space-y-4">
