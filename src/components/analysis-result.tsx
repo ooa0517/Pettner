@@ -1,20 +1,19 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import type { AnalyzePetFoodIngredientsOutput, AnalyzePetFoodIngredientsInput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   ShoppingBag, AlertCircle, 
   Stethoscope, BarChart3, 
-  ShieldAlert, Microscope, 
+  Microscope, 
   Zap, 
-  PieChart, Factory, Truck,
-  Leaf, Gavel, History, Scale,
+  PieChart, History, Scale,
   TrendingDown, CheckCircle2,
-  Share2, Link as LinkIcon
+  Share2, Info, Table as TableIcon,
+  ShieldAlert, Leaf, Gavel
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -23,11 +22,18 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useUser, useFirestore } from '@/firebase';
-import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import AdBanner from '@/components/ad-banner';
 import { useToast } from '@/hooks/use-toast';
-import { useParams } from 'next/navigation';
 
 type AnalysisResultProps = {
   result: AnalyzePetFoodIngredientsOutput;
@@ -40,12 +46,11 @@ type AnalysisResultProps = {
 export default function AnalysisResult({ result, input, onReset, resetButtonText, isPublicView = false }: AnalysisResultProps) {
   const isEn = input.language === 'en';
   const isCat = input.petType === 'cat';
+  const isGeneralMode = input.analysisMode === 'general';
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
-  const params = useParams();
   const [isPremium, setIsPremium] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
 
   useEffect(() => {
     if (user && db) {
@@ -56,32 +61,20 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   }, [user, db]);
 
   const handleShare = async () => {
-    if (!user || !db) {
-       toast({ title: "로그인이 필요합니다", description: "리포트를 공유하려면 로그인이 필요합니다." });
-       return;
-    }
-
-    setIsSharing(true);
-    try {
-      // 현재 리포트의 ID를 찾기 위해 최근 기록 조회 (보통 상세 페이지나 분석 직후이므로 ID가 존재함)
-      // 여기서는 URL의 params나 상위에서 넘겨준 ID가 없으므로 현재 페이지 URL을 기반으로 하거나
-      // Web Share API를 사용합니다.
-      const shareUrl = window.location.href;
-      
-      if (navigator.share) {
+    const shareUrl = window.location.href;
+    if (navigator.share) {
+      try {
         await navigator.share({
           title: `Pettner 분석 리포트: ${result.productIdentity.name}`,
-          text: `${input.petProfile?.name}를 위한 맞춤 영양 분석 결과입니다.`,
+          text: `${isGeneralMode ? '제품 영양 분석 결과입니다.' : input.petProfile?.name + '를 위한 맞춤 영양 분석 결과입니다.'}`,
           url: shareUrl,
         });
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        toast({ title: "링크 복사 완료", description: "공유 링크가 클립보드에 복사되었습니다." });
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsSharing(false);
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({ title: "링크 복사 완료", description: "공유 링크가 클립보드에 복사되었습니다." });
     }
   };
 
@@ -96,7 +89,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
      );
   }
 
-  const { productIdentity, scoreCard, scientificAnalysis, esgReport, weightDiagnosis, dietRoadmap } = result;
+  const { productIdentity, scoreCard, scientificAnalysis, esgReport, weightDiagnosis, dietRoadmap, productAnalysisOnly } = result;
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-48 max-w-4xl mx-auto px-4">
@@ -114,9 +107,8 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   {productIdentity.pettnerCompliance.isCompliant ? 'PETTNER COMPLIANT' : 'NON-COMPLIANT'}
                 </Badge>
                 <Badge variant="outline" className="px-3 py-1 rounded-full text-[10px] font-black border-primary text-primary">
-                  V17.0 MEDICAL AUDIT
+                  V15.0 PRODUCT AUDIT
                 </Badge>
-                {isPublicView && <Badge className="bg-amber-500 text-white font-black text-[10px]">SHARED REPORT</Badge>}
               </div>
               <h1 className="text-3xl font-black tracking-tighter pt-2 leading-tight">
                 {productIdentity.name}
@@ -133,6 +125,18 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             </div>
           </div>
 
+          {/* Product Purpose (Only for General Mode) */}
+          {isGeneralMode && productAnalysisOnly?.productPurpose && (
+            <div className="p-6 bg-muted/20 rounded-3xl border-2 border-dashed border-primary/20">
+              <h4 className="font-black text-sm flex items-center gap-2 mb-2">
+                <Info size={16} className="text-primary"/> {isEn ? 'Product Goal' : '제품 급여 목적'}
+              </h4>
+              <p className="text-sm font-bold text-foreground leading-relaxed break-keep">
+                {productAnalysisOnly.productPurpose}
+              </p>
+            </div>
+          )}
+
           <div className="p-8 rounded-[2.5rem] border-l-8 border-primary bg-primary/5">
              <h3 className="text-xl font-black flex items-center gap-2 mb-4">
                <Stethoscope className="text-primary" size={20}/> 
@@ -143,21 +147,109 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
              </p>
           </div>
 
-          {!isPublicView && (
-            <Button 
-              onClick={handleShare} 
-              variant="outline" 
-              className="w-full h-14 rounded-2xl border-2 border-dashed font-bold flex items-center justify-center gap-2 hover:bg-muted/50"
-            >
-              <Share2 size={18} />
-              이 리포트 공유하기
-            </Button>
-          )}
+          <Button 
+            onClick={handleShare} 
+            variant="outline" 
+            className="w-full h-14 rounded-2xl border-2 border-dashed font-bold flex items-center justify-center gap-2 hover:bg-muted/50"
+          >
+            <Share2 size={18} />
+            이 리포트 공유하기
+          </Button>
         </CardContent>
       </Card>
 
-      {/* 2. Weight & Breed Diagnosis (AI Correction) */}
-      {weightDiagnosis && (
+      {/* 2. Mode Specific Section: Feeding Guide (General Mode) */}
+      {isGeneralMode && productAnalysisOnly?.feedingTable && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 px-2">
+            <TableIcon className="text-primary w-6 h-6" />
+            <h2 className="text-2xl font-black font-headline tracking-tight">{isEn ? 'Daily Feeding Guide' : '일일 권장 급여량 가이드'}</h2>
+          </div>
+          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden p-6">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="font-black text-center">{isEn ? 'Weight' : '체중 (kg)'}</TableHead>
+                  <TableHead className="font-black text-center">{isEn ? 'Low Activity' : '활동량 낮음'}</TableHead>
+                  <TableHead className="font-black text-center">{isEn ? 'High Activity' : '활동량 높음'}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {productAnalysisOnly.feedingTable.map((row, i) => (
+                  <TableRow key={i} className="hover:bg-muted/10">
+                    <TableCell className="text-center font-bold">{row.weightRange}</TableCell>
+                    <TableCell className="text-center font-medium text-muted-foreground">{row.lowActivityGrams}</TableCell>
+                    <TableCell className="text-center font-bold text-primary">{row.highActivityGrams}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <p className="text-[10px] text-muted-foreground mt-4 text-center">
+              * 일일 권장 칼로리(RER/DER)를 기준으로 계산된 예상 수치입니다. 실제 급여 시 아이의 상태를 보며 가감하세요.
+            </p>
+          </Card>
+        </div>
+      )}
+
+      {/* 3. Suitability Audit (General Mode) */}
+      {isGeneralMode && productAnalysisOnly?.suitabilityAudit && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8 space-y-4">
+            <h4 className="font-black text-sm text-success uppercase flex items-center gap-2">
+              <CheckCircle2 size={16}/> {isEn ? 'Recommended For' : '급여 권장'}
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {productAnalysisOnly.suitabilityAudit.suitableFor.map((item, i) => (
+                <Badge key={i} className="bg-success/10 text-success border-none rounded-xl font-bold">{item}</Badge>
+              ))}
+            </div>
+          </Card>
+          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8 space-y-4 border-l-8 border-destructive">
+            <h4 className="font-black text-sm text-destructive uppercase flex items-center gap-2">
+              <ShieldAlert size={16}/> {isEn ? 'NOT Recommended' : '급여 부적합'}
+            </h4>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {productAnalysisOnly.suitabilityAudit.notSuitableFor.map((item, i) => (
+                <Badge key={i} className="bg-destructive/10 text-destructive border-none rounded-xl font-bold">{item}</Badge>
+              ))}
+            </div>
+            <p className="text-xs font-bold text-muted-foreground leading-relaxed">
+              <span className="text-destructive">⚠️ 경고:</span> {productAnalysisOnly.suitabilityAudit.unsuitableReasons}
+            </p>
+          </Card>
+        </div>
+      )}
+
+      {/* 4. 100% Ingredient Analysis (General Mode) */}
+      {isGeneralMode && productAnalysisOnly?.ingredientList100 && (
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 px-2">
+            <Microscope className="text-primary w-6 h-6" />
+            <h2 className="text-2xl font-black font-headline tracking-tight">{isEn ? '100% Ingredient Audit' : '전성분 원재료 100% 분석'}</h2>
+          </div>
+          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
+            <CardContent className="p-0">
+              <div className="divide-y divide-muted/30">
+                {productAnalysisOnly.ingredientList100.map((ing, i) => (
+                  <div key={i} className="p-6 flex items-start gap-4 hover:bg-muted/5 transition-colors">
+                    <div className={cn("mt-1 w-3 h-3 rounded-full shrink-0", 
+                      ing.category === 'positive' ? 'bg-success shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 
+                      ing.category === 'cautionary' ? 'bg-destructive shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-muted-foreground'
+                    )} />
+                    <div className="space-y-1">
+                      <p className="font-black text-lg">{ing.name}</p>
+                      <p className="text-sm text-muted-foreground font-medium leading-relaxed">{ing.reason}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Weight Diagnosis (Custom Mode) */}
+      {!isGeneralMode && weightDiagnosis && (
         <div className="space-y-6">
           <div className="flex items-center gap-2 px-2">
             <Scale className="text-primary w-6 h-6" />
@@ -215,10 +307,10 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
 
       {!isPublicView && <AdBanner position="middle" />}
 
-      {/* 3. Scientific Deep Dive */}
+      {/* 5. Scientific Deep Dive (Nutrients) */}
       <div className="space-y-6">
         <div className="flex items-center gap-2 px-2">
-          <Microscope className="text-primary w-6 h-6" />
+          <PieChart className="text-primary w-6 h-6" />
           <h2 className="text-2xl font-black font-headline tracking-tight">{isEn ? 'Nutrition Audit' : '영양학적 감사'}</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

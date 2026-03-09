@@ -1,15 +1,16 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v14.5 - Full Medical Integration]
- * - 모든 설문 데이터(성별, 중성화, 생활 습관, 약물)를 AI 분석 로직에 통합.
- * - 데이터 규격(Schema)을 프론트엔드 폼 데이터와 일치시킴.
+ * @fileOverview [Pettner Core Engine v15.0 - Extended Product Analysis]
+ * - 제품 분석 전용 모드(general)를 위한 원재료 100% 카테고리 분석 추가.
+ * - 체중 및 활동량별 일일 급여량 테이블 생성 로직 통합.
+ * - 제품 목적 요약 및 적합성/부적합성 명시 기능 강화.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-// 1. 입력 데이터 규칙 (Input Schema) - 프론트엔드 데이터와 정밀 동기화
+// 1. 입력 데이터 규칙 (Input Schema)
 const AnalyzePetFoodIngredientsInputSchema = z.object({
   petType: z.enum(['dog', 'cat']).describe('반려동물 종류'),
   analysisMode: z.enum(['general', 'custom']).describe('분석 모드'),
@@ -41,8 +42,8 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
 export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngredientsInputSchema>;
 
 const PromptInputSchema = AnalyzePetFoodIngredientsInputSchema.extend({
-  isModeA: z.boolean(),
-  isModeB: z.boolean(),
+  isModeGeneral: z.boolean(),
+  isModeCustom: z.boolean(),
 });
 
 // 2. 출력 데이터 규칙 (Output Schema)
@@ -63,6 +64,26 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     grade: z.string().optional(),
     statusTags: z.array(z.string())
   }),
+  // 제품 분석 전용 데이터 (Mode: General)
+  productAnalysisOnly: z.object({
+    ingredientList100: z.array(z.object({
+      name: z.string(),
+      category: z.enum(['positive', 'neutral', 'cautionary']),
+      reason: z.string().describe('Scientific reason for category')
+    })).describe('Analysis of 100% of the visible ingredients on the label'),
+    feedingTable: z.array(z.object({
+      weightRange: z.string().describe('e.g., 1-5kg'),
+      lowActivityGrams: z.string().describe('e.g., 50-100g'),
+      highActivityGrams: z.string().describe('e.g., 60-120g')
+    })).describe('Daily feeding guide based on weight and activity'),
+    productPurpose: z.string().describe('Summary of what the product is for (e.g., joint support for seniors)'),
+    suitabilityAudit: z.object({
+      suitableFor: z.array(z.string()).describe('List of pet types/conditions this is good for'),
+      notSuitableFor: z.array(z.string()).describe('List of pet types/conditions this is bad for'),
+      unsuitableReasons: z.string().describe('Clear warning why it might be unsuitable')
+    })
+  }).optional(),
+  // 맞춤 분석 전용 데이터 (Mode: Custom)
   weightDiagnosis: z.object({
     currentWeight: z.number(),
     idealWeight: z.number(),
@@ -106,20 +127,25 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   prompt: `You are a world-class Veterinary Nutritionist. Analyze the pet food based on the provided data.
 Match Target Language: {{{language}}}.
 
+# [Operation Mode]
+- Mode: {{#if isModeGeneral}}PRODUCT ANALYSIS ONLY (General Mode){{else}}PERSONALIZED CUSTOM ANALYSIS (Custom Mode){{/if}}
+
 # [Input Data Context]
-- Pet: {{{petType}}}, Breed: {{{petProfile.breed}}}, Gender: {{{petProfile.gender}}}, Neutered: {{{petProfile.neutered}}}
-- Age: {{{petProfile.age}}} years, Weight: {{{petProfile.weight}}}kg, BCS: {{{petProfile.bcs}}}
-- Lifestyle: Walking Time {{{petProfile.walkingTime}}}, Living Environment {{{petProfile.livingEnvironment}}}
+- Pet Type: {{{petType}}}
+{{#if isModeCustom}}
+- Profile: Breed {{{petProfile.breed}}}, Gender {{{petProfile.gender}}}, Age {{{petProfile.age}}}, Weight {{{petProfile.weight}}}kg, BCS {{{petProfile.bcs}}}
 - Medical: Health Conditions ({{#each petProfile.healthConditions}}{{{this}}}, {{/each}}), Allergies ({{#each petProfile.allergies}}{{{this}}}, {{/each}})
-- Current Medications/Supplements: {{{petProfile.medications}}}
+- Medications: {{{petProfile.medications}}}
+{{/if}}
 - Product: {{{productName}}} ({{{productCategory}}} - {{{detailedProductType}}})
 
-# [Instructions]
-1. **Neutered Correction**: If neutered is 'yes', reduce calorie needs (RER) by ~20%.
-2. **Breed Genetics**: Check breed-specific vulnerabilities (e.g., Maltipoo -> Joints, Maltese -> Heart).
-3. **Medication Audit**: If prescriptionPhotoDataUri or medications are provided, analyze if ingredients conflict with the drugs.
-4. **Calculations**: Provide nutrient mass per 100g. Total nutrient mass cannot exceed 100g.
-5. **ESG**: Research brand's recall history and environmental impact.
+# [Instructions for General Mode]
+{{#if isModeGeneral}}
+1. **100% Ingredient Analysis**: Analyze every single ingredient shown on the photo. Categorize into 'positive' (Good), 'neutral' (Safe but no major benefit), or 'cautionary' (Risk factors). Provide clear scientific reasons.
+2. **Feeding Table**: Create a robust feeding table for various weight ranges (1-5kg, 5-10kg, 10-20kg, 20kg+) showing suggested daily grams for 'Low Activity' vs 'High Activity'.
+3. **Product Purpose**: Summarize the core goal of this product (e.g., "Full nutrition for adult dogs with joint support emphasis").
+4. **Suitability Audit**: Explicitly state who should NOT eat this. For example, if it's a dog food, say "Unsuitable for Cats" and explain why (e.g., lacking taurine). Also list medical conditions that are contraindications.
+{{/if}}
 
 # [Multimodal Analysis]
 {{#if photoDataUri}}
@@ -141,8 +167,8 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
     try {
       const response = await analyzePetFoodIngredientsPrompt({
         ...input,
-        isModeA: input.analysisMode === 'general',
-        isModeB: input.analysisMode === 'custom',
+        isModeGeneral: input.analysisMode === 'general',
+        isModeCustom: input.analysisMode === 'custom',
       });
 
       if (!response || !response.output) {
