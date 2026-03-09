@@ -26,12 +26,13 @@ function HomeContent() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [step, setStep] = useState<'landing' | 'survey' | 'input' | 'loading' | 'result'>('landing');
+  // 로그인한 사용자는 바로 분석 입력 단계('input')에서 시작하도록 설정
+  const [step, setStep] = useState<'landing' | 'survey' | 'input' | 'loading' | 'result'>('input');
   const [analysisResult, setAnalysisResult] = useState<AnalyzePetFoodIngredientsOutput | null>(null);
   const [resultInput, setResultInput] = useState<AnalyzePetFoodIngredientsInput | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
 
-  // 사용자가 로그인하지 않은 경우 로그인 페이지로 즉시 이동 (Auth Wall)
+  // 🔐 Auth Wall: 로그인하지 않은 경우 즉시 로그인 페이지로 리디렉션
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
@@ -41,30 +42,19 @@ function HomeContent() {
   useEffect(() => {
     const resetParam = searchParams.get('reset');
     if (resetParam === 'true') {
-      setStep(user ? 'input' : 'landing');
+      setStep('input');
       setAnalysisResult(null);
       setResultInput(null);
-      return;
     }
-
-    // 로그인 상태라면 랜딩 페이지를 건너뛰고 바로 입력 화면으로 이동
-    if (user && step === 'landing') {
-      setStep('input');
-    }
-  }, [user, searchParams, step]);
+  }, [searchParams]);
 
   const checkUsageLimit = useCallback(async () => {
-    // 일시적으로 제한 해제 (사용자 요청)
+    // 일시적으로 제한 해제 (검증용)
     return true; 
   }, []);
 
   const handleAnalysis = async (formData: any) => {
     if (!user) {
-      toast({
-        variant: "destructive",
-        title: "로그인이 필요합니다.",
-        description: "분석 결과를 저장하고 확인하려면 먼저 로그인해주세요.",
-      });
       router.push('/login');
       return;
     }
@@ -150,17 +140,22 @@ function HomeContent() {
   };
   
   const handleReset = () => {
-    setStep(user ? 'input' : 'landing');
+    setStep('input');
     setAnalysisResult(null);
     setResultInput(null);
   };
 
+  // 로딩 중이거나 사용자가 없는 경우(리디렉션 대기) 로더 또는 빈 화면 노출
   if (isUserLoading) {
     return (
       <div className="flex items-center justify-center flex-grow p-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
   
   return (
