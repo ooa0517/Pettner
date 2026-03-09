@@ -1,15 +1,14 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v16.0 - Advanced Analysis]
- * - AAFCO 기준 대비 영양 성분 분석 데이터 추가.
- * - 원재료 분석 및 급여 가이드 로직 강화.
+ * @fileOverview [Pettner Core Engine v17.0 - Comparative Nutrition Analysis]
+ * - AAFCO 표준 대비 시각화 데이터 강화.
+ * - 급여 테이블 내 그람당 칼로리 계산 로직 추가.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-// 1. 입력 데이터 규칙 (Input Schema)
 const AnalyzePetFoodIngredientsInputSchema = z.object({
   petType: z.enum(['dog', 'cat']).describe('반려동물 종류'),
   analysisMode: z.enum(['general', 'custom']).describe('분석 모드'),
@@ -45,13 +44,12 @@ const PromptInputSchema = AnalyzePetFoodIngredientsInputSchema.extend({
   isModeCustom: z.boolean(),
 });
 
-// 2. 출력 데이터 규칙 (Output Schema)
 const AnalyzePetFoodIngredientsOutputSchema = z.object({
   status: z.enum(['success', 'error']),
   productIdentity: z.object({
-    name: z.string().describe('Identified product name'),
-    brand: z.string().describe('Brand name'),
-    category: z.string().describe('Category'),
+    name: z.string(),
+    brand: z.string(),
+    category: z.string(),
     pettnerCompliance: z.object({
       isCompliant: z.boolean(),
       reason: z.string()
@@ -63,52 +61,48 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     grade: z.string().optional(),
     statusTags: z.array(z.string())
   }),
-  // 원재료 분석 데이터
   ingredientAnalysis: z.object({
     ingredientList100: z.array(z.object({
       name: z.string(),
       category: z.enum(['positive', 'neutral', 'cautionary']),
-      reason: z.string().describe('Scientific reason for category')
-    })).describe('Analysis of 100% of the visible ingredients on the label'),
+      reason: z.string()
+    })),
     suitabilityAudit: z.object({
-      suitableFor: z.array(z.string()).describe('List of pet types/conditions this is good for'),
-      notSuitableFor: z.array(z.string()).describe('List of pet types/conditions this is bad for'),
-      unsuitableReasons: z.string().describe('Clear warning why it might be unsuitable')
+      suitableFor: z.array(z.string()),
+      notSuitableFor: z.array(z.string()),
+      unsuitableReasons: z.string()
     })
   }),
-  // 영양 분석 데이터
   scientificAnalysis: z.object({
     nutrientMass: z.object({
-      protein_g: z.number(),
-      fat_g: z.number(),
-      carbs_g: z.number(),
+      protein_g: z.number().describe('Product Protein %'),
+      fat_g: z.number().describe('Product Fat %'),
+      carbs_g: z.number().describe('Product Carbs %'),
       kcal: z.number()
     }),
+    comparativeChart: z.array(z.object({
+      nutrient: z.string().describe('e.g., Protein, Fat'),
+      productValue: z.number(),
+      standardMin: z.number(),
+      standardMax: z.number().optional()
+    })).describe('Data for side-by-side comparison chart against AAFCO standards'),
     aafcoComparison: z.array(z.object({
-      nutrient: z.string().describe('e.g., Crude Protein, Calcium'),
-      unit: z.string().describe('e.g., %, mg/kg'),
+      nutrient: z.string(),
+      unit: z.string(),
       productValue: z.number(),
       aafcoMin: z.number().optional(),
       aafcoMax: z.number().optional(),
       status: z.enum(['pass', 'fail', 'optimal'])
-    })).describe('Comparison against AAFCO nutritional profiles for dogs/cats'),
-    dogSpecific: z.object({
-      breedRiskMatching: z.string()
-    }).optional(),
-    catSpecific: z.object({
-      taurineCheck: z.string()
-    }).optional()
+    }))
   }),
-  // 급여 가이드
   feedingGuide: z.object({
-    productPurpose: z.string().describe('Summary of what the product is for'),
+    productPurpose: z.string(),
     feedingTable: z.array(z.object({
-      weightRange: z.string().describe('e.g., 1-5kg'),
-      lowActivityGrams: z.string().describe('e.g., 50-100g'),
-      highActivityGrams: z.string().describe('e.g., 60-120g')
+      weightRange: z.string(),
+      lowActivityGrams: z.string().describe('e.g., 50-100g (150-300 kcal)'),
+      highActivityGrams: z.string().describe('e.g., 70-120g (210-360 kcal)')
     })).optional()
   }),
-  // 맞춤 분석 전용 데이터 (Mode: Custom)
   weightDiagnosis: z.object({
     currentWeight: z.number(),
     idealWeight: z.number(),
@@ -130,43 +124,32 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
 
 export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngredientsOutputSchema>;
 
-// 3. AI 프롬프트 정의
 const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: PromptInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
   prompt: `You are a world-class Veterinary Nutritionist. Analyze the pet food based on the provided data.
-Match Target Language: {{{language}}}.
+Match Target Language: {{{language}}}. (If 'ko', all output strings must be in Korean).
 
-# [Operation Mode]
-- Mode: {{#if isModeGeneral}}PRODUCT ANALYSIS ONLY (General Mode){{else}}PERSONALIZED CUSTOM ANALYSIS (Custom Mode){{/if}}
+# [Instructions for v17.0]
+1. **Comparative Chart**: Provide data comparing the product's Protein, Fat, and Carbs against AAFCO standards for the specific pet type (Dog/Cat) and life stage.
+2. **Calorie-Inclusive Feeding Table**: For the feedingTable, each entry MUST include the calorie range in brackets. Example: "50-100g (150-300 kcal)".
+3. **100% Ingredient Audit**: Search for and explain every ingredient found in the photo.
+4. **Product Purpose**: Clearly summarize what this product is for (e.g., "Maintains joint health for seniors").
+5. **Suitability**: Explicitly state if it's unsuitable for certain pets (e.g., "Not suitable for cats").
 
-# [Input Data Context]
+# [Input Context]
 - Pet Type: {{{petType}}}
 {{#if isModeCustom}}
-- Profile: Breed {{{petProfile.breed}}}, Gender {{{petProfile.gender}}}, Age {{{petProfile.age}}}, Weight {{{petProfile.weight}}}kg, BCS {{{petProfile.bcs}}}
-- Medical: Health Conditions ({{#each petProfile.healthConditions}}{{{this}}}, {{/each}}), Allergies ({{#each petProfile.allergies}}{{{this}}}, {{/each}})
-- Medications: {{{petProfile.medications}}}
+- Profile: Breed {{{petProfile.breed}}}, Age {{{petProfile.age}}}, Weight {{{petProfile.weight}}}kg, Health ({{#each petProfile.healthConditions}}{{{this}}}, {{/each}})
 {{/if}}
-- Product: {{{productName}}} ({{{productCategory}}} - {{{detailedProductType}}})
+- Product: {{{productName}}} ({{{productCategory}}})
 
-# [Instructions]
-1. **100% Ingredient Analysis**: Analyze every single ingredient shown on the photo. Categorize into 'positive' (Good), 'neutral' (Safe but no major benefit), or 'cautionary' (Risk factors). Provide clear scientific reasons.
-2. **AAFCO Comparison Table**: Provide a table comparing core nutrients (Protein, Fat, Calcium, Phosphorus, etc.) against AAFCO minimum/maximum standards for the specific pet type and life stage.
-3. **Feeding Table**: Create a robust feeding table for various weight ranges showing suggested daily grams for 'Low Activity' vs 'High Activity'.
-4. **Product Purpose**: Summarize the core goal of this product.
-5. **Suitability Audit**: Explicitly state who should NOT eat this. List medical conditions that are contraindications.
-
-# [Multimodal Analysis]
 {{#if photoDataUri}}
-- Food Label Photo: {{media url=photoDataUri}}
-{{/if}}
-{{#if prescriptionPhotoDataUri}}
-- Prescription/Supplement Photo: {{media url=prescriptionPhotoDataUri}}
+- Label Photo: {{media url=photoDataUri}}
 {{/if}}`,
 });
 
-// 4. 실행 흐름 정의
 const analyzePetFoodIngredientsFlow = ai.defineFlow(
   {
     name: 'analyzePetFoodIngredientsFlow',
@@ -180,11 +163,7 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
         isModeGeneral: input.analysisMode === 'general',
         isModeCustom: input.analysisMode === 'custom',
       });
-
-      if (!response || !response.output) {
-        throw new Error('AI failed to return analysis output.');
-      }
-
+      if (!response || !response.output) throw new Error('AI failed to return output.');
       return { ...response.output, status: 'success' as const };
     } catch (error: any) {
       console.error("AI Flow Error:", error);
