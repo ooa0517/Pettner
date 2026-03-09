@@ -16,10 +16,11 @@ import { saveAnalysisToHistory } from '@/lib/history';
 import { useLanguage } from '@/contexts/language-context';
 import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 function HomeContent() {
   const { language, t } = useLanguage();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const db = useFirestore();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -30,6 +31,13 @@ function HomeContent() {
   const [resultInput, setResultInput] = useState<AnalyzePetFoodIngredientsInput | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
 
+  // 사용자가 로그인하지 않은 경우 로그인 페이지로 즉시 이동 (Auth Wall)
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
   useEffect(() => {
     const resetParam = searchParams.get('reset');
     if (resetParam === 'true') {
@@ -39,19 +47,18 @@ function HomeContent() {
       return;
     }
 
-    // 로그인 상태라면 랜딩 페이지를 건너뛰고 바로 입력 화면으로 이동 (초기 진입 시)
+    // 로그인 상태라면 랜딩 페이지를 건너뛰고 바로 입력 화면으로 이동
     if (user && step === 'landing') {
       setStep('input');
     }
-  }, [user, searchParams]); // step 의존성 제거하여 무한 루프 및 강제 리셋 방지
+  }, [user, searchParams, step]);
 
   const checkUsageLimit = useCallback(async () => {
-    // 실제 운영 시에는 여기서 Firestore 데이터를 조회하여 일일 사용량을 체크합니다.
+    // 일시적으로 제한 해제 (사용자 요청)
     return true; 
   }, []);
 
   const handleAnalysis = async (formData: any) => {
-    // 분석 실행 시점에 로그인이 안 되어 있다면 로그인 페이지로 유도
     if (!user) {
       toast({
         variant: "destructive",
@@ -147,6 +154,14 @@ function HomeContent() {
     setAnalysisResult(null);
     setResultInput(null);
   };
+
+  if (isUserLoading) {
+    return (
+      <div className="flex items-center justify-center flex-grow p-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
   
   return (
     <div className="flex flex-col items-center justify-center flex-grow p-4 md:p-8 bg-muted/20">
