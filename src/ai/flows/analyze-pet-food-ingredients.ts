@@ -1,10 +1,9 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v19.2 - Scientific Evidence Based Audit]
- * - Deterministic Scoring based on peer-reviewed veterinary journals.
- * - Mandatory citations for ingredients (e.g., Pet Food Sci J, 2024).
- * - Corporate transparency audit (ISO/HACCP, Recall history).
+ * @fileOverview [Pettner Core Engine v21.0 - Hybrid Analysis Mode]
+ * - Mode A: General Product Audit (Standard AAFCO/ESG focused)
+ * - Mode B: Custom Pet Matching (Tailored interaction focused)
  */
 
 import {ai} from '@/ai/genkit';
@@ -12,7 +11,7 @@ import {z} from 'genkit';
 
 const AnalyzePetFoodIngredientsInputSchema = z.object({
   petType: z.enum(['dog', 'cat']).describe('반려동물 종류'),
-  analysisMode: z.enum(['general', 'custom']).describe('분석 모드'),
+  analysisMode: z.enum(['general', 'custom']).describe('분석 모드: 일반 분석 vs 맞춤 분석'),
   productName: z.string().optional().describe('제품명'),
   productCategory: z.enum(['food', 'treat', 'supplement']).optional().describe('제품 카테고리'),
   detailedProductType: z.string().optional().describe('세부 제품 유형'),
@@ -56,19 +55,27 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       reason: z.string()
     })
   }),
+  // 일반 분석용 점수 카드
   scoreCard: z.object({
     totalScore: z.number().min(0).max(100),
     grade: z.string(),
     headline: z.string(),
     statusTags: z.array(z.string()),
-    scoringBasis: z.string().describe('Explain the weights: Protein 30%, Fat 20%, Safety 20%, etc. with paper citations.'),
+    scoringBasis: z.string(),
   }),
+  // 맞춤 분석 전용 매칭 리포트
+  matchingReport: z.object({
+    matchScore: z.number().min(0).max(100).optional(),
+    pros: z.array(z.string()).optional(),
+    cons: z.array(z.string()).optional(),
+    suitabilityVerdict: z.string().optional(),
+  }).optional(),
   ingredientAnalysis: z.object({
     ingredientList100: z.array(z.object({
       name: z.string(),
       category: z.enum(['positive', 'neutral', 'cautionary']),
-      reason: z.string().describe('Must include paper citation like (Pet Food Sci J, 2024)'),
-      safetyRating: z.string().optional().describe('e.g., High Quality, Allergy Risk 5%, etc.')
+      reason: z.string(),
+      safetyRating: z.string().optional()
     })),
     suitabilityAudit: z.object({
       suitableFor: z.array(z.string()),
@@ -88,14 +95,6 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       productValue: z.number(),
       standardMin: z.number(),
       standardMax: z.number().optional()
-    })),
-    aafcoComparison: z.array(z.object({
-      nutrient: z.string(),
-      unit: z.string(),
-      productValue: z.number(),
-      aafcoMin: z.number().optional(),
-      aafcoMax: z.number().optional(),
-      status: z.enum(['pass', 'fail', 'optimal'])
     }))
   }),
   feedingGuide: z.object({
@@ -104,14 +103,14 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       weightRange: z.string(),
       lowActivityGrams: z.string(),
       highActivityGrams: z.string(),
-      totalKcalRange: z.string().describe('e.g., 600-800kcal')
+      totalKcalRange: z.string()
     })).optional()
   }),
   esgReport: z.object({
-    transparencyStatus: z.enum(['DIRECT', 'OEM_LOW', 'OEM_PREMIUM']).describe('Direct sourcing vs OEM status'),
+    transparencyStatus: z.enum(['DIRECT', 'OEM_LOW', 'OEM_PREMIUM']),
     environmental: z.string(),
     recallHistory: z.string(),
-    certifications: z.array(z.string()).describe('ISO, HACCP, USDA, etc.')
+    certifications: z.array(z.string())
   }),
   veterinaryAdvice: z.string()
 });
@@ -122,32 +121,33 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
   input: {schema: PromptInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
-  prompt: `You are a world-class Veterinary Nutritionist. Analyze the pet food based on 5,000+ peer-reviewed papers.
+  prompt: `You are a world-class Veterinary Nutritionist.
 Match Target Language: {{{language}}}.
 
+### [Selected Mode: {{#if isModeGeneral}}GENERAL PRODUCT AUDIT{{else}}CUSTOM PET MATCHING{{/if}}]
+
+{{#if isModeGeneral}}
+### [Mode A: General Product Audit Instructions]
+- Focus on objective product quality and AAFCO compliance.
+- ScoreCard: Standard scoring based on ingredient density and safety.
+- scientificAnalysis: Compare against standard AAFCO adult maintenance ranges.
+- feedingGuide: Standard weight-based table.
+{{else}}
+### [Mode B: Custom Pet Matching Instructions]
+- Focus on the interaction between product and {{{petProfile.name}}} ({{{petProfile.breed}}}, {{{petProfile.age}}}yo, {{{petProfile.weight}}}kg).
+- matchingReport: Calculate a Match Score (%) based on how well this food fits the pet's health conditions: {{{petProfile.healthConditions}}} and allergies: {{{petProfile.allergies}}}.
+- veterinaryAdvice: Must address the pet by name and give specific advice for their condition.
+- feedingGuide: Calculate specific grams for this pet's exact weight.
+{{/if}}
+
 ### [Scientific Baselines]
-- Use AAFCO (Nutr Rev Pet, 2023) and NRC guidelines for all nutritional audits.
-- Calculate energy requirements based on AVMA J (2022): 30~50kcal/kg for standard adult pets.
-
-### [Deterministic Scoring Rubric v1.2]
-Base Score: 100 points.
-1. Protein Quality & Density (30%): -15 if below AAFCO min. +5 if high-quality animal source top 3.
-2. Fat Balance (20%): -10 if unbalanced Omega 6:3 ratio.
-3. Ingredient Safety (20%): -5 per cautionary ingredient (Pet Food Sci J, 2024).
-4. Minerals/Vitamins (15%): -10 if synthetic heavy or missing key minerals.
-5. Caloric Suitability (15%): -10 if Carbs >40% (Dog) or >25% (Cat).
-
-### [Reporting Requirements]
-1. ingredientList100: Cite specific papers for at least 3 major ingredients.
-2. esgReport: Analyze if the brand is known for direct sourcing (USDA/ISO) or cheap OEM.
-3. feedingTable: Include "Total Kcal Range" for each weight bracket.
+- NRC/AAFCO Guidelines (Nutr Rev Pet, 2023).
+- Calorie calculation (AVMA J, 2022): 30~50kcal/kg.
 
 ### [Input Context]
 - Pet Type: {{{petType}}}
 - Product: {{{productName}}} ({{{productCategory}}})
-{{#if photoDataUri}}
-- Label Photo: {{media url=photoDataUri}}
-{{/if}}`,
+{{#if photoDataUri}}- Label Photo Provided{{/if}}`,
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(
