@@ -1,28 +1,35 @@
 
-# 🐾 Pettner 베타 서비스 출시 매뉴얼
+# 🐾 Pettner 정식 배포 및 GitHub 연결 매뉴얼
 
-Pettner 성분 분석기 베타 서비스에 오신 것을 환영합니다!
+Pettner 베타 서비스의 정식 출시를 위한 가이드입니다. GitHub와 연결하면 코드가 수정될 때마다 자동으로 배포되어 누구나 접속 가능한 전용 URL이 생성됩니다.
 
-## 📱 핸드폰에서 401 오류 없이 접속하는 방법 (필수)
+## 🚀 1단계: GitHub 저장소 만들기 및 코드 올리기
 
-현재 보고 계신 **미리보기 URL**은 보안상 개발자 본인만 접근 가능합니다. 핸드폰이나 다른 사람에게 공유하려면 **Firebase App Hosting**을 통해 정식 배포를 해야 합니다.
+1.  **GitHub 저장소 생성**: [GitHub](https://github.com/new)에서 새로운 저장소(Repository)를 만듭니다. (이름 예: `pettner-analyzer`)
+2.  **코드 내보내기**: Firebase Studio 우측 상단의 **'Share'** 또는 **'GitHub'** 아이콘을 클릭하여 생성한 저장소로 코드를 푸시(Push)합니다.
+    *   *참고: 직접 Git CLI를 사용한다면 `git remote add origin [저장소주소]` 후 `git push -u origin main`을 수행합니다.*
 
-### 1단계: 정식 배포하기 (무료)
-1. [Firebase Console](https://console.firebase.google.com/)에 접속합니다.
-2. 왼쪽 메뉴에서 **Build > App Hosting**을 선택합니다.
-3. **시작하기**를 누르고 현재의 GitHub 저장소를 연결합니다.
-4. 배포가 완료되면 `https://pettner-xxxx.web.app`과 같은 **진짜 공용 URL**이 생성됩니다! 이 주소는 401 오류 없이 누구나 접속 가능합니다.
+## 🌐 2단계: Firebase App Hosting 연결 (정식 URL 생성)
 
-### 2단계: 로그인 활성화 (Firebase 콘솔 설정)
-로그인이 되지 않는다면 다음 설정을 꼭 확인하세요.
-1. **Authentication 활성화**: `Authentication > Sign-in method`에서 **Google**과 **Apple**을 '사용 설정'으로 변경하세요.
-2. **승인된 도메인 등록**: `Authentication > Settings > Authorized domains` 목록에 생성된 **진짜 공용 URL**의 도메인을 추가해야 로그인이 작동합니다.
+현재 보고 계신 미리보기 주소는 본인만 접근 가능하며 401 오류가 발생할 수 있습니다. 누구나 접속 가능한 주소를 만들려면 다음 과정을 거치세요.
 
-## 주요 기능
-- **AI 통합 분석:** 사진 한 장으로 식단/간식/영양제 정밀 분석
-- **맞춤 급여 가이드:** 생애주기 및 몸무게별 권장 급여량 확인
-- **수익화 모델:** 최저가 구매 링크 연동
-- **분석 히스토리:** 과거 분석 기록 저장 (로그인 시)
+1.  [Firebase Console](https://console.firebase.google.com/)에 접속합니다.
+2.  왼쪽 메뉴에서 **Build > App Hosting**을 선택합니다.
+3.  **시작하기**를 누르고 위에서 만든 GitHub 저장소를 선택합니다.
+4.  배포 설정(기본값 권장)을 완료하면 `https://pettner-xxxx.web.app`과 같은 **진짜 공용 URL**이 생성됩니다!
+
+## 🔐 3단계: 로그인 기능 활성화 (필수 설정)
+
+정식 URL에서 로그인이 작동하려면 다음 설정이 반드시 필요합니다.
+
+1.  **Authentication 설정**: `Authentication > Sign-in method`에서 **Google**과 **이메일/비밀번호**가 '사용 설정'인지 확인합니다.
+2.  **승인된 도메인 등록**: `Authentication > Settings > Authorized domains`에 생성된 **진짜 공용 URL의 도메인**을 추가해야 로그인이 작동합니다.
+
+## 💳 4단계: 토스페이먼츠 연동 확인
+
+현재 제공해주신 테스트 키(`test_ck_...`)가 연결되어 있습니다. 
+*   **테스트**: 실제 결제창이 뜨며, 테스트 카드로 결제 시 가상으로 성공 처리가 됩니다.
+*   **실제 서비스**: 정식 오픈 시에는 토스페이먼츠에서 발급받은 **실제 라이브 키**로 교체해야 합니다 (`src/components/payment-modal.tsx`).
 
 ---
 © 2024 Pettner Team. All rights reserved.
