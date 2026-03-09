@@ -54,7 +54,8 @@
   },
   "analysisLoading": {
     "titleV2": "맞춤 리포트 생성 중",
-    "descriptionV2": "수의 영양학 알고리즘(v4.0)을 통해<br/>성분과 아이의 상태를 매칭하고 있습니다."
+    "descriptionV2": "수의 영양학 알고리즘(v4.0)을 통해<br/>성분과 아이의 상태를 매칭하고 있습니다.",
+    "statusText": "분석 중..."
   },
   "homePage": {
     "analysisCompleteTitle": "분석 완료!",

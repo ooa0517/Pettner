@@ -46,7 +46,8 @@
   },
   "analysisLoading": {
     "titleV2": "Generating Report",
-    "descriptionV2": "Matching ingredients with your pet's status<br/>using our veterinary algorithm (v4.0)."
+    "descriptionV2": "Matching ingredients with your pet's status<br/>using our veterinary algorithm (v4.0).",
+    "statusText": "Analyzing..."
   },
   "homePage": {
     "analysisCompleteTitle": "Analysis Complete!",
