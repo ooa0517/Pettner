@@ -1,3 +1,4 @@
+
 'use client';
 
 import { 
@@ -14,7 +15,9 @@ import {
   CheckCircle2,
   Gavel,
   Target,
-  Zap
+  Zap,
+  LogIn,
+  Mail
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,8 +30,31 @@ import {
   CarouselPrevious 
 } from "@/components/ui/carousel";
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
+import { useUser, useAuth } from '@/firebase';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 export default function LandingPage({ onStart }: { onStart?: () => void }) {
+  const { user } = useUser();
+  const auth = useAuth();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleGoogleLogin = async () => {
+    if (!auth) return;
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      toast({ title: "로그인 성공", description: "Pettner에 오신 것을 환영합니다!" });
+      router.push('/');
+    } catch (error: any) {
+      console.error(error);
+      toast({ variant: 'destructive', title: "로그인 실패", description: "Google 로그인 중 오류가 발생했습니다." });
+    }
+  };
+
   const coreBenefits = [
     {
       icon: <Scale className="text-primary" />,
@@ -77,7 +103,7 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
           </p>
         </div>
 
-        <div className="w-full max-w-sm mx-auto pt-6">
+        <div className="w-full max-w-md mx-auto pt-6 space-y-4">
           <Button 
             onClick={onStart} 
             size="lg"
@@ -87,7 +113,24 @@ export default function LandingPage({ onStart }: { onStart?: () => void }) {
             우리 아이 맞춤 분석 시작
             <ArrowRight className="ml-3 h-6 w-6" />
           </Button>
-          <p className="text-xs text-muted-foreground font-bold mt-4">50만 반려인이 선택한 초개인화 영양 솔루션</p>
+          
+          {!user && (
+            <div className="space-y-3 pt-4">
+              <p className="text-xs text-muted-foreground font-bold">분석 기록을 안전하게 저장하려면?</p>
+              <div className="grid grid-cols-2 gap-3">
+                <Button asChild variant="outline" className="h-14 rounded-2xl font-bold border-muted-foreground/20">
+                  <Link href="/login">
+                    <LogIn className="mr-2 h-4 w-4" /> 로그인하기
+                  </Link>
+                </Button>
+                <Button onClick={handleGoogleLogin} variant="outline" className="h-14 rounded-2xl font-bold border-muted-foreground/20">
+                  <Mail className="mr-2 h-4 w-4" /> Google 로그인
+                </Button>
+              </div>
+            </div>
+          )}
+          
+          <p className="text-[10px] text-muted-foreground font-bold opacity-60">50만 반려인이 선택한 초개인화 영양 솔루션</p>
         </div>
       </div>
 
