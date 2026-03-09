@@ -11,11 +11,11 @@ import {
   Stethoscope, Microscope, 
   PieChart, History, Scale,
   TrendingDown, CheckCircle2,
-  Share2, Info, Table as TableIcon,
-  ShieldAlert, Leaf, Gavel, Search,
-  ChevronDown, ChevronUp,
+  Share2, Search,
   Flame,
-  ArrowRight
+  ChevronDown,
+  Gavel,
+  Leaf
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -47,7 +47,6 @@ type AnalysisResultProps = {
 
 export default function AnalysisResult({ result, input, onReset, resetButtonText, isPublicView = false }: AnalysisResultProps) {
   const isEn = input.language === 'en';
-  const isCat = input.petType === 'cat';
   const isGeneralMode = input.analysisMode === 'general';
   const { user } = useUser();
   const db = useFirestore();
@@ -128,7 +127,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   {productIdentity.pettnerCompliance.isCompliant ? 'PETTNER COMPLIANT' : 'NON-COMPLIANT'}
                 </Badge>
                 <Badge variant="outline" className="px-3 py-1 rounded-full text-[10px] font-black border-primary text-primary">
-                  V17.0 EXPERT AUDIT
+                  V18.0 EXPERT AUDIT
                 </Badge>
               </div>
               <h1 className="text-3xl font-black tracking-tighter pt-2 leading-tight">
@@ -175,7 +174,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </CardContent>
       </Card>
 
-      <Accordion type="multiple" defaultValue={["ing-audit", "nut-audit", "feeding-guide", "weight-audit", "corporate-audit"]} className="space-y-6">
+      <Accordion type="multiple" defaultValue={["ing-audit", "nut-audit", "feeding-guide"]} className="space-y-6">
         
         {/* 2. 100% Ingredient Analysis */}
         <AccordionItem value="ing-audit" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
@@ -216,35 +215,37 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t">
               <div className="space-y-4">
                 <h4 className="font-black text-sm text-success flex items-center gap-2">
-                  <CheckCircle2 size={16}/> {isEn ? 'Suitable For' : '급여 권장 리스트'}
+                  <CheckCircle2 size={16}/> {isEn ? 'Recommended Ingredients' : '급여 권장 리스트'}
                 </h4>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap gap-2">
                   {ingredientAnalysis.suitabilityAudit.suitableFor.map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 bg-success/5 p-3 rounded-xl">
+                    <div key={i} className="flex items-center gap-2 bg-success/5 px-3 py-2 rounded-xl border border-success/10">
                       <div className="w-1.5 h-1.5 rounded-full bg-success" /> 
-                      <span className="text-xs font-bold text-success">{item}</span>
+                      <span className="text-[11px] font-bold text-success">{item}</span>
                     </div>
                   ))}
                 </div>
               </div>
               <div className="space-y-4">
                 <h4 className="font-black text-sm text-orange-500 flex items-center gap-2">
-                  <AlertCircle size={16}/> {isEn ? 'Not Recommended' : '주의 및 부적합 리스트'}
+                  <AlertCircle size={16}/> {isEn ? 'Cautionary Items' : '주의 및 부적합 리스트'}
                 </h4>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap gap-2">
                   {ingredientAnalysis.suitabilityAudit.notSuitableFor.map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 bg-orange-500/5 p-3 rounded-xl">
+                    <div key={i} className="flex items-center gap-2 bg-orange-500/5 px-3 py-2 rounded-xl border border-orange-500/10">
                       <div className="w-1.5 h-1.5 rounded-full bg-orange-500" /> 
-                      <span className="text-xs font-bold text-orange-500">{item}</span>
+                      <span className="text-[11px] font-bold text-orange-500">{item}</span>
                     </div>
                   ))}
                 </div>
-                <div className="text-[11px] font-bold text-muted-foreground leading-relaxed bg-orange-500/5 p-3 rounded-xl border border-orange-500/10">
-                  <span className="text-orange-500">⚠️ 부적합 사유:</span> {ingredientAnalysis.suitabilityAudit.unsuitableReasons}
-                </div>
+                {ingredientAnalysis.suitabilityAudit.unsuitableReasons && (
+                  <div className="text-[11px] font-bold text-muted-foreground leading-relaxed bg-orange-500/5 p-3 rounded-xl border border-orange-500/10">
+                    <span className="text-orange-500">⚠️ 부적합 사유:</span> {ingredientAnalysis.suitabilityAudit.unsuitableReasons}
+                  </div>
+                )}
               </div>
             </div>
           </AccordionContent>
@@ -271,7 +272,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               <div className="grid gap-8">
                 {(result.scientificAnalysis.comparativeChart || []).map((item, i) => {
                   const maxVal = Math.max(item.productValue, item.standardMax || 60);
-                  const productPct = (item.productValue / maxVal) * 100;
+                  const productPct = Math.min((item.productValue / maxVal) * 100, 100);
                   const minPct = (item.standardMin / maxVal) * 100;
                   const maxRangePct = item.standardMax ? (item.standardMax / maxVal) * 100 : 100;
 
@@ -280,24 +281,26 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                     <div className="flex justify-between items-end">
                       <div className="space-y-0.5">
                         <span className="text-sm font-black text-foreground">{item.nutrient}</span>
-                        <p className="text-[10px] text-muted-foreground font-bold">Standard: {item.standardMin}% {item.standardMax ? `~ ${item.standardMax}%` : 'Min'}</p>
+                        <p className="text-[10px] text-muted-foreground font-bold">
+                          AAFCO Min: {item.standardMin}% {item.standardMax ? `~ Max: ${item.standardMax}%` : ''}
+                        </p>
                       </div>
                       <div className="text-right">
                         <span className="text-xl font-black text-primary">{item.productValue}%</span>
-                        <p className="text-[10px] text-muted-foreground font-bold">Current Product</p>
+                        <p className="text-[10px] text-muted-foreground font-bold">{isEn ? 'Current Product' : '제품 실제 함량'}</p>
                       </div>
                     </div>
                     
                     <div className="relative h-6 w-full bg-muted rounded-full overflow-hidden">
-                      {/* Standard Range Overlay */}
+                      {/* Standard Range Overlay (Optimal Zone) */}
                       <div 
                         className="absolute h-full bg-primary/10 border-x border-primary/20 z-0" 
-                        style={{ left: `${minPct}%`, width: `${maxRangePct - minPct}%` }} 
+                        style={{ left: `${minPct}%`, width: `${Math.max(0, maxRangePct - minPct)}%` }} 
                       />
                       {/* Product Value Bar */}
                       <div 
                         className={cn("absolute h-full transition-all duration-1000 z-10 flex items-center justify-end pr-2", 
-                          item.productValue < item.standardMin ? "bg-orange-500" : "bg-primary"
+                          item.productValue < item.standardMin ? "bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.4)]" : "bg-primary shadow-[0_0_15px_rgba(75,69,237,0.4)]"
                         )} 
                         style={{ width: `${productPct}%` }}
                       >
@@ -356,7 +359,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         <AccordionItem value="feeding-guide" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <AccordionTrigger className="px-8 py-6 hover:no-underline">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-primary/10 rounded-2xl text-primary"><TableIcon size={24} /></div>
+              <div className="p-3 bg-primary/10 rounded-2xl text-primary"><ShoppingBag size={24} /></div>
               <div className="text-left">
                 <h3 className="font-black text-xl">{isEn ? 'Feeding Table & Purpose' : '일일 급여 가이드 및 권장량'}</h3>
                 <p className="text-xs text-muted-foreground font-medium">활동량에 따른 권장량과 해당 제품의 칼로리 밀도입니다.</p>
@@ -367,7 +370,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-6 bg-muted/20 rounded-3xl border-2 border-dashed border-primary/10">
                 <h4 className="font-black text-sm flex items-center gap-2 mb-2">
-                  <Info size={16} className="text-primary"/> {isEn ? 'Product Purpose' : '제품 급여 목적'}
+                  <Stethoscope size={16} className="text-primary"/> {isEn ? 'Product Purpose' : '제품 급여 목적'}
                 </h4>
                 <p className="text-sm font-bold leading-relaxed">{feedingGuide.productPurpose}</p>
               </div>

@@ -3,7 +3,8 @@
 /**
  * @fileOverview [Pettner Core Engine v18.0 - Deterministic Scoring & Nutrition Audit]
  * - 고정된 스코어링 알고리즘(Pettner Scoring Rubric v1.0) 도입으로 결과 일관성 확보.
- * - AAFCO 표준 및 영양소 밀도 기반의 정밀 계산 로직 강화.
+ * - AAFCO 표준 수치 명문화로 비교 그래프의 기준점 고정.
+ * - 권장 성분 리스트 추출 로직 강화 (누락 없는 전수 조사).
  */
 
 import {ai} from '@/ai/genkit';
@@ -68,8 +69,8 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       reason: z.string()
     })),
     suitabilityAudit: z.object({
-      suitableFor: z.array(z.string()),
-      notSuitableFor: z.array(z.string()),
+      suitableFor: z.array(z.string()).describe('List of all positive and functional ingredients found'),
+      notSuitableFor: z.array(z.string()).describe('List of all allergens or cautionary ingredients found'),
       unsuitableReasons: z.string()
     })
   }),
@@ -81,7 +82,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       kcal: z.number()
     }),
     comparativeChart: z.array(z.object({
-      nutrient: z.string().describe('e.g., Protein, Fat, Carbs'),
+      nutrient: z.string().describe('Protein, Fat, Carbs'),
       productValue: z.number(),
       standardMin: z.number(),
       standardMax: z.number().optional()
@@ -131,28 +132,31 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   prompt: `You are a world-class Veterinary Nutritionist. Analyze the pet food based on the provided data.
 Match Target Language: {{{language}}}. (If 'ko', all output strings must be in Korean).
 
-### [Pettner Scoring Rubric v1.0 - MANDATORY DETERMINISTIC CALCULATION]
-To ensure consistency, you MUST calculate the 'totalScore' using this exact logic:
-1. **Base Score**: 100 points.
-2. **Deductions**:
-   - **AAFCO Non-compliance**: -15 points for each major nutrient (Protein, Fat) outside the AAFCO range for the pet's life stage.
-   - **Cautionary Ingredients**: -5 points for each 'cautionary' ingredient identified (e.g., artificial colors, unspecified by-products, high-glycemic fillers like tapioca).
-   - **High Carb Penalty**: If Carbs (NFE) > 40% (for dogs) or > 25% (for cats), deduct 10 points.
-   - **Health Mismatch**: If the product contains ingredients known to trigger the pet's listed allergies or worsen listed health conditions, deduct 15 points.
-3. **Bonuses**:
-   - **High-Quality Protein**: If the top 3 ingredients are specific animal proteins (e.g., Deboned Chicken), add 5 points.
-   - **Functional Additives**: +2 points for each functional additive like Probiotics, Glucosamine, or Omega-3 (max +10).
-4. **Final Grade Mapping**:
-   - 90-100: A (Optimal)
-   - 80-89: B (Good)
-   - 70-79: C (Fair)
-   - <70: D or F (Caution)
+### [AAFCO Standards Fixed Baselines (Dry Matter %)]
+Use these fixed values for comparison charts to ensure consistency:
+- **Adult Dog**: Protein Min: 18%, Fat Min: 5%
+- **Puppy/Repro Dog**: Protein Min: 22.5%, Fat Min: 8.5%
+- **Adult Cat**: Protein Min: 26%, Fat Min: 9%
+- **Kitten/Repro Cat**: Protein Min: 30%, Fat Min: 9%
+- **Carbs (NFE)**: No official AAFCO min, but Pettner Ideal is <40% (Dogs) / <25% (Cats).
 
-### [Instructions for Report Generation]
-1. **Comparative Chart**: Provide Protein, Fat, and Carbs vs AAFCO standards for {{{petType}}}. Ensure 'productValue' matches the detected label data exactly.
-2. **Feeding Table**: Each entry MUST include the calorie range in brackets. Example: "50-100g (150-300 kcal)". Calculate this based on the product's kcal/kg density.
-3. **Ingredient Audit**: List 100% of detected ingredients. categorize as positive, neutral, or cautionary with clear scientific reasons.
-4. **Suitability**: Explicitly state if it's unsuitable for certain pets (e.g., "Not suitable for cats" or "Avoid for pets with kidney issues").
+### [Pettner Scoring Rubric v1.0 - MANDATORY DETERMINISTIC CALCULATION]
+Calculate 'totalScore' (0-100):
+1. **Base**: 100 points.
+2. **Deductions**:
+   - AAFCO Major Nutrient Fail: -15 pts each.
+   - Cautionary Ingredient: -5 pts each (max -30).
+   - High Carb (>40% Dog / >25% Cat): -10 pts.
+   - Health/Allergy Mismatch: -15 pts.
+3. **Bonuses**:
+   - Specific Animal Protein in top 3: +5 pts.
+   - Functional Additive (Probiotics, Glucosamine, Omega-3): +2 pts each (max +10).
+
+### [Instructions for Comprehensive Audit]
+1. **ingredientList100**: Extract and categorize EVERY ingredient from the label.
+2. **suitableFor**: This MUST include ALL positive ingredients found (e.g., "Chicken", "Salmon Oil", "Taurine", "Probiotics", "Lutein"). Do not summarize too much; provide a rich list.
+3. **comparativeChart**: Must include "Protein", "Fat", and "Carbs". The 'standardMin' and 'standardMax' must be consistent with the AAFCO baselines provided above.
+4. **feedingTable**: Calculate grams based on product density. Include kcal in brackets: "50-100g (150-300 kcal)".
 
 ### [Input Context]
 - Pet Type: {{{petType}}}
