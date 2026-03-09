@@ -56,13 +56,13 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       reason: z.string()
     })
   }),
-  scoreCard: {
+  scoreCard: z.object({
     totalScore: z.number().min(0).max(100),
     grade: z.string(),
     headline: z.string(),
     statusTags: z.array(z.string()),
     scoringBasis: z.string().describe('Explain the weights: Protein 30%, Fat 20%, Safety 20%, etc. with paper citations.'),
-  },
+  }),
   ingredientAnalysis: z.object({
     ingredientList100: z.array(z.object({
       name: z.string(),

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
@@ -38,24 +37,7 @@ function HomeContent() {
   }, [searchParams]);
 
   const checkUsageLimit = useCallback(async () => {
-    // 검증을 위해 일시적으로 사용량 제한을 해제합니다.
     return true;
-    
-    /* 기존 제한 로직 (나중에 활성화 가능)
-    if (!user || !db) return true;
-    try {
-      const userDocRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userDocRef);
-      if (!userSnap.exists()) return true;
-      const userData = userSnap.data();
-      if (userData.isPremium === true) return true;
-      const today = new Date().toISOString().split('T')[0];
-      if (userData.lastUsageDate === today && userData.dailyUsageCount >= 5) return false; 
-      return true;
-    } catch (e) {
-      return true;
-    }
-    */
   }, []);
 
   const handleAnalysis = async (formData: any) => {
@@ -68,6 +50,9 @@ function HomeContent() {
     setStep('loading');
     
     const isCustom = formData.analysisMode === 'custom';
+    const ageNum = parseFloat(formData.petProfile?.age);
+    const weightNum = parseFloat(formData.petProfile?.weight);
+
     const analysisInput: AnalyzePetFoodIngredientsInput = {
         petType: formData.petType,
         analysisMode: formData.analysisMode,
@@ -79,8 +64,8 @@ function HomeContent() {
           name: formData.petProfile?.name,
           gender: formData.petProfile?.gender,
           breed: formData.petProfile?.breed,
-          age: parseFloat(formData.petProfile?.age) || 0,
-          weight: parseFloat(formData.petProfile?.weight) || 0,
+          age: isNaN(ageNum) ? 0 : ageNum,
+          weight: isNaN(weightNum) ? 0 : weightNum,
           neutered: formData.petProfile?.neutered,
           bcs: formData.petProfile?.bcs,
           activityLevel: formData.petProfile?.activityLevel,
@@ -95,23 +80,19 @@ function HomeContent() {
     };
 
     try {
-      // 1. 사료 이미지 처리
-      const foodFile = formData.image?.[0];
-      if (foodFile) {
+      if (formData.image?.[0]) {
         const reader = new FileReader();
         analysisInput.photoDataUri = await new Promise<string>((resolve) => {
           reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(foodFile);
+          reader.readAsDataURL(formData.image[0]);
         });
       }
 
-      // 2. 처방전 이미지 처리
-      const prescriptionFile = formData.prescriptionImage?.[0];
-      if (prescriptionFile) {
+      if (formData.prescriptionImage?.[0]) {
         const reader = new FileReader();
         analysisInput.prescriptionPhotoDataUri = await new Promise<string>((resolve) => {
           reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(prescriptionFile);
+          reader.readAsDataURL(formData.prescriptionImage[0]);
         });
       }
       

@@ -10,14 +10,12 @@ import {
   ShoppingBag, AlertCircle, 
   Stethoscope, Microscope, 
   PieChart, History, Scale,
-  TrendingDown, CheckCircle2,
-  Share2, Search,
+  CheckCircle2,
+  Search,
   Flame,
   ChevronDown,
-  Gavel,
   Leaf,
   Star,
-  Zap,
   ShieldCheck,
   Factory
 } from 'lucide-react';
@@ -51,7 +49,6 @@ type AnalysisResultProps = {
 
 export default function AnalysisResult({ result, input, onReset, resetButtonText, isPublicView = false }: AnalysisResultProps) {
   const isEn = input.language === 'en';
-  const isGeneralMode = input.analysisMode === 'general';
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
@@ -74,34 +71,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
     );
   }, [result.ingredientAnalysis, ingSearch]);
 
-  const handleShare = async () => {
-    const shareUrl = window.location.href;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Pettner 분석 리포트: ${result.productIdentity.name}`,
-          text: `${isGeneralMode ? '제품 영양 분석 결과입니다.' : input.petProfile?.name + '를 위한 맞춤 영양 분석 결과입니다.'}`,
-          url: shareUrl,
-        });
-      } catch (e) {
-        console.error(e);
-      }
-    } else {
-      await navigator.clipboard.writeText(shareUrl);
-      toast({ title: "링크 복사 완료", description: "공유 링크가 클립보드에 복사되었습니다." });
-    }
-  };
-
-  const getVerdictLabel = (status: string) => {
-    if (isEn) return status.toUpperCase();
-    switch (status.toLowerCase()) {
-      case 'pass': return '적합';
-      case 'optimal': return '최적';
-      case 'fail': return '주의';
-      default: return status;
-    }
-  };
-
   if (!result || !result.productIdentity || !result.scoreCard) {
      return (
         <div className="space-y-8 py-20 text-center">
@@ -120,7 +89,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
       
       {!isPublicView && <AdBanner position="top" />}
 
-      {/* 1. Scientific Score Header */}
       <Card className="border-none shadow-2xl rounded-[3rem] bg-white overflow-hidden">
         <CardContent className="p-10 space-y-8">
           <div className="flex flex-col md:flex-row justify-between items-start gap-8">
@@ -189,7 +157,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
 
       <Accordion type="multiple" defaultValue={["ing-audit", "nut-audit", "feeding-guide"]} className="space-y-6">
         
-        {/* 2. 100% Ingredient Analysis */}
         <AccordionItem value="ing-audit" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <AccordionTrigger className="px-8 py-8 hover:no-underline">
             <div className="flex items-center gap-4">
@@ -260,7 +227,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </AccordionContent>
         </AccordionItem>
 
-        {/* 3. AAFCO Standards Chart */}
         <AccordionItem value="nut-audit" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <AccordionTrigger className="px-8 py-8 hover:no-underline">
             <div className="flex items-center gap-4">
@@ -312,7 +278,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </AccordionContent>
         </AccordionItem>
 
-        {/* 4. Feeding Guide Table */}
         <AccordionItem value="feeding-guide" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <AccordionTrigger className="px-8 py-8 hover:no-underline">
             <div className="flex items-center gap-4">
@@ -342,7 +307,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
               </div>
             </div>
 
-            {feedingGuide.feedingTable && (
+            {feedingGuide.feedingTable && feedingGuide.feedingTable.length > 0 && (
               <div className="rounded-[2rem] border-2 border-muted overflow-hidden bg-white shadow-inner">
                 <Table>
                   <TableHeader className="bg-muted/50 h-16">
@@ -367,7 +332,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
           </AccordionContent>
         </AccordionItem>
 
-        {/* 5. Brand Integrity */}
         <AccordionItem value="corporate-audit" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
           <AccordionTrigger className="px-8 py-8 hover:no-underline">
             <div className="flex items-center gap-4">
