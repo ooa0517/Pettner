@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v17.0 - Comparative Nutrition Analysis]
- * - AAFCO 표준 대비 시각화 데이터 강화.
- * - 급여 테이블 내 그람당 칼로리 계산 로직 추가.
+ * @fileOverview [Pettner Core Engine v18.0 - Deterministic Scoring & Nutrition Audit]
+ * - 고정된 스코어링 알고리즘(Pettner Scoring Rubric v1.0) 도입으로 결과 일관성 확보.
+ * - AAFCO 표준 및 영양소 밀도 기반의 정밀 계산 로직 강화.
  */
 
 import {ai} from '@/ai/genkit';
@@ -81,7 +81,7 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       kcal: z.number()
     }),
     comparativeChart: z.array(z.object({
-      nutrient: z.string().describe('e.g., Protein, Fat'),
+      nutrient: z.string().describe('e.g., Protein, Fat, Carbs'),
       productValue: z.number(),
       standardMin: z.number(),
       standardMax: z.number().optional()
@@ -131,17 +131,33 @@ const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   prompt: `You are a world-class Veterinary Nutritionist. Analyze the pet food based on the provided data.
 Match Target Language: {{{language}}}. (If 'ko', all output strings must be in Korean).
 
-# [Instructions for v17.0]
-1. **Comparative Chart**: Provide data comparing the product's Protein, Fat, and Carbs against AAFCO standards for the specific pet type (Dog/Cat) and life stage.
-2. **Calorie-Inclusive Feeding Table**: For the feedingTable, each entry MUST include the calorie range in brackets. Example: "50-100g (150-300 kcal)".
-3. **100% Ingredient Audit**: Search for and explain every ingredient found in the photo.
-4. **Product Purpose**: Clearly summarize what this product is for (e.g., "Maintains joint health for seniors").
-5. **Suitability**: Explicitly state if it's unsuitable for certain pets (e.g., "Not suitable for cats").
+### [Pettner Scoring Rubric v1.0 - MANDATORY DETERMINISTIC CALCULATION]
+To ensure consistency, you MUST calculate the 'totalScore' using this exact logic:
+1. **Base Score**: 100 points.
+2. **Deductions**:
+   - **AAFCO Non-compliance**: -15 points for each major nutrient (Protein, Fat) outside the AAFCO range for the pet's life stage.
+   - **Cautionary Ingredients**: -5 points for each 'cautionary' ingredient identified (e.g., artificial colors, unspecified by-products, high-glycemic fillers like tapioca).
+   - **High Carb Penalty**: If Carbs (NFE) > 40% (for dogs) or > 25% (for cats), deduct 10 points.
+   - **Health Mismatch**: If the product contains ingredients known to trigger the pet's listed allergies or worsen listed health conditions, deduct 15 points.
+3. **Bonuses**:
+   - **High-Quality Protein**: If the top 3 ingredients are specific animal proteins (e.g., Deboned Chicken), add 5 points.
+   - **Functional Additives**: +2 points for each functional additive like Probiotics, Glucosamine, or Omega-3 (max +10).
+4. **Final Grade Mapping**:
+   - 90-100: A (Optimal)
+   - 80-89: B (Good)
+   - 70-79: C (Fair)
+   - <70: D or F (Caution)
 
-# [Input Context]
+### [Instructions for Report Generation]
+1. **Comparative Chart**: Provide Protein, Fat, and Carbs vs AAFCO standards for {{{petType}}}. Ensure 'productValue' matches the detected label data exactly.
+2. **Feeding Table**: Each entry MUST include the calorie range in brackets. Example: "50-100g (150-300 kcal)". Calculate this based on the product's kcal/kg density.
+3. **Ingredient Audit**: List 100% of detected ingredients. categorize as positive, neutral, or cautionary with clear scientific reasons.
+4. **Suitability**: Explicitly state if it's unsuitable for certain pets (e.g., "Not suitable for cats" or "Avoid for pets with kidney issues").
+
+### [Input Context]
 - Pet Type: {{{petType}}}
 {{#if isModeCustom}}
-- Profile: Breed {{{petProfile.breed}}}, Age {{{petProfile.age}}}, Weight {{{petProfile.weight}}}kg, Health ({{#each petProfile.healthConditions}}{{{this}}}, {{/each}})
+- Profile: Breed {{{petProfile.breed}}}, Age {{{petProfile.age}}}, Weight {{{petProfile.weight}}}kg, BCS {{{petProfile.bcs}}}, Health ({{#each petProfile.healthConditions}}{{{this}}}, {{/each}})
 {{/if}}
 - Product: {{{productName}}} ({{{productCategory}}})
 
