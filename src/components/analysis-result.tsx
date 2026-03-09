@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { AnalyzePetFoodIngredientsOutput, AnalyzePetFoodIngredientsInput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { 
   ShoppingBag, AlertCircle, 
   Stethoscope, BarChart3, 
@@ -13,7 +14,8 @@ import {
   PieChart, History, Scale,
   TrendingDown, CheckCircle2,
   Share2, Info, Table as TableIcon,
-  ShieldAlert, Leaf, Gavel
+  ShieldAlert, Leaf, Gavel, Search,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -51,6 +53,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
   const db = useFirestore();
   const { toast } = useToast();
   const [isPremium, setIsPremium] = useState(false);
+  const [ingSearch, setIngSearch] = useState('');
 
   useEffect(() => {
     if (user && db) {
@@ -59,6 +62,14 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
       });
     }
   }, [user, db]);
+
+  const filteredIngredients = useMemo(() => {
+    if (!result.ingredientAnalysis?.ingredientList100) return [];
+    if (!ingSearch) return result.ingredientAnalysis.ingredientList100;
+    return result.ingredientAnalysis.ingredientList100.filter(ing => 
+      ing.name.toLowerCase().includes(ingSearch.toLowerCase())
+    );
+  }, [result.ingredientAnalysis, ingSearch]);
 
   const handleShare = async () => {
     const shareUrl = window.location.href;
@@ -89,7 +100,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
      );
   }
 
-  const { productIdentity, scoreCard, scientificAnalysis, esgReport, weightDiagnosis, dietRoadmap, productAnalysisOnly } = result;
+  const { productIdentity, scoreCard, scientificAnalysis, esgReport, weightDiagnosis, dietRoadmap, ingredientAnalysis, feedingGuide } = result;
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 pb-48 max-w-4xl mx-auto px-4">
@@ -107,7 +118,7 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                   {productIdentity.pettnerCompliance.isCompliant ? 'PETTNER COMPLIANT' : 'NON-COMPLIANT'}
                 </Badge>
                 <Badge variant="outline" className="px-3 py-1 rounded-full text-[10px] font-black border-primary text-primary">
-                  V15.0 PRODUCT AUDIT
+                  V16.0 EXPERT AUDIT
                 </Badge>
               </div>
               <h1 className="text-3xl font-black tracking-tighter pt-2 leading-tight">
@@ -124,18 +135,6 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                )}
             </div>
           </div>
-
-          {/* Product Purpose (Only for General Mode) */}
-          {isGeneralMode && productAnalysisOnly?.productPurpose && (
-            <div className="p-6 bg-muted/20 rounded-3xl border-2 border-dashed border-primary/20">
-              <h4 className="font-black text-sm flex items-center gap-2 mb-2">
-                <Info size={16} className="text-primary"/> {isEn ? 'Product Goal' : '제품 급여 목적'}
-              </h4>
-              <p className="text-sm font-bold text-foreground leading-relaxed break-keep">
-                {productAnalysisOnly.productPurpose}
-              </p>
-            </div>
-          )}
 
           <div className="p-8 rounded-[2.5rem] border-l-8 border-primary bg-primary/5">
              <h3 className="text-xl font-black flex items-center gap-2 mb-4">
@@ -158,128 +157,241 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
         </CardContent>
       </Card>
 
-      {/* 2. Mode Specific Section: Feeding Guide (General Mode) */}
-      {isGeneralMode && productAnalysisOnly?.feedingTable && (
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 px-2">
-            <TableIcon className="text-primary w-6 h-6" />
-            <h2 className="text-2xl font-black font-headline tracking-tight">{isEn ? 'Daily Feeding Guide' : '일일 권장 급여량 가이드'}</h2>
-          </div>
-          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden p-6">
-            <Table>
-              <TableHeader>
-                <TableRow className="hover:bg-transparent">
-                  <TableHead className="font-black text-center">{isEn ? 'Weight' : '체중 (kg)'}</TableHead>
-                  <TableHead className="font-black text-center">{isEn ? 'Low Activity' : '활동량 낮음'}</TableHead>
-                  <TableHead className="font-black text-center">{isEn ? 'High Activity' : '활동량 높음'}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {productAnalysisOnly.feedingTable.map((row, i) => (
-                  <TableRow key={i} className="hover:bg-muted/10">
-                    <TableCell className="text-center font-bold">{row.weightRange}</TableCell>
-                    <TableCell className="text-center font-medium text-muted-foreground">{row.lowActivityGrams}</TableCell>
-                    <TableCell className="text-center font-bold text-primary">{row.highActivityGrams}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <p className="text-[10px] text-muted-foreground mt-4 text-center">
-              * 일일 권장 칼로리(RER/DER)를 기준으로 계산된 예상 수치입니다. 실제 급여 시 아이의 상태를 보며 가감하세요.
-            </p>
-          </Card>
-        </div>
-      )}
-
-      {/* 3. Suitability Audit (General Mode) */}
-      {isGeneralMode && productAnalysisOnly?.suitabilityAudit && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8 space-y-4">
-            <h4 className="font-black text-sm text-success uppercase flex items-center gap-2">
-              <CheckCircle2 size={16}/> {isEn ? 'Recommended For' : '급여 권장'}
-            </h4>
-            <div className="flex flex-wrap gap-2">
-              {productAnalysisOnly.suitabilityAudit.suitableFor.map((item, i) => (
-                <Badge key={i} className="bg-success/10 text-success border-none rounded-xl font-bold">{item}</Badge>
-              ))}
+      <Accordion type="multiple" defaultValue={["ing-audit", "nut-audit", "feeding-guide", "weight-audit"]} className="space-y-6">
+        
+        {/* 2. 100% Ingredient Analysis */}
+        <AccordionItem value="ing-audit" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
+          <AccordionTrigger className="px-8 py-6 hover:no-underline [&[data-state=open]>div>svg]:rotate-180">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Microscope size={24} /></div>
+              <div className="text-left">
+                <h3 className="font-black text-xl">{isEn ? '100% Ingredient Audit' : '전성분 원재료 100% 분석'}</h3>
+                <p className="text-xs text-muted-foreground font-medium">{ingredientAnalysis.ingredientList100.length}개의 원재료를 정밀 검수했습니다.</p>
+              </div>
             </div>
-          </Card>
-          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8 space-y-4 border-l-8 border-destructive">
-            <h4 className="font-black text-sm text-destructive uppercase flex items-center gap-2">
-              <ShieldAlert size={16}/> {isEn ? 'NOT Recommended' : '급여 부적합'}
-            </h4>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {productAnalysisOnly.suitabilityAudit.notSuitableFor.map((item, i) => (
-                <Badge key={i} className="bg-destructive/10 text-destructive border-none rounded-xl font-bold">{item}</Badge>
-              ))}
+          </AccordionTrigger>
+          <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="성분명 검색 (예: 타우린, 연어...)" 
+                className="pl-12 rounded-2xl border-muted bg-muted/20"
+                value={ingSearch}
+                onChange={(e) => setIngSearch(e.target.value)}
+              />
             </div>
-            <p className="text-xs font-bold text-muted-foreground leading-relaxed">
-              <span className="text-destructive">⚠️ 경고:</span> {productAnalysisOnly.suitabilityAudit.unsuitableReasons}
-            </p>
-          </Card>
-        </div>
-      )}
 
-      {/* 4. 100% Ingredient Analysis (General Mode) */}
-      {isGeneralMode && productAnalysisOnly?.ingredientList100 && (
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 px-2">
-            <Microscope className="text-primary w-6 h-6" />
-            <h2 className="text-2xl font-black font-headline tracking-tight">{isEn ? '100% Ingredient Audit' : '전성분 원재료 100% 분석'}</h2>
-          </div>
-          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
-            <CardContent className="p-0">
-              <div className="divide-y divide-muted/30">
-                {productAnalysisOnly.ingredientList100.map((ing, i) => (
-                  <div key={i} className="p-6 flex items-start gap-4 hover:bg-muted/5 transition-colors">
-                    <div className={cn("mt-1 w-3 h-3 rounded-full shrink-0", 
-                      ing.category === 'positive' ? 'bg-success shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 
-                      ing.category === 'cautionary' ? 'bg-destructive shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'bg-muted-foreground'
-                    )} />
-                    <div className="space-y-1">
-                      <p className="font-black text-lg">{ing.name}</p>
-                      <p className="text-sm text-muted-foreground font-medium leading-relaxed">{ing.reason}</p>
+            <div className="divide-y divide-muted/30 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+              {filteredIngredients.length > 0 ? filteredIngredients.map((ing, i) => (
+                <div key={i} className="py-5 flex items-start gap-4 hover:bg-muted/5 transition-colors">
+                  <div className={cn("mt-1.5 w-2 h-2 rounded-full shrink-0", 
+                    ing.category === 'positive' ? 'bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 
+                    ing.category === 'cautionary' ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]' : 'bg-muted-foreground'
+                  )} />
+                  <div className="space-y-1">
+                    <p className="font-black text-lg">{ing.name}</p>
+                    <p className="text-sm text-muted-foreground font-medium leading-relaxed">{ing.reason}</p>
+                  </div>
+                </div>
+              )) : (
+                <div className="py-10 text-center text-muted-foreground font-bold">검색 결과가 없습니다.</div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+              <div className="space-y-4">
+                <h4 className="font-black text-sm text-success flex items-center gap-2">
+                  <CheckCircle2 size={16}/> {isEn ? 'Suitable For' : '급여 권장'}
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {ingredientAnalysis.suitabilityAudit.suitableFor.map((item, i) => (
+                    <Badge key={i} className="bg-success/10 text-success border-none rounded-xl font-bold flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-success" /> {item}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h4 className="font-black text-sm text-orange-500 flex items-center gap-2">
+                  <AlertCircle size={16}/> {isEn ? 'Not Recommended' : '급여 부적합'}
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {ingredientAnalysis.suitabilityAudit.notSuitableFor.map((item, i) => (
+                    <Badge key={i} className="bg-orange-500/10 text-orange-500 border-none rounded-xl font-bold flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-orange-500" /> {item}
+                    </Badge>
+                  ))}
+                </div>
+                <p className="text-[11px] font-bold text-muted-foreground leading-relaxed bg-orange-500/5 p-3 rounded-xl border border-orange-500/10">
+                  <span className="text-orange-500">⚠️ 사유:</span> {ingredientAnalysis.suitabilityAudit.unsuitableReasons}
+                </p>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* 3. AAFCO Nutrition Audit */}
+        <AccordionItem value="nut-audit" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
+          <AccordionTrigger className="px-8 py-6 hover:no-underline">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-2xl text-primary"><PieChart size={24} /></div>
+              <div className="text-left">
+                <h3 className="font-black text-xl">{isEn ? 'Nutrition Audit' : 'AAFCO 영양 성분 감사'}</h3>
+                <p className="text-xs text-muted-foreground font-medium">글로벌 영양 표준 기준 적합성 평가 결과입니다.</p>
+              </div>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-8 pb-8 pt-4 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <h4 className="font-black text-sm text-muted-foreground uppercase tracking-widest">Main Nutrients</h4>
+                {[
+                  { label: 'Protein', value: scientificAnalysis.nutrientMass.protein_g, color: 'bg-primary' },
+                  { label: 'Fat', value: scientificAnalysis.nutrientMass.fat_g, color: 'bg-yellow-500' },
+                  { label: 'Carbs', value: scientificAnalysis.nutrientMass.carbs_g, color: 'bg-muted-foreground' }
+                ].map((item, i) => (
+                  <div key={i} className="space-y-2">
+                    <div className="flex justify-between text-xs font-black"><span>{item.label}</span><span>{item.value.toFixed(1)}g</span></div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div className={cn("h-full transition-all duration-1000", item.color)} style={{ width: `${Math.min(item.value, 100)}%` }} />
                     </div>
                   </div>
                 ))}
+                <div className="pt-4 border-t flex justify-between items-center">
+                   <span className="text-xs font-black">Total Calories</span>
+                   <span className="text-2xl font-black text-primary tracking-tighter">{scientificAnalysis.nutrientMass.kcal} kcal</span>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
-      {/* Weight Diagnosis (Custom Mode) */}
-      {!isGeneralMode && weightDiagnosis && (
-        <div className="space-y-6">
-          <div className="flex items-center gap-2 px-2">
-            <Scale className="text-primary w-6 h-6" />
-            <h2 className="text-2xl font-black font-headline tracking-tight">{isEn ? 'Weight Analysis' : '체형 및 품종 표준 진단'}</h2>
-          </div>
-          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
-            <CardContent className="p-8 space-y-8">
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-4">
+                 <h4 className="font-black text-sm text-muted-foreground uppercase tracking-widest">{isCat ? 'Cat Specifics' : 'Dog Specifics'}</h4>
+                 <div className="p-5 bg-primary/5 rounded-3xl border border-primary/10 space-y-3">
+                    <p className="text-[11px] font-black text-primary uppercase">Expert Clinical Advice</p>
+                    <p className="text-sm font-bold leading-relaxed">{result.veterinaryAdvice}</p>
+                 </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-black text-sm text-muted-foreground uppercase tracking-widest">AAFCO Standards Comparison</h4>
+                <Badge variant="outline" className="text-[10px] font-bold border-muted text-muted-foreground">Unit: DM Basis (%)</Badge>
+              </div>
+              <div className="rounded-2xl border border-muted overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-muted/30">
+                    <TableRow>
+                      <TableHead className="font-black text-xs">Nutrient</TableHead>
+                      <TableHead className="font-black text-xs text-center">Value</TableHead>
+                      <TableHead className="font-black text-xs text-center">AAFCO Range</TableHead>
+                      <TableHead className="font-black text-xs text-center">Verdict</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {scientificAnalysis.aafcoComparison.map((row, i) => (
+                      <TableRow key={i} className="hover:bg-muted/5">
+                        <TableCell className="font-bold text-xs">{row.nutrient}</TableCell>
+                        <TableCell className="text-center font-black text-xs text-primary">{row.productValue}{row.unit}</TableCell>
+                        <TableCell className="text-center text-xs font-medium text-muted-foreground">
+                          {row.aafcoMin || 0}{row.unit} ~ {row.aafcoMax ? `${row.aafcoMax}${row.unit}` : 'Max'}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge className={cn("text-[10px] font-black px-2 py-0", 
+                            row.status === 'pass' ? "bg-success" : 
+                            row.status === 'optimal' ? "bg-primary" : "bg-destructive"
+                          )}>
+                            {row.status.toUpperCase()}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* 4. Feeding Table & Roadmap */}
+        <AccordionItem value="feeding-guide" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
+          <AccordionTrigger className="px-8 py-6 hover:no-underline">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-2xl text-primary"><TableIcon size={24} /></div>
+              <div className="text-left">
+                <h3 className="font-black text-xl">{isEn ? 'Daily Feeding Guide' : '일일 권장 급여량 및 목적'}</h3>
+                <p className="text-xs text-muted-foreground font-medium">체중별, 활동량별 맞춤형 급여 가이드라인입니다.</p>
+              </div>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
+            <div className="p-6 bg-muted/20 rounded-3xl border-2 border-dashed border-primary/10">
+              <h4 className="font-black text-sm flex items-center gap-2 mb-2">
+                <Info size={16} className="text-primary"/> 제품 목적 요약
+              </h4>
+              <p className="text-sm font-bold leading-relaxed">{feedingGuide.productPurpose}</p>
+            </div>
+
+            {feedingGuide.feedingTable && (
+              <div className="rounded-2xl border border-muted overflow-hidden">
+                <Table>
+                  <TableHeader className="bg-muted/30">
+                    <TableRow>
+                      <TableHead className="font-black text-xs text-center">체중 (kg)</TableHead>
+                      <TableHead className="font-black text-xs text-center">낮은 활동량</TableHead>
+                      <TableHead className="font-black text-xs text-center">높은 활동량</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {feedingGuide.feedingTable.map((row, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="text-center font-bold text-xs">{row.weightRange}</TableCell>
+                        <TableCell className="text-center font-medium text-xs text-muted-foreground">{row.lowActivityGrams}</TableCell>
+                        <TableCell className="text-center font-black text-xs text-primary">{row.highActivityGrams}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* 5. Weight Diagnosis (Custom Mode) */}
+        {!isGeneralMode && weightDiagnosis && (
+          <AccordionItem value="weight-audit" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
+            <AccordionTrigger className="px-8 py-6 hover:no-underline">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Scale size={24} /></div>
+                <div className="text-left">
+                  <h3 className="font-black text-xl">{isEn ? 'Weight Diagnosis' : '아이 체형 및 감량 진단'}</h3>
+                  <p className="text-xs text-muted-foreground font-medium">현재 체형 점수(BCS) 기반의 건강 리포트입니다.</p>
+                </div>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-8 pb-8 pt-4 space-y-8">
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="text-center p-6 bg-muted/20 rounded-3xl">
                      <p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Standard Range</p>
-                     <p className="text-xl font-black">{weightDiagnosis.breedStandardRange}</p>
+                     <p className="text-lg font-black">{weightDiagnosis.breedStandardRange}</p>
                      <p className="text-[10px] font-bold text-primary mt-1">{input.petProfile?.breed} 평균</p>
                   </div>
                   <div className="text-center p-6 bg-primary text-white rounded-3xl shadow-xl shadow-primary/20">
                      <p className="text-[10px] font-black opacity-60 uppercase mb-1">Current Weight</p>
-                     <p className="text-3xl font-black">{weightDiagnosis.currentWeight}kg</p>
+                     <p className="text-2xl font-black">{weightDiagnosis.currentWeight}kg</p>
                      <Badge className="bg-white/20 text-white border-none mt-2">
                         {weightDiagnosis.overweightPercentage > 0 ? `상위 ${weightDiagnosis.overweightPercentage}%` : '표준 범위'}
                      </Badge>
                   </div>
                   <div className="text-center p-6 bg-success/10 rounded-3xl">
                      <p className="text-[10px] font-black text-success uppercase mb-1">Ideal Weight</p>
-                     <p className="text-xl font-black text-success">{weightDiagnosis.idealWeight}kg</p>
+                     <p className="text-lg font-black text-success">{weightDiagnosis.idealWeight}kg</p>
                      <p className="text-[10px] font-bold text-success mt-1">AI 권장 목표</p>
                   </div>
                </div>
                
                <div className="p-6 bg-muted/10 rounded-[2rem] border-2 border-dashed border-muted-foreground/20">
-                  <p className="text-sm font-bold leading-relaxed text-muted-foreground">
-                     <AlertCircle className="inline-block mr-2 h-4 w-4 text-primary" />
+                  <p className="text-sm font-bold leading-relaxed text-muted-foreground flex items-start gap-3">
+                     <AlertCircle className="shrink-0 h-5 w-5 text-primary mt-0.5" />
                      {weightDiagnosis.verdict}
                   </p>
                </div>
@@ -287,113 +399,49 @@ export default function AnalysisResult({ result, input, onReset, resetButtonText
                {dietRoadmap && (
                  <div className="space-y-4">
                     <h4 className="font-black text-sm flex items-center gap-2">
-                      <TrendingDown size={16} className="text-primary"/> 감량 및 건강 관리 로드맵
+                      <TrendingDown size={16} className="text-primary"/> 건강 감량 로드맵 (Step-by-Step)
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                        {dietRoadmap.map((step, i) => (
-                         <div key={i} className="p-4 bg-muted/5 rounded-2xl flex flex-col items-center">
+                         <div key={i} className="p-5 bg-muted/5 rounded-2xl flex flex-col items-center border border-muted/30">
                             <span className="text-[10px] font-black text-muted-foreground mb-2 uppercase">{step.phase}</span>
-                            <p className="font-black text-lg">{step.weight}kg</p>
-                            <Badge variant="outline" className="mt-1 border-primary text-primary font-bold">{step.grams}g 급여</Badge>
+                            <p className="font-black text-xl text-foreground">{step.weight}kg</p>
+                            <Badge className="mt-2 bg-primary/10 text-primary border-none font-black">{step.grams}g 급여</Badge>
                          </div>
                        ))}
                     </div>
                  </div>
                )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {!isPublicView && <AdBanner position="middle" />}
-
-      {/* 5. Scientific Deep Dive (Nutrients) */}
-      <div className="space-y-6">
-        <div className="flex items-center gap-2 px-2">
-          <PieChart className="text-primary w-6 h-6" />
-          <h2 className="text-2xl font-black font-headline tracking-tight">{isEn ? 'Nutrition Audit' : '영양학적 감사'}</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8">
-             <h4 className="font-black text-sm text-muted-foreground uppercase flex items-center gap-2 mb-6">
-              <PieChart size={16}/> Nutrient Mass (per 100g)
-            </h4>
-            <div className="space-y-6">
-              {[
-                { label: 'Protein', value: scientificAnalysis.nutrientMass.protein_g, color: 'bg-primary' },
-                { label: 'Fat', value: scientificAnalysis.nutrientMass.fat_g, color: 'bg-yellow-500' },
-                { label: 'Carbs', value: scientificAnalysis.nutrientMass.carbs_g, color: 'bg-muted-foreground' }
-              ].map((item, i) => (
-                <div key={i} className="space-y-2">
-                  <div className="flex justify-between text-[11px] font-black"><span>{item.label}</span><span>{item.value.toFixed(1)}g</span></div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div className={cn("h-full transition-all duration-1000", item.color)} style={{ width: `${Math.min(item.value, 100)}%` }} />
-                  </div>
-                </div>
-              ))}
-              <div className="pt-4 border-t flex justify-between items-center">
-                 <span className="text-xs font-black">Total Calories</span>
-                 <span className="text-xl font-black text-primary">{scientificAnalysis.nutrientMass.kcal} kcal</span>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="border-none shadow-xl rounded-[2.5rem] bg-white p-8 space-y-6">
-            <h4 className="font-black text-sm text-muted-foreground uppercase flex items-center gap-2">
-              <BarChart3 size={16}/> {isCat ? 'Cat Specifics' : 'Dog Specifics'}
-            </h4>
-            <div className="space-y-4">
-               {isCat ? (
-                 <div className="p-4 bg-muted/5 rounded-2xl">
-                   <p className="text-[10px] font-black opacity-50">Taurine Check</p>
-                   <p className="text-sm font-bold mt-1">{scientificAnalysis.catSpecific?.taurineCheck || 'Verified'}</p>
-                 </div>
-               ) : (
-                 <div className="p-4 bg-muted/5 rounded-2xl">
-                   <p className="text-[10px] font-black opacity-50">Genetic Risk Matching</p>
-                   <p className="text-sm font-bold mt-1">{scientificAnalysis.dogSpecific?.breedRiskMatching || 'Optimal'}</p>
-                 </div>
-               )}
-               <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
-                  <p className="text-[10px] font-black text-primary uppercase">Veterinary Advice</p>
-                  <p className="text-xs font-bold mt-1 leading-relaxed">{result.veterinaryAdvice}</p>
-               </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        <div className="flex items-center gap-2 px-2">
-          <Gavel className="text-primary w-6 h-6" />
-          <h2 className="text-2xl font-black font-headline tracking-tight">{isEn ? 'Corporate Audit' : '기업 신뢰도 리포트'}</h2>
-        </div>
-        <Accordion type="single" collapsible className="w-full space-y-4">
-          <AccordionItem value="environmental" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
-            <AccordionTrigger className="px-8 py-6 hover:no-underline">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-success/10 rounded-2xl text-success"><Leaf /></div>
-                <div className="text-left"><h3 className="font-black text-lg">{isEn ? 'Environmental' : '환경 경영'}</h3></div>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-8 pb-8 pt-4">
-              <p className="text-sm font-bold leading-relaxed">{esgReport.environmental}</p>
             </AccordionContent>
           </AccordionItem>
+        )}
 
-          <AccordionItem value="recall" className="border-none shadow-lg rounded-[2.5rem] bg-white overflow-hidden">
-            <AccordionTrigger className="px-8 py-6 hover:no-underline">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-destructive/10 rounded-2xl text-destructive"><History /></div>
-                <div className="text-left"><h3 className="font-black text-lg">{isEn ? 'Recall Audit' : '리콜 이력'}</h3></div>
+        {/* 6. Corporate Audit */}
+        <AccordionItem value="corporate-audit" className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
+          <AccordionTrigger className="px-8 py-6 hover:no-underline">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Gavel size={24} /></div>
+              <div className="text-left">
+                <h3 className="font-black text-xl">{isEn ? 'Corporate Integrity' : '기업 및 브랜드 감사'}</h3>
+                <p className="text-xs text-muted-foreground font-medium">제조사의 리콜 이력 및 환경 경영 리포트입니다.</p>
               </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-8 pb-8 pt-4">
-              <p className="text-sm font-bold leading-relaxed">{esgReport.recallHistory}</p>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </div>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="px-8 pb-8 pt-4 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-6 bg-success/5 rounded-3xl border border-success/10 space-y-3">
+                <div className="flex items-center gap-2 text-success"><Leaf size={18} /><h4 className="font-black text-sm">환경 경영</h4></div>
+                <p className="text-xs font-bold leading-relaxed text-muted-foreground">{esgReport.environmental}</p>
+              </div>
+              <div className="p-6 bg-destructive/5 rounded-3xl border border-destructive/10 space-y-3">
+                <div className="flex items-center gap-2 text-destructive"><History size={18} /><h4 className="font-black text-sm">리콜 이력</h4></div>
+                <p className="text-xs font-bold leading-relaxed text-muted-foreground">{esgReport.recallHistory}</p>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+      </Accordion>
 
       {!isPublicView && <AdBanner position="bottom" />}
 

@@ -1,10 +1,9 @@
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v15.0 - Extended Product Analysis]
- * - 제품 분석 전용 모드(general)를 위한 원재료 100% 카테고리 분석 추가.
- * - 체중 및 활동량별 일일 급여량 테이블 생성 로직 통합.
- * - 제품 목적 요약 및 적합성/부적합성 명시 기능 강화.
+ * @fileOverview [Pettner Core Engine v16.0 - Advanced Analysis]
+ * - AAFCO 기준 대비 영양 성분 분석 데이터 추가.
+ * - 원재료 분석 및 급여 가이드 로직 강화.
  */
 
 import {ai} from '@/ai/genkit';
@@ -64,25 +63,51 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     grade: z.string().optional(),
     statusTags: z.array(z.string())
   }),
-  // 제품 분석 전용 데이터 (Mode: General)
-  productAnalysisOnly: z.object({
+  // 원재료 분석 데이터
+  ingredientAnalysis: z.object({
     ingredientList100: z.array(z.object({
       name: z.string(),
       category: z.enum(['positive', 'neutral', 'cautionary']),
       reason: z.string().describe('Scientific reason for category')
     })).describe('Analysis of 100% of the visible ingredients on the label'),
-    feedingTable: z.array(z.object({
-      weightRange: z.string().describe('e.g., 1-5kg'),
-      lowActivityGrams: z.string().describe('e.g., 50-100g'),
-      highActivityGrams: z.string().describe('e.g., 60-120g')
-    })).describe('Daily feeding guide based on weight and activity'),
-    productPurpose: z.string().describe('Summary of what the product is for (e.g., joint support for seniors)'),
     suitabilityAudit: z.object({
       suitableFor: z.array(z.string()).describe('List of pet types/conditions this is good for'),
       notSuitableFor: z.array(z.string()).describe('List of pet types/conditions this is bad for'),
       unsuitableReasons: z.string().describe('Clear warning why it might be unsuitable')
     })
-  }).optional(),
+  }),
+  // 영양 분석 데이터
+  scientificAnalysis: z.object({
+    nutrientMass: z.object({
+      protein_g: z.number(),
+      fat_g: z.number(),
+      carbs_g: z.number(),
+      kcal: z.number()
+    }),
+    aafcoComparison: z.array(z.object({
+      nutrient: z.string().describe('e.g., Crude Protein, Calcium'),
+      unit: z.string().describe('e.g., %, mg/kg'),
+      productValue: z.number(),
+      aafcoMin: z.number().optional(),
+      aafcoMax: z.number().optional(),
+      status: z.enum(['pass', 'fail', 'optimal'])
+    })).describe('Comparison against AAFCO nutritional profiles for dogs/cats'),
+    dogSpecific: z.object({
+      breedRiskMatching: z.string()
+    }).optional(),
+    catSpecific: z.object({
+      taurineCheck: z.string()
+    }).optional()
+  }),
+  // 급여 가이드
+  feedingGuide: z.object({
+    productPurpose: z.string().describe('Summary of what the product is for'),
+    feedingTable: z.array(z.object({
+      weightRange: z.string().describe('e.g., 1-5kg'),
+      lowActivityGrams: z.string().describe('e.g., 50-100g'),
+      highActivityGrams: z.string().describe('e.g., 60-120g')
+    })).optional()
+  }),
   // 맞춤 분석 전용 데이터 (Mode: Custom)
   weightDiagnosis: z.object({
     currentWeight: z.number(),
@@ -96,20 +121,6 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     weight: z.number(),
     grams: z.number()
   })).optional(),
-  scientificAnalysis: z.object({
-    nutrientMass: z.object({
-      protein_g: z.number(),
-      fat_g: z.number(),
-      carbs_g: z.number(),
-      kcal: z.number()
-    }),
-    dogSpecific: z.object({
-      breedRiskMatching: z.string()
-    }).optional(),
-    catSpecific: z.object({
-      taurineCheck: z.string()
-    }).optional()
-  }),
   esgReport: z.object({
     environmental: z.string(),
     recallHistory: z.string()
@@ -139,13 +150,12 @@ Match Target Language: {{{language}}}.
 {{/if}}
 - Product: {{{productName}}} ({{{productCategory}}} - {{{detailedProductType}}})
 
-# [Instructions for General Mode]
-{{#if isModeGeneral}}
+# [Instructions]
 1. **100% Ingredient Analysis**: Analyze every single ingredient shown on the photo. Categorize into 'positive' (Good), 'neutral' (Safe but no major benefit), or 'cautionary' (Risk factors). Provide clear scientific reasons.
-2. **Feeding Table**: Create a robust feeding table for various weight ranges (1-5kg, 5-10kg, 10-20kg, 20kg+) showing suggested daily grams for 'Low Activity' vs 'High Activity'.
-3. **Product Purpose**: Summarize the core goal of this product (e.g., "Full nutrition for adult dogs with joint support emphasis").
-4. **Suitability Audit**: Explicitly state who should NOT eat this. For example, if it's a dog food, say "Unsuitable for Cats" and explain why (e.g., lacking taurine). Also list medical conditions that are contraindications.
-{{/if}}
+2. **AAFCO Comparison Table**: Provide a table comparing core nutrients (Protein, Fat, Calcium, Phosphorus, etc.) against AAFCO minimum/maximum standards for the specific pet type and life stage.
+3. **Feeding Table**: Create a robust feeding table for various weight ranges showing suggested daily grams for 'Low Activity' vs 'High Activity'.
+4. **Product Purpose**: Summarize the core goal of this product.
+5. **Suitability Audit**: Explicitly state who should NOT eat this. List medical conditions that are contraindications.
 
 # [Multimodal Analysis]
 {{#if photoDataUri}}
