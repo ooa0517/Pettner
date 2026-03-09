@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -158,7 +157,7 @@ export default function ScannerHome({ onAnalyze }: { onAnalyze: (data: any) => v
   const detailedType = form.watch('detailedProductType');
   const petType = form.watch('petType');
   const imageFile = form.watch('image');
-  const prescriptionFile = form.watch('prescriptionImage');
+  const prescriptionFile = form.watch('prescriptionImage'); // Correctly watch the field to avoid ReferenceError
   const selectedConditions = form.watch('petProfile.healthConditions') || [];
   const selectedAllergies = form.watch('petProfile.allergies') || [];
   const currentBCS = form.watch('petProfile.bcs');
