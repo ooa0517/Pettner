@@ -7,8 +7,6 @@ import { getAnalysis } from '@/app/actions';
 import AnalysisResult from '@/components/analysis-result';
 import ScannerHome from '@/components/scanner-home';
 import AnalysisLoading from '@/components/analysis-loading';
-import OnboardingSurvey from '@/components/onboarding-survey';
-import LandingPage from '@/components/landing-page';
 import UsageLimitModal from '@/components/usage-limit-modal';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
@@ -26,8 +24,8 @@ function HomeContent() {
   const router = useRouter();
   const { toast } = useToast();
   
-  // 로그인한 사용자는 바로 분석 입력 단계('input')에서 시작하도록 설정
-  const [step, setStep] = useState<'landing' | 'survey' | 'input' | 'loading' | 'result'>('input');
+  // 로그인한 사용자는 바로 분석 입력 단계('input')에서 시작
+  const [step, setStep] = useState<'input' | 'loading' | 'result'>('input');
   const [analysisResult, setAnalysisResult] = useState<AnalyzePetFoodIngredientsOutput | null>(null);
   const [resultInput, setResultInput] = useState<AnalyzePetFoodIngredientsInput | null>(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
@@ -49,9 +47,26 @@ function HomeContent() {
   }, [searchParams]);
 
   const checkUsageLimit = useCallback(async () => {
-    // 일시적으로 제한 해제 (검증용)
-    return true; 
-  }, []);
+    if (!user || !db) return true;
+    
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userDocRef);
+      
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        if (userData.isPremium) return true;
+        
+        const today = new Date().toISOString().split('T')[0];
+        if (userData.lastUsageDate === today && (userData.dailyUsageCount || 0) >= 5) {
+          return false;
+        }
+      }
+      return true;
+    } catch (e) {
+      return true;
+    }
+  }, [user, db]);
 
   const handleAnalysis = async (formData: any) => {
     if (!user) {
@@ -145,7 +160,6 @@ function HomeContent() {
     setResultInput(null);
   };
 
-  // 로딩 중이거나 사용자가 없는 경우(리디렉션 대기) 로더 또는 빈 화면 노출
   if (isUserLoading) {
     return (
       <div className="flex items-center justify-center flex-grow p-4">
@@ -154,6 +168,7 @@ function HomeContent() {
     );
   }
 
+  // 로그인하지 않은 상태면 아무것도 렌더링하지 않음 (useEffect가 리디렉션 처리)
   if (!user) {
     return null;
   }
@@ -161,8 +176,6 @@ function HomeContent() {
   return (
     <div className="flex flex-col items-center justify-center flex-grow p-4 md:p-8 bg-muted/20">
       <div className="w-full max-w-4xl">
-        {step === 'landing' && <LandingPage onStart={() => setStep('survey')} />}
-        {step === 'survey' && <OnboardingSurvey onComplete={() => setStep('input')} />}
         {step === 'input' && <ScannerHome onAnalyze={handleAnalysis} />}
         {step === 'loading' && <AnalysisLoading />}
         {step === 'result' && analysisResult && resultInput && (
@@ -176,7 +189,7 @@ function HomeContent() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-screen"><Loader2 className="animate-spin text-primary h-8 w-8" /></div>}>
       <HomeContent />
     </Suspense>
   );
