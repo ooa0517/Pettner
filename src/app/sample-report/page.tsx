@@ -1,3 +1,4 @@
+
 'use client';
 
 import AnalysisResult from '@/components/analysis-result';
@@ -7,69 +8,82 @@ import { ArrowLeft, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SampleReportPage() {
-  // 나무(말티푸, 12.6kg, BCS 5)를 위한 초정밀 분석 데이터
+  // 나무(말티푸, 12.6kg, BCS 5)를 위한 초정밀 분석 데이터 V19.2 규격
   const mockResult: AnalyzePetFoodIngredientsOutput = {
     status: 'success',
     productIdentity: {
       name: "인스팅트 오리지널 그레인프리 치킨",
       brand: "인스팅트 (Instinct)",
-      category: "건식 사료"
+      category: "건식 사료",
+      pettnerCompliance: {
+        isCompliant: true,
+        reason: "AAFCO 영양 기준을 충족하며, 고품질 육류 단백질을 주원료로 사용합니다."
+      }
     },
     scoreCard: {
-      totalScore: 58,
-      grade: "C+ (다이어트 필요)",
-      headline: "나무의 건강을 위해 탄수화물 함량이 더 낮은 식단으로 교체하는 것을 권장합니다.",
-      statusTags: ["🔴 비만 경고", "📉 다이어트 시급", "🦴 관절 보호 필요"]
+      totalScore: 88,
+      grade: "A (우수)",
+      headline: "나무의 건강 상태를 고려할 때 매우 우수한 단백질 공급원이지만, 체중 관리를 위해 급여량 조절이 필요합니다.",
+      statusTags: ["✅ 고단백", "✅ 그레인프리", "⚠️ 칼로리 밀도 높음"],
+      scoringBasis: "단백질 품질(30%), 지방 균형(20%), 원재료 안전성(20%), 미네랄/비타민(15%), 칼로리 적합성(15%) 기준에 따라 산출되었습니다. (J Vet Nutr, 2023)"
     },
-    weightDiagnosis: {
-      currentWeight: 12.6,
-      idealWeight: 10.08,
-      weightGap: 2.52,
-      breedStandardRange: "3~8kg",
-      overweightPercentage: 57.5,
-      verdict: "말티푸 평균 몸무게 상단(8kg) 대비 약 57% 초과된 상태로, 관절 및 심혈관 질환 위험이 매우 높습니다."
-    },
-    dietRoadmap: [
-      { weight: 12.6, grams: 85, phase: "급속 감량기" },
-      { weight: 11.3, grams: 95, phase: "안정기" },
-      { weight: 10.1, grams: 110, phase: "유지기 도달" }
-    ],
-    advancedNutrition: {
-      carbs_nfe_dm: 42.5,
-      protein_dm: 35.0,
-      fat_dm: 18.0,
-      isHighCarb: true,
-      caloriesPerGram: 3.8
-    },
-    veterinaryDiagnosis: {
-      criticalMismatch: "본 제품의 탄수화물 함량은 42.5%로, 비만 관리가 필요한 나무에게는 다소 높습니다. 특히 고혈당을 유발하는 타피오카 성분이 포함되어 있어 체지방 감량 속도가 더딜 수 있습니다.",
-      positivePoints: [
-        "글루코사민과 콘드로이친이 함유되어 과체중으로 인한 나무의 슬개골 및 관절 부담을 완화해줍니다.",
-        "오메가-3 지방산이 풍부하여 비만으로 인한 만성 염증 억제에 도움을 줍니다."
+    ingredientAnalysis: {
+      ingredientList100: [
+        { name: "닭고기", category: "positive", reason: "고품질 동물성 단백질원으로 필수 아미노산이 풍부합니다. (Pet Food Sci J, 2024)", safetyRating: "High Quality" },
+        { name: "닭고기 지방", category: "positive", reason: "에너지원 및 오메가-6 지방산 공급원입니다.", safetyRating: "Safe" },
+        { name: "타피오카 전분", category: "cautionary", reason: "높은 당지수로 인해 과체중 아이의 혈당 조절에 영향을 줄 수 있습니다.", safetyRating: "Allergy Risk Low" }
       ],
-      cautionaryPoints: [
-        "타피오카 전분: 높은 당지수로 인해 인슐린 분비를 자극, 지방 축적을 촉진할 수 있습니다.",
-        "닭고기 지방: 칼로리 밀도가 높아 정해진 급여량을 엄격히 준수해야 합니다."
-      ],
-      vetAdvice: "현재 나무는 심각한 과체중 상태입니다. 사료를 즉시 변경하기 어렵다면 현재 급여량에서 15%를 줄여서 시작하시고, 간식은 일체 중단하십시오. 2주 뒤 체중 변화를 보고 급여량을 미세 조정해야 합니다."
+      suitabilityAudit: {
+        suitableFor: ["성견", "활동량 많은 개", "곡물 알러지 견"],
+        notSuitableFor: ["비만 견(제한 급여 필요)", "고양이"],
+        unsuitableReasons: "높은 지방 함량으로 인해 엄격한 체중 관리가 필요한 경우 주의가 필요합니다."
+      }
     },
-    feedingSummary: {
-      lossAmountGrams: 85,
-      cupGuide: "종이컵 약 0.8컵"
-    }
+    scientificAnalysis: {
+      nutrientMass: {
+        protein_g: 35.0,
+        fat_g: 18.0,
+        carbs_g: 22.0,
+        kcal: 3800
+      },
+      comparativeChart: [
+        { nutrient: "조단백질", productValue: 35.0, standardMin: 18.0, standardMax: 30.0 },
+        { nutrient: "조지방", productValue: 18.0, standardMin: 5.5, standardMax: 20.0 }
+      ],
+      aafcoComparison: [
+        { nutrient: "Protein", unit: "%", productValue: 35.0, aafcoMin: 18.0, status: "optimal" },
+        { nutrient: "Fat", unit: "%", productValue: 18.0, aafcoMin: 5.5, status: "pass" }
+      ]
+    },
+    feedingGuide: {
+      productPurpose: "성견의 근육 유지 및 일상적인 에너지 공급을 목적으로 하는 프리미엄 식단입니다.",
+      feedingTable: [
+        { weightRange: "10-15kg", lowActivityGrams: "150g", highActivityGrams: "200g", totalKcalRange: "570-760kcal" }
+      ]
+    },
+    esgReport: {
+      transparencyStatus: "DIRECT",
+      environmental: "지속 가능한 원료 소싱 및 친환경 패키징을 실천하고 있습니다.",
+      recallHistory: "최근 5년간 중대한 안전 관련 리콜 이력이 없습니다.",
+      certifications: ["ISO 9001", "HACCP"]
+    },
+    veterinaryAdvice: "나무는 현재 과체중 상태이므로 제품 권장 급여량의 하단(150g)부터 시작하시고, 운동량을 서서히 늘리는 것을 권장합니다."
   };
 
   const mockInput: AnalyzePetFoodIngredientsInput = {
     petType: 'dog',
+    analysisMode: 'custom',
     productName: '인스팅트 오리지널 그레인프리 치킨',
+    productCategory: 'food',
+    detailedProductType: '건식 사료',
     petProfile: {
       name: '나무',
       breed: '말티푸',
       age: 4,
       weight: 12.6,
       bcs: '5',
-      healthConditions: ['발핥음'],
-      activityLevel: 'HIGH'
+      healthConditions: ['비만'],
+      activityLevel: 'NORMAL'
     }
   };
 

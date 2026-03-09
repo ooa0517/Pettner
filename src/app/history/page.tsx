@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -143,7 +144,7 @@ export default function HistoryPage() {
           <div className="grid gap-4">
             {filteredHistory.map((item) => {
               const PetIcon = item.userInput.petType === 'cat' ? Cat : Dog;
-              const score = item.analysisOutput.scoreCard?.match_score;
+              const score = item.analysisOutput.scoreCard?.totalScore;
               
               return (
               <Link href={`/history/${item.id}`} key={item.id}>
