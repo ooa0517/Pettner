@@ -38,6 +38,10 @@ function HomeContent() {
   }, [searchParams]);
 
   const checkUsageLimit = useCallback(async () => {
+    // 검증을 위해 일시적으로 사용량 제한을 해제합니다.
+    return true;
+    
+    /* 기존 제한 로직 (나중에 활성화 가능)
     if (!user || !db) return true;
     try {
       const userDocRef = doc(db, 'users', user.uid);
@@ -51,7 +55,8 @@ function HomeContent() {
     } catch (e) {
       return true;
     }
-  }, [user, db]);
+    */
+  }, []);
 
   const handleAnalysis = async (formData: any) => {
     const canAnalyze = await checkUsageLimit();
