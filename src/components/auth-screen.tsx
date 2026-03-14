@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -6,11 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Sparkles, Mail, Lock, Loader2, ArrowRight, UserPlus, LogIn } from 'lucide-react';
+import { Sparkles, Mail, Lock, Loader2, LogIn, UserPlus } from 'lucide-react';
 import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 
 type AuthMode = 'login' | 'signup';
 
@@ -70,7 +68,6 @@ export default function AuthScreen() {
         </div>
 
         <CardContent className="p-10 space-y-8">
-          {/* Email Form */}
           <form onSubmit={handleEmailAuth} className="space-y-4">
             <div className="space-y-2">
               <Label className="ml-1 font-bold text-xs uppercase tracking-widest text-muted-foreground">이메일 주소</Label>
@@ -132,10 +129,6 @@ export default function AuthScreen() {
               {mode === 'login' ? "계정이 없으신가요? 회원가입하기" : "이미 계정이 있으신가요? 로그인하기"}
             </button>
           </div>
-          
-          <p className="text-[10px] text-center text-muted-foreground leading-relaxed px-4">
-            계속 진행함으로써 Pettner의 <span className="underline">이용 약관</span> 및 <span className="underline">개인정보 처리 방침</span>에 동의하게 됩니다.
-          </p>
         </CardContent>
       </Card>
     </div>

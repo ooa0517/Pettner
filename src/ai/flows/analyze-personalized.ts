@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -75,6 +74,17 @@ const AnalyzePersonalizedOutputSchema = z.object({
     })),
     expectedStoolChanges: z.string()
   }),
+  ingredientAnalysis: z.array(z.object({
+    name: z.string(),
+    category: z.enum(['positive', 'neutral', 'cautionary']),
+    reason: z.string(),
+    safetyRating: z.string().optional()
+  })),
+  esgReport: z.object({
+    transparencyStatus: z.enum(['DIRECT', 'OEM_LOW', 'OEM_PREMIUM']),
+    recallHistory: z.string(),
+    certifications: z.array(z.string())
+  }),
   veterinaryAdvice: z.string()
 });
 
@@ -93,6 +103,8 @@ For the same pet profile and product, you MUST produce identical scores and inst
 ### [Mode B: Personalized Solution]
 1. [Matching]: Score (0-100) and specific vet opinion addressing {{{petProfile.name}}}.
 2. [Feeding Guide]: Precise grams/units based on weight {{{petProfile.weight}}}kg and BCS {{{petProfile.bcs}}}.
+   - Apply 10% rule for treats.
+   - Apply precise dosage for supplements.
 3. [Behavioral Forecast]:
    - palatabilityIndex: Calculate probability of eating based on aromatic coatings (fat, liver) and ingredients.
    - giAndSatiety: Evaluate Glycemic Index based on carbohydrate sources (e.g., Oatmeal vs Tapioca).
@@ -101,6 +113,7 @@ For the same pet profile and product, you MUST produce identical scores and inst
    - Identify allergy conflicts.
    - Provide a 7-day transition schedule (e.g., Day 1-2: 25% new, 75% old).
    - Predict stool changes (odor, consistency).
+5. [Ingredients & ESG]: Standard traffic light audit and brand transparency.
 
 Pet: {{{petProfile.name}}}, {{{petProfile.petType}}}, {{{petProfile.breed}}}, {{{petProfile.age}}}yo, {{{petProfile.weight}}}kg, BCS {{{petProfile.bcs}}}
 Product: {{{productInfo.productName}}} ({{{productInfo.productCategory}}})`,

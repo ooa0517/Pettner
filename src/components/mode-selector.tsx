@@ -1,7 +1,6 @@
-
 'use client';
 
-import { Microscope, Target, ArrowRight, ShoppingBag, HeartPulse } from 'lucide-react';
+import { Microscope, Target, ArrowRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -10,7 +9,7 @@ export default function ModeSelector({ onSelectA, onSelectB }: { onSelectA: () =
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 md:p-8 space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
       <div className="text-center space-y-4">
-        <Badge className="bg-primary/10 text-primary border-none px-4 py-1.5 rounded-full font-black text-xs">Pettner Core v22.0</Badge>
+        <Badge className="bg-primary/10 text-primary border-none px-4 py-1.5 rounded-full font-black text-xs">Pettner Core v24.0</Badge>
         <h1 className="text-5xl font-black tracking-tighter leading-tight">분석 타입을 선택해주세요</h1>
         <p className="text-muted-foreground font-medium text-lg">어떤 정보가 필요하신가요?</p>
       </div>
@@ -21,15 +20,15 @@ export default function ModeSelector({ onSelectA, onSelectB }: { onSelectA: () =
           title="Analyzer_A"
           subtitle="제품 객관적 분석"
           desc="제품의 AAFCO 준수 여부, 원재료 등급, 제조사 투명성을 팩트 위주로 분석합니다."
-          badges={["성분 감사", "품질 등급", "투명성 감사"]}
+          badges={["성분 감사", "품질 등급", "원산지 리스크"]}
           onClick={onSelectA}
         />
         <ModeCard 
           icon={<Target className="h-12 w-12" />}
           title="Analyzer_B"
           subtitle="우리 아이 맞춤 분석"
-          desc="아이의 증상(눈물, 슬개골 등)과 알러지를 기반으로 제품과의 1:1 상성을 매칭합니다."
-          badges={["상성 점수", "알러지 체크", "맞춤 급여량"]}
+          desc="아이의 증상과 알러지를 기반으로 제품과의 1:1 상성을 매칭하고 처방을 내립니다."
+          badges={["기호성 예측", "알러지 체크", "맞춤 급여량"]}
           highlight
           onClick={onSelectB}
         />

@@ -1,10 +1,9 @@
-
 'use client';
 
 /**
- * [Analyzer_B: Personalized Analysis]
+ * [Analyzer_B: Personalized Analysis v24.0]
  * - Strictly independent component for Step 3-B.
- * - Focuses on Pet's Symptoms, Allergies, and Holistic Matching.
+ * - Focuses on Pet's Symptoms, Allergies, Behavioral Forecast, and Transition Schedule.
  */
 
 import { useState, useRef } from 'react';
@@ -111,12 +110,11 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
           <div className="p-3 bg-primary rounded-2xl text-white shadow-lg shadow-primary/30"><Target /></div>
           <h2 className="text-3xl font-black tracking-tight">밀착 맞춤 분석 (Analyzer_B)</h2>
         </div>
-        <p className="text-muted-foreground font-medium">아이의 증상과 알러지 통계 데이터를 기반으로 최적의 한 끼를 추천합니다.</p>
+        <p className="text-muted-foreground font-medium">아이의 증상과 알러지 데이터를 기반으로 1:1 매칭 처방전을 생성합니다.</p>
       </div>
 
       {step === 'product' ? (
         <div className="space-y-8 animate-in slide-in-from-right-5 duration-500">
-           {/* Step 1: Product Identification */}
            <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
             <CardHeader className="bg-primary/5 p-10 border-b">
               <CardTitle className="text-xl font-black flex items-center gap-3">
@@ -153,7 +151,6 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
             </CardContent>
           </Card>
 
-          {/* Step 2: Ingredient Scan */}
           <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
             <CardHeader className="bg-primary/5 p-10 border-b">
               <CardTitle className="text-xl font-black flex items-center gap-3">
@@ -203,8 +200,11 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
                   <Input value={petProfile.name} onChange={e => setPetProfile({...petProfile, name: e.target.value})} className="rounded-2xl h-14 bg-muted/20 border-none px-6 font-bold" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-muted-foreground ml-2 uppercase tracking-widest">품종</label>
-                  <Input value={petProfile.breed} onChange={e => setPetProfile({...petProfile, breed: e.target.value})} className="rounded-2xl h-14 bg-muted/20 border-none px-6 font-bold" />
+                  <label className="text-xs font-black text-muted-foreground ml-2 uppercase tracking-widest">나이/체중</label>
+                  <div className="flex gap-2">
+                    <Input placeholder="살" type="number" value={petProfile.age} onChange={e => setPetProfile({...petProfile, age: e.target.value})} className="rounded-2xl h-14 bg-muted/20 border-none px-4 font-bold" />
+                    <Input placeholder="kg" type="number" value={petProfile.weight} onChange={e => setPetProfile({...petProfile, weight: e.target.value})} className="rounded-2xl h-14 bg-muted/20 border-none px-4 font-bold" />
+                  </div>
                 </div>
               </div>
 

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -15,7 +14,6 @@ import {
   Target,
   Bot,
   ThumbsUp,
-  Beef,
   Zap,
   AlertTriangle,
   ArrowRight,
@@ -59,8 +57,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
   const category = input.productCategory || result.productIdentity?.category?.toLowerCase() || 'food';
 
   const filteredIngredients = useMemo(() => {
-    const list = result.ingredientAnalysis;
-    if (!list) return [];
+    const list = result.ingredientAnalysis || [];
     if (!ingSearch) return list;
     return list.filter((ing: any) => ing.name.toLowerCase().includes(ingSearch.toLowerCase()));
   }, [result, ingSearch]);
@@ -76,7 +73,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
     );
   }
 
-  // --- RENDERING HELPERS FOR MODE A ---
+  // --- RENDERING HELPERS FOR MODE A (FACT CHECK) ---
 
   const renderModeASummary = () => (
     <div className="space-y-6">
@@ -148,7 +145,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
     </Card>
   );
 
-  // --- RENDERING HELPERS FOR MODE B ---
+  // --- RENDERING HELPERS FOR MODE B (SOLUTION) ---
 
   const renderModeBSummary = () => (
     <div className="space-y-8">
@@ -161,7 +158,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
               className="text-primary transition-all duration-1000" />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-5xl font-black text-primary">{result.matchingReport?.matchScore}%</span>
+            <span className="text-5xl font-black text-primary">{result.matchingReport?.matchScore}</span>
             <span className="text-[10px] font-black text-muted-foreground uppercase">Matching Score</span>
           </div>
         </div>
@@ -239,31 +236,28 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
 
   // --- COMMON SECTIONS ---
 
-  const renderCategorySpec = () => {
-    if (category === 'food') {
-      const chartConfig = {
-        value: { label: "제품 함량", color: "hsl(var(--primary))" },
-        standard: { label: "AAFCO 표준", color: "hsl(var(--muted-foreground))" }
-      };
-      return (
-        <div className="space-y-6">
-          <h3 className="font-black text-2xl flex items-center gap-2"><TrendingUp className="text-primary"/> 영양 밸런스 헥사곤</h3>
-          <div className="h-[300px] w-full">
-            <ChartContainer config={chartConfig}>
-              <ChartRadarChart data={result.nutritionalAnalysis?.radarData || []}>
-                <ChartPolarGrid />
-                <ChartPolarAngleAxis dataKey="nutrient" />
-                <ChartRadar name="standard" dataKey="standard" stroke="var(--color-standard)" fill="var(--color-standard)" fillOpacity={0.1} />
-                <ChartRadar name="value" dataKey="value" stroke="var(--color-value)" fill="var(--color-value)" fillOpacity={0.5} />
-              </ChartRadarChart>
-            </ChartContainer>
-          </div>
-          <p className="text-center text-xs text-muted-foreground font-medium italic">※ AAFCO/FEDIAF 권장 가이드라인 대비 탄/단/지/무기질 비율</p>
+  const renderNutritionalRadar = () => {
+    if (category !== 'food' || !result.nutritionalAnalysis?.radarData) return null;
+    const chartConfig = {
+      value: { label: "제품 함량", color: "hsl(var(--primary))" },
+      standard: { label: "AAFCO 표준", color: "hsl(var(--muted-foreground))" }
+    };
+    return (
+      <div className="space-y-6">
+        <h3 className="font-black text-2xl flex items-center gap-2"><TrendingUp className="text-primary"/> 영양 밸런스 헥사곤</h3>
+        <div className="h-[300px] w-full">
+          <ChartContainer config={chartConfig}>
+            <ChartRadarChart data={result.nutritionalAnalysis.radarData}>
+              <ChartPolarGrid />
+              <ChartPolarAngleAxis dataKey="nutrient" />
+              <ChartRadar name="standard" dataKey="standard" stroke="var(--color-standard)" fill="var(--color-standard)" fillOpacity={0.1} />
+              <ChartRadar name="value" dataKey="value" stroke="var(--color-value)" fill="var(--color-value)" fillOpacity={0.5} />
+            </ChartRadarChart>
+          </ChartContainer>
         </div>
-      );
-    }
-    // Treat and Supplement UI remains same or expanded if needed
-    return null;
+        <p className="text-center text-[10px] text-muted-foreground font-medium italic">※ AAFCO/FEDIAF 권장 가이드라인 대비 탄/단/지/무기질 비율</p>
+      </div>
+    );
   };
 
   const renderFeedingGuide = () => {
@@ -278,7 +272,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
             {category === 'food' && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white p-6 rounded-3xl text-center space-y-1 shadow-sm">
-                  <p className="text-xs font-black text-muted-foreground uppercase">1일 권장량</p>
+                  <p className="text-xs font-black text-muted-foreground uppercase">1일 권장 급여량</p>
                   <p className="text-3xl font-black text-primary">{guide.dailyGrams}</p>
                 </div>
                 <div className="bg-white p-6 rounded-3xl text-center space-y-1 shadow-sm">
@@ -290,7 +284,26 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
                 </div>
               </div>
             )}
-            {/* Other categories handles... */}
+            {category === 'treat' && (
+              <div className="bg-white p-8 rounded-3xl text-center space-y-4 shadow-sm">
+                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">하루 최대 급여 개수 (10% Rule)</p>
+                <p className="text-4xl font-black text-orange-500">{guide.maxUnitsPerDay}</p>
+                <p className="text-sm font-bold text-muted-foreground break-keep">{guide.ruleOf10PercentMsg}</p>
+              </div>
+            )}
+            {category === 'supplement' && (
+              <div className="bg-white p-8 rounded-3xl text-center space-y-4 shadow-sm">
+                <p className="text-xs font-black text-muted-foreground uppercase tracking-widest">권장 복용량</p>
+                <div className="flex justify-center items-baseline gap-1">
+                  <span className="text-5xl font-black text-primary">{guide.dosage}</span>
+                  <span className="text-xl font-bold">{guide.dosageUnit}</span>
+                </div>
+                <div className="p-4 bg-destructive/5 rounded-2xl border border-destructive/10">
+                  <p className="text-xs font-black text-destructive uppercase mb-1 flex items-center justify-center gap-1"><AlertCircle size={12}/> 부작용 주의</p>
+                  <p className="text-xs font-bold leading-relaxed">{guide.sideEffectWarning}</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -335,7 +348,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
           {mode === 'general' && (
             <div className="space-y-10">
               {renderModeASummary()}
-              {renderCategorySpec()}
+              {renderNutritionalRadar()}
             </div>
           )}
 
@@ -432,7 +445,6 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
         </AccordionItem>
       </Accordion>
 
-      {/* Persistent Bottom Actions */}
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-2xl border-t z-50 flex justify-center shadow-2xl">
         <div className="w-full max-w-4xl flex gap-4">
           <Button onClick={onReset} variant="outline" className="flex-1 h-16 rounded-2xl border-2 font-black text-primary">새로운 분석 시작</Button>

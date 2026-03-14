@@ -1,10 +1,9 @@
-
 'use client';
 
 /**
- * [Analyzer_A: Product-Only Analysis]
+ * [Analyzer_A: Product-Only Analysis v24.0]
  * - Strictly independent component for Step 3-A.
- * - Focusing on Product Specs & Brand Transparency.
+ * - Focusing on Product Specs, AAFCO balance, and Brand Transparency.
  */
 
 import { useState, useRef } from 'react';
@@ -12,7 +11,6 @@ import { ShoppingBag, Cookie, HeartPulse, Camera, Sparkles, ArrowLeft, Microscop
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { getGeneralAnalysis } from '@/app/actions';
 import AnalysisLoading from '@/components/analysis-loading';
@@ -104,7 +102,6 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
         <p className="text-muted-foreground font-medium">제품의 영양 스펙과 제조사 투명성을 팩트 기반으로 감사힙니다.</p>
       </div>
 
-      {/* 1. 카테고리 선택 */}
       <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
         <CardHeader className="bg-muted/30 p-10 border-b">
           <CardTitle className="text-xl font-black flex items-center gap-3">
@@ -133,7 +130,6 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
         </CardContent>
       </Card>
 
-      {/* 2. 스마트 제품 식별 (바코드) */}
       <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
         <CardHeader className="bg-muted/30 p-10 border-b">
           <CardTitle className="text-xl font-black flex items-center gap-3">
@@ -166,13 +162,12 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
           </div>
 
           <div className="space-y-4">
-            <label className="text-xs font-black text-muted-foreground ml-2 uppercase tracking-widest">제품명</label>
+            <label className="text-xs font-black text-muted-foreground ml-2 uppercase tracking-widest">제품명 직접 입력</label>
             <Input value={productName} onChange={e => setProductName(e.target.value)} placeholder="분석할 제품명을 입력해주세요." className="h-16 rounded-2xl border-none bg-muted/20 px-6 font-bold text-lg" />
           </div>
         </CardContent>
       </Card>
 
-      {/* 3. 성분표 촬영 */}
       <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
         <CardHeader className="bg-muted/30 p-10 border-b">
           <CardTitle className="text-xl font-black flex items-center gap-3">
@@ -182,9 +177,9 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
         <CardContent className="p-10 space-y-6">
           <Alert className="bg-primary/5 border-primary/20 rounded-3xl p-6">
             <Info className="h-5 w-5 text-primary" />
-            <AlertTitle className="text-primary font-black text-sm">전문가급 리포트를 위한 촬영 팁</AlertTitle>
+            <AlertTitle className="text-primary font-black text-sm">촬영 가이드</AlertTitle>
             <AlertDescription className="text-xs font-medium text-primary/70 leading-relaxed mt-1">
-              제품 뒷면의 <strong>'원재료명'</strong>과 <strong>'등록성분량'</strong> 텍스트가 흔들리지 않게 한 화면에 꽉 차도록 촬영해 주세요.
+              제품 뒷면의 <strong>'원재료명'</strong>과 <strong>'등록성분량'</strong>이 뚜렷하게 보이도록 한 화면에 꽉 차게 촬영해 주세요.
             </AlertDescription>
           </Alert>
 
