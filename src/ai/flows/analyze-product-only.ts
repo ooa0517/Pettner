@@ -2,8 +2,8 @@
 'use server';
 
 /**
- * @fileOverview [Analyzer_A: Product-Only Engine]
- * - Focuses strictly on product specs, AAFCO compliance, and ingredient quality.
+ * @fileOverview [Analyzer_A: Product-Only Engine v23.0]
+ * - Focuses strictly on product specs, AAFCO compliance, and category-specific highlights.
  */
 
 import {ai} from '@/ai/genkit';
@@ -30,38 +30,42 @@ const AnalyzeProductOnlyOutputSchema = z.object({
       reason: z.string()
     })
   }),
-  scoreCard: z.object({
-    totalScore: z.number().min(0).max(100),
-    grade: z.string(),
+  summary: z.object({
     headline: z.string(),
-    statusTags: z.array(z.string()),
-    scoringBasis: z.string(),
+    bestFor: z.array(z.string()),
+    worstFor: z.array(z.string())
   }),
-  ingredientAnalysis: z.object({
-    ingredientList100: z.array(z.object({
-      name: z.string(),
-      category: z.enum(['positive', 'neutral', 'cautionary']),
-      reason: z.string(),
-      safetyRating: z.string().optional()
-    }))
-  }),
-  scientificAnalysis: z.object({
-    nutrientMass: z.object({
-      protein_g: z.number(),
-      fat_g: z.number(),
-      carbs_g: z.number(),
-      kcal: z.number()
-    }),
-    comparativeChart: z.array(z.object({
+  // Category specific spec data
+  nutritionalAnalysis: z.object({
+    // For Food: Radar chart data (0-100 scale vs standard)
+    radarData: z.array(z.object({
       nutrient: z.string(),
-      productValue: z.number(),
-      standardMin: z.number(),
-      standardMax: z.number().optional()
-    }))
+      value: z.number(),
+      standard: z.number()
+    })).optional(),
+    // For Treat: Additive focus
+    caloriePerUnit: z.string().optional(),
+    additiveWarnings: z.array(z.object({
+      name: z.string(),
+      reason: z.string(),
+      riskLevel: z.enum(['low', 'medium', 'high'])
+    })).optional(),
+    // For Supplement: Active ingredient focus
+    activeIngredients: z.array(z.object({
+      name: z.string(),
+      amount: z.string(),
+      recommended: z.string(),
+      status: z.string()
+    })).optional()
   }),
+  ingredientAnalysis: z.array(z.object({
+    name: z.string(),
+    category: z.enum(['positive', 'neutral', 'cautionary']),
+    reason: z.string(),
+    safetyRating: z.string().optional()
+  })),
   esgReport: z.object({
     transparencyStatus: z.enum(['DIRECT', 'OEM_LOW', 'OEM_PREMIUM']),
-    environmental: z.string(),
     recallHistory: z.string(),
     certifications: z.array(z.string())
   })
@@ -76,8 +80,17 @@ const analyzeProductOnlyPrompt = ai.definePrompt({
   prompt: `You are a world-class Food Quality Auditor specializing in pet nutrition.
 Target Language: {{{language}}}.
 
-Focus on the product's objective quality, AAFCO standards, and brand transparency.
-Calculate the score (0-100) based on ingredient quality and nutritional balance.
+### [Strict Analysis Mode: Analyzer_A]
+Provide a factual, objective audit of the product based on the label image or info.
+
+1. [Headline]: Scientific one-liner.
+2. [Suitability]: Best target audience vs. Worst target audience.
+3. [Category-Specific Logic]:
+   - If 'food': Provide radarData for Protein, Fat, Carbs, Fiber, Ash, Moisture (Value vs AAFCO Standard).
+   - If 'treat': Highlight additives (preservatives, colors, sweeteners) and calorie per unit. Use red text logic for warnings.
+   - If 'supplement': Focus on active ingredients (e.g., Glucosamine mg, Probiotics CFU) vs recommended dosage.
+4. [Ingredients]: Traffic light system (positive, neutral, cautionary).
+5. [Reliability]: Check if DIRECT sourcing or OEM. Mention recall history.
 
 Product: {{{productName}}} ({{{productCategory}}})
 Type: {{{detailedProductType}}}

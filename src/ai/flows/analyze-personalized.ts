@@ -2,8 +2,8 @@
 'use server';
 
 /**
- * @fileOverview [Analyzer_B: Personalized Matching Engine]
- * - Focuses on the match between product and pet's specific medical/symptom data.
+ * @fileOverview [Analyzer_B: Personalized Solution Engine v23.0]
+ * - Focuses on Matching, Prescription, and Fulfillment Briefing.
  */
 
 import {ai} from '@/ai/genkit';
@@ -40,17 +40,24 @@ const AnalyzePersonalizedOutputSchema = z.object({
     suitabilityVerdict: z.string(),
     pros: z.array(z.string()),
     cons: z.array(z.string()),
-    riskLevel: z.enum(['low', 'medium', 'high']),
   }),
-  ingredientMatchAnalysis: z.array(z.object({
-    name: z.string(),
-    matchStatus: z.enum(['perfect', 'safe', 'warning', 'danger']),
-    reason: z.string(),
-  })),
-  feedingGuide: z.object({
-    dailyGrams: z.string(),
-    dailyKcal: z.string(),
-    feedingTips: z.string(),
+  personalizedFeedingGuide: z.object({
+    category: z.enum(['food', 'treat', 'supplement']),
+    // For Food
+    dailyGrams: z.string().optional(),
+    perMealGrams: z.string().optional(),
+    kcalInstruction: z.string().optional(),
+    // For Treat
+    maxUnitsPerDay: z.string().optional(),
+    ruleOf10PercentMsg: z.string().optional(),
+    // For Supplement
+    dosage: z.string().optional(), // e.g. "1 pill", "2 scoops"
+    dosageUnit: z.string().optional(),
+    sideEffectWarning: z.string().optional()
+  }),
+  fulfillmentBriefing: z.object({
+    pros: z.array(z.string()), // Things this product fulfills
+    cons: z.array(z.string()), // Things missing or needing supplement
   }),
   veterinaryAdvice: z.string()
 });
@@ -65,14 +72,18 @@ const analyzePersonalizedPrompt = ai.definePrompt({
 Target Language: {{{language}}}.
 
 Analyze the compatibility between the product and {{{petProfile.name}}} ({{{petProfile.breed}}}).
-Focus on Symptoms: {{{#each petProfile.symptoms}}}{{{this}}}, {{{/each}}}
-And Allergies: {{{#each petProfile.allergies}}}{{{this}}}, {{{/each}}}
-Main Concern: {{{petProfile.mainConcern}}}
 
-Calculate a Match Score (%) and provide specific veterinary advice addressing the pet by name.
+### [Mode B: Personalized Solution]
+1. [Match Score]: 0-100%.
+2. [Suitability Verdict]: Address the pet by name. Explain why this product is good or bad based on their specific concerns: {{{petProfile.mainConcern}}}, symptoms: {{{#each petProfile.symptoms}}}{{{this}}}, {{{/each}}}.
+3. [Prescription Guide]:
+   - If 'food': Provide exact daily/per-meal grams based on {{{petProfile.weight}}}kg and BCS {{{petProfile.bcs}}}.
+   - If 'treat': Apply 10% Calorie Rule. "Maximum O pieces per day".
+   - If 'supplement': Precise count in pills/scoops/pumps. Warn about side effects (e.g., liver levels).
+4. [Briefing]: What is fulfilled (Pros) vs. What is missing (Cons - suggest supplement needs).
 
-Product: {{{productInfo.productName}}}
-Pet: {{{petProfile.name}}}, {{{petProfile.petType}}}, {{{petProfile.age}}}yo, {{{petProfile.weight}}}kg, BCS {{{petProfile.bcs}}}`,
+Pet: {{{petProfile.name}}}, {{{petProfile.petType}}}, {{{petProfile.age}}}yo, {{{petProfile.weight}}}kg, BCS {{{petProfile.bcs}}}
+Product: {{{productInfo.productName}}} ({{{productInfo.productCategory}}})`,
 });
 
 export async function analyzePersonalized(input: AnalyzePersonalizedInput): Promise<AnalyzePersonalizedOutput> {
