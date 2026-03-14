@@ -4,11 +4,11 @@
 /**
  * [Analyzer_B: Personalized Analysis]
  * - Strictly independent component for Step 3-B.
- * - Collects symptoms, allergies, and concerns for factory statistics.
+ * - Added: Barcode and specialized Ingredient scanning.
  */
 
-import { useState } from 'react';
-import { Target, ShoppingBag, Camera, Sparkles, ArrowLeft, Info, HeartPulse, AlertTriangle, Scale, Footprints, Droplets, Dog, Cat, Loader2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Target, ShoppingBag, Camera, Sparkles, ArrowLeft, Info, HeartPulse, AlertTriangle, Dog, Cat, ScanBarcode, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,9 +40,24 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
   const [petProfile, setPetProfile] = useState<any>({ name: '', breed: '', age: '', weight: '', bcs: '3', symptoms: [], allergies: [], mainConcern: '' });
   const [analysisData, setAnalysisData] = useState<any>(null);
 
+  // Barcode state
+  const [isBarcodeScanning, setIsBarcodeScanning] = useState(false);
+  const barcodeVideoRef = useRef<HTMLVideoElement>(null);
+
+  const startBarcodeScan = async () => {
+    setIsBarcodeScanning(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      if (barcodeVideoRef.current) barcodeVideoRef.current.srcObject = stream;
+    } catch (e) {
+      toast({ variant: 'destructive', title: '카메라 권한 거부됨' });
+      setIsBarcodeScanning(false);
+    }
+  };
+
   const handleNextToSurvey = () => {
     if (!productInfo.image) {
-      toast({ variant: "destructive", title: "사진 필요", description: "분석을 위해 성분표 사진을 찍어주세요." });
+      toast({ variant: "destructive", title: "성분표 사진 필요", description: "정밀 맞춤 분석을 위해 성분표를 찍어주세요." });
       return;
     }
     setStep('survey');
@@ -66,7 +81,6 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
       
       if (result.error) throw new Error(result.error);
 
-      // Save to B-type specific DB (for factory stats)
       if (user && db) {
         await addDoc(collection(db, 'users', user.uid, 'analysisHistory'), {
           type: 'B',
@@ -98,28 +112,65 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
           <div className="p-3 bg-primary rounded-2xl text-white shadow-lg shadow-primary/30"><Target /></div>
           <h2 className="text-3xl font-black tracking-tight">밀착 맞춤 분석 (Analyzer_B)</h2>
         </div>
-        <p className="text-muted-foreground font-medium">아이의 신체 데이터와 제품 성분을 완벽하게 매칭합니다.</p>
+        <p className="text-muted-foreground font-medium">우리 아이의 건강 상태에 가장 완벽한 한 끼를 찾아드립니다.</p>
       </div>
 
       {step === 'product' ? (
         <div className="space-y-8 animate-in slide-in-from-right-5">
            <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
             <CardHeader className="bg-primary/5 p-10 border-b">
-              <CardTitle className="text-xl font-black flex items-center gap-2"><ShoppingBag className="text-primary"/> 1단계: 제품 정보 입력</CardTitle>
+              <CardTitle className="text-xl font-black flex items-center gap-2">
+                <ScanBarcode className="text-primary"/> 1단계: 제품 정보 & 바코드
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-10 space-y-8">
+              <div className="space-y-4">
+                 <label className="text-sm font-black text-muted-foreground ml-2">바코드 촬영 (제품 자동 인식)</label>
+                 {!isBarcodeScanning ? (
+                    <div onClick={startBarcodeScan} className="w-full h-32 border-4 border-dashed rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-all">
+                      <ScanBarcode className="h-10 w-10 text-primary opacity-30 mb-2" />
+                      <span className="font-bold">바코드 카메라 실행</span>
+                    </div>
+                 ) : (
+                    <div className="relative rounded-[2rem] overflow-hidden bg-black aspect-video">
+                      <video ref={barcodeVideoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-4/5 h-1/3 border-2 border-primary/50 rounded-lg" />
+                      </div>
+                      <Button onClick={() => setIsBarcodeScanning(false)} className="absolute bottom-4 right-4 rounded-full">닫기</Button>
+                    </div>
+                 )}
+              </div>
+
               <div className="space-y-2">
                 <label className="text-sm font-black text-muted-foreground ml-2">제품명</label>
                 <Input value={productInfo.name} onChange={e => setProductInfo({...productInfo, name: e.target.value})} placeholder="분석할 제품명을 입력하세요." className="h-14 rounded-2xl border-none bg-muted/20 px-6 font-bold" />
               </div>
-              <div onClick={() => document.getElementById('image-b')?.click()} className={cn("relative w-full aspect-video border-4 border-dashed rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer transition-all", productInfo.image ? "border-success bg-success/5" : "border-muted/30")}>
-                <Camera className="h-16 w-16 text-primary mb-4 opacity-20" />
-                <span className="text-xl font-black">{productInfo.image ? "성분표 촬영 완료" : "성분표 촬영하기"}</span>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
+            <CardHeader className="bg-primary/5 p-10 border-b">
+              <CardTitle className="text-xl font-black flex items-center gap-2">
+                <FileText className="text-primary"/> 2단계: 성분표 정밀 스캔
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-10">
+              <div onClick={() => document.getElementById('image-b')?.click()} className={cn("relative w-full aspect-[4/3] border-4 border-dashed rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer transition-all", productInfo.image ? "border-success bg-success/5" : "border-muted/30")}>
+                {productInfo.image ? (
+                   <img src={URL.createObjectURL(productInfo.image)} className="absolute inset-0 w-full h-full object-cover rounded-[2.3rem]" alt="Ingredients" />
+                ) : (
+                  <>
+                    <Camera className="h-16 w-16 text-primary mb-4 opacity-20" />
+                    <span className="text-xl font-black">제품 뒷면 성분표 촬영</span>
+                  </>
+                )}
                 <input id="image-b" type="file" accept="image/*" className="hidden" onChange={e => setProductInfo({...productInfo, image: e.target.files?.[0] || null})} />
               </div>
             </CardContent>
           </Card>
-          <Button onClick={handleNextToSurvey} className="w-full h-24 rounded-[3rem] text-2xl font-black shadow-2xl bg-primary">다음 단계로 (설문)</Button>
+
+          <Button onClick={handleNextToSurvey} className="w-full h-24 rounded-[3rem] text-2xl font-black shadow-2xl bg-primary">다음 단계로 (아이 상태 입력)</Button>
         </div>
       ) : (
         <div className="space-y-8 animate-in slide-in-from-right-5">
@@ -134,7 +185,7 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
 
           <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
             <CardHeader className="bg-muted/30 p-10 border-b">
-              <CardTitle className="text-xl font-black flex items-center gap-2"><HeartPulse className="text-primary"/> 2단계: 종별 정밀 설문</CardTitle>
+              <CardTitle className="text-xl font-black flex items-center gap-2"><HeartPulse className="text-primary"/> 3단계: 종별 정밀 설문</CardTitle>
             </CardHeader>
             <CardContent className="p-10 space-y-10">
               <div className="grid grid-cols-2 gap-4">

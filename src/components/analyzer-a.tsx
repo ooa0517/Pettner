@@ -4,10 +4,11 @@
 /**
  * [Analyzer_A: Product-Only Analysis]
  * - Strictly independent component for Step 3-A.
+ * - Added: Barcode simulation and dedicated Ingredient Label section.
  */
 
-import { useState } from 'react';
-import { ShoppingBag, Cookie, HeartPulse, Camera, Sparkles, ArrowLeft, Microscope, Info, CheckCircle2 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { ShoppingBag, Cookie, HeartPulse, Camera, Sparkles, ArrowLeft, Microscope, Info, CheckCircle2, ScanBarcode, FileText, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,7 @@ import { getGeneralAnalysis } from '@/app/actions';
 import AnalysisLoading from '@/components/analysis-loading';
 import AnalysisResult from '@/components/analysis-result';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const CATEGORIES = [
   { id: 'food', label: '사료', icon: ShoppingBag, types: ['건식', '습식', '동결건조', '화식'] },
@@ -30,11 +32,45 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
   const [category, setCategory] = useState<any>(CATEGORIES[0]);
   const [detailedType, setDetailedType] = useState(CATEGORIES[0].types[0]);
   const [productName, setProductName] = useState('');
+  const [barcode, setBarcode] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [analysisData, setAnalysisData] = useState<any>(null);
+  
+  // Camera state simulation
+  const [isScanning, setIsScanning] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const startScanning = async () => {
+    setIsScanning(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      toast({
+        variant: 'destructive',
+        title: '카메라 권한 오류',
+        description: '바코드 스캔을 위해 카메라 권한을 허용해 주세요.',
+      });
+      setIsScanning(false);
+    }
+  };
+
+  const stopScanning = () => {
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setIsScanning(false);
+  };
 
   const handleAnalyze = async () => {
-    if (!image) return;
+    if (!image) {
+      toast({ variant: "destructive", title: "성분표 사진 누락", description: "정밀 분석을 위해 제품 뒷면 성분표를 촬영해 주세요." });
+      return;
+    }
     setStep('loading');
 
     const reader = new FileReader();
@@ -73,12 +109,14 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
           <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Microscope /></div>
           <h2 className="text-3xl font-black tracking-tight">제품 정보 수집 (Analyzer_A)</h2>
         </div>
-        <p className="text-muted-foreground font-medium">제품의 팩트와 품질 데이터를 전수 조사합니다.</p>
+        <p className="text-muted-foreground font-medium">제품의 스펙을 기반으로 수의학적 등급을 판별합니다.</p>
       </div>
 
       <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
         <CardHeader className="bg-muted/30 p-10 border-b">
-          <CardTitle className="text-xl font-black">1. 카테고리 선택</CardTitle>
+          <CardTitle className="text-xl font-black flex items-center gap-2">
+            <ShoppingBag className="text-primary"/> 1. 카테고리 선택
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-10 space-y-8">
           <div className="grid grid-cols-3 gap-4">
@@ -104,16 +142,60 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
 
       <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
         <CardHeader className="bg-muted/30 p-10 border-b">
-          <CardTitle className="text-xl font-black">2. 제품 식별 및 촬영</CardTitle>
+          <CardTitle className="text-xl font-black flex items-center gap-2">
+            <ScanBarcode className="text-primary"/> 2. 스마트 제품 식별
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-10 space-y-8">
-          <div className="space-y-2">
-            <label className="text-sm font-black text-muted-foreground ml-2">제품명 직접 입력</label>
+          <div className="space-y-4">
+             <label className="text-sm font-black text-muted-foreground ml-2">바코드 스캔 (제품 식별용)</label>
+             {!isScanning ? (
+                <div onClick={startScanning} className="w-full h-32 border-4 border-dashed rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:bg-muted/20 transition-all">
+                  <ScanBarcode className="h-10 w-10 text-primary opacity-30 mb-2" />
+                  <span className="font-bold">바코드 카메라 열기</span>
+                </div>
+             ) : (
+                <div className="relative rounded-[2rem] overflow-hidden bg-black aspect-video">
+                  <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-3/4 h-1/2 border-2 border-primary rounded-lg animate-pulse" />
+                  </div>
+                  <Button onClick={stopScanning} className="absolute bottom-4 right-4 rounded-full">닫기</Button>
+                </div>
+             )}
+          </div>
+
+          <div className="space-y-4">
+            <label className="text-sm font-black text-muted-foreground ml-2">제품명 직접 입력 (또는 바코드 인식값)</label>
             <Input value={productName} onChange={e => setProductName(e.target.value)} placeholder="제품명을 정확히 입력해주세요." className="h-14 rounded-2xl border-none bg-muted/20 px-6 font-bold" />
           </div>
-          <div onClick={() => document.getElementById('image-a')?.click()} className={cn("relative w-full aspect-video border-4 border-dashed rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer transition-all", image ? "border-success bg-success/5" : "border-muted/30")}>
-            <Camera className="h-16 w-16 text-primary mb-4 opacity-20" />
-            <span className="text-xl font-black">{image ? "라벨 사진 준비 완료" : "제품 뒷면 성분표 촬영"}</span>
+        </CardContent>
+      </Card>
+
+      <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
+        <CardHeader className="bg-muted/30 p-10 border-b">
+          <CardTitle className="text-xl font-black flex items-center gap-2">
+            <FileText className="text-primary"/> 3. 정밀 분석용 성분표 촬영
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-10 space-y-6">
+          <Alert className="bg-primary/5 border-primary/20 rounded-2xl">
+            <Info className="h-4 w-4 text-primary" />
+            <AlertTitle className="text-primary font-black">촬영 팁</AlertTitle>
+            <AlertDescription className="text-xs font-medium text-primary/70">
+              제품 뒷면의 '원재료명'과 '등록성분량'이 한 화면에 잘 보이도록 촬영해 주세요.
+            </AlertDescription>
+          </Alert>
+
+          <div onClick={() => document.getElementById('image-a')?.click()} className={cn("relative w-full aspect-[4/3] border-4 border-dashed rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer transition-all", image ? "border-success bg-success/5" : "border-muted/30")}>
+            {image ? (
+               <img src={URL.createObjectURL(image)} className="absolute inset-0 w-full h-full object-cover rounded-[2.3rem]" alt="Preview" />
+            ) : (
+              <>
+                <Camera className="h-16 w-16 text-primary mb-4 opacity-20" />
+                <span className="text-xl font-black">성분표 사진 촬영</span>
+              </>
+            )}
             <input id="image-a" type="file" accept="image/*" className="hidden" onChange={e => setImage(e.target.files?.[0] || null)} />
           </div>
         </CardContent>

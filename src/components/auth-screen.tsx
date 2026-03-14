@@ -3,7 +3,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Sparkles } from 'lucide-react';
+import { Mail, Sparkles, LogIn, UserPlus } from 'lucide-react';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
@@ -36,28 +36,44 @@ export default function AuthScreen() {
           <div className="bg-white/20 p-4 rounded-3xl inline-block backdrop-blur-md">
             <Sparkles className="h-10 w-10" />
           </div>
-          <CardTitle className="text-3xl font-black tracking-tighter">Pettner 시작하기</CardTitle>
+          <CardTitle className="text-3xl font-black tracking-tighter leading-tight">
+            똑똑한 집사의 <br/>필수 앱, Pettner
+          </CardTitle>
           <CardDescription className="text-white/70 font-medium">
-            분석 기록을 저장하고 우리 아이 맞춤 리포트를 받으세요.
+            로그인하여 우리 아이를 위한 <br/>맞춤 영양 리포트를 관리하세요.
           </CardDescription>
         </div>
         <CardContent className="p-10 space-y-6">
-          <Button 
-            onClick={handleGoogleLogin} 
-            disabled={loading}
-            className="w-full h-16 rounded-2xl bg-white border-2 border-muted hover:bg-muted text-foreground font-black flex items-center justify-center gap-3 shadow-sm transition-all"
-          >
-            <Mail className="text-primary" /> Google로 시작하기
-          </Button>
-          <Button 
-            variant="ghost" 
-            onClick={() => router.push('/login')}
-            className="w-full h-12 font-bold text-muted-foreground"
-          >
-            이메일로 로그인하기
-          </Button>
-          <p className="text-[10px] text-center text-muted-foreground">
-            로그인 시 Pettner의 이용 약관 및 개인정보 처리 방침에 동의하게 됩니다.
+          <div className="grid gap-3">
+            <Button 
+              onClick={handleGoogleLogin} 
+              disabled={loading}
+              className="w-full h-16 rounded-2xl bg-white border-2 border-muted hover:bg-muted text-foreground font-black flex items-center justify-center gap-3 shadow-sm transition-all"
+            >
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5 h-5" alt="Google" />
+              Google로 시작하기
+            </Button>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => router.push('/login')}
+                className="h-16 rounded-2xl font-black border-2 gap-2"
+              >
+                <LogIn size={18} /> 로그인
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => router.push('/signup')}
+                className="h-16 rounded-2xl font-black border-2 gap-2"
+              >
+                <UserPlus size={18} /> 회원가입
+              </Button>
+            </div>
+          </div>
+          
+          <p className="text-[10px] text-center text-muted-foreground leading-relaxed">
+            계속 진행함으로써 Pettner의 <span className="underline">이용 약관</span> 및 <span className="underline">개인정보 처리 방침</span>에 동의하게 됩니다.
           </p>
         </CardContent>
       </Card>
