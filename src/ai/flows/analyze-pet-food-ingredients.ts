@@ -1,9 +1,9 @@
+
 'use server';
 
 /**
- * @fileOverview [Pettner Core Engine v21.0 - Hybrid Analysis Mode]
- * - Mode A: General Product Audit (Standard AAFCO/ESG focused)
- * - Mode B: Custom Pet Matching (Tailored interaction focused)
+ * @fileOverview [Pettner Core Engine v21.0 - Deterministic Analysis Mode]
+ * - Provides consistent scoring and matching based on AAFCO/NRC standards.
  */
 
 import {ai} from '@/ai/genkit';
@@ -16,7 +16,6 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
   productCategory: z.enum(['food', 'treat', 'supplement']).optional().describe('제품 카테고리'),
   detailedProductType: z.string().optional().describe('세부 제품 유형'),
   photoDataUri: z.string().optional().describe("라벨 사진 데이터 URI"),
-  prescriptionPhotoDataUri: z.string().optional().describe("처방전 또는 영양제 사진 데이터 URI"),
   language: z.string().optional().default('ko').describe("출력 언어"),
   petProfile: z.object({
     name: z.string().optional(),
@@ -39,11 +38,6 @@ const AnalyzePetFoodIngredientsInputSchema = z.object({
 
 export type AnalyzePetFoodIngredientsInput = z.infer<typeof AnalyzePetFoodIngredientsInputSchema>;
 
-const PromptInputSchema = AnalyzePetFoodIngredientsInputSchema.extend({
-  isModeGeneral: z.boolean(),
-  isModeCustom: z.boolean(),
-});
-
 const AnalyzePetFoodIngredientsOutputSchema = z.object({
   status: z.enum(['success', 'error']),
   productIdentity: z.object({
@@ -55,7 +49,6 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
       reason: z.string()
     })
   }),
-  // 일반 분석용 점수 카드
   scoreCard: z.object({
     totalScore: z.number().min(0).max(100),
     grade: z.string(),
@@ -63,7 +56,6 @@ const AnalyzePetFoodIngredientsOutputSchema = z.object({
     statusTags: z.array(z.string()),
     scoringBasis: z.string(),
   }),
-  // 맞춤 분석 전용 매칭 리포트
   matchingReport: z.object({
     matchScore: z.number().min(0).max(100).optional(),
     pros: z.array(z.string()).optional(),
@@ -119,35 +111,35 @@ export type AnalyzePetFoodIngredientsOutput = z.infer<typeof AnalyzePetFoodIngre
 
 const analyzePetFoodIngredientsPrompt = ai.definePrompt({
   name: 'analyzePetFoodIngredientsPrompt',
-  input: {schema: PromptInputSchema},
+  input: {schema: AnalyzePetFoodIngredientsInputSchema},
   output: {schema: AnalyzePetFoodIngredientsOutputSchema},
   prompt: `You are a world-class Veterinary Nutritionist.
-Match Target Language: {{{language}}}.
+Target Language: {{{language}}}.
 
-### [Selected Mode: {{#if isModeGeneral}}GENERAL PRODUCT AUDIT{{else}}CUSTOM PET MATCHING{{/if}}]
+### [Scoring Rubric (Deterministic)]
+1. Start at 100 points.
+2. Deduct 15 pts if not AAFCO compliant.
+3. Deduct 5 pts per cautionary ingredient.
+4. Deduct 10 pts if Carbs > 40% (for cat) or > 50% (for dog).
+5. Add 5 pts for high-quality single source protein (e.g., Deboned Chicken).
 
-{{#if isModeGeneral}}
-### [Mode A: General Product Audit Instructions]
-- Focus on objective product quality and AAFCO compliance.
-- ScoreCard: Standard scoring based on ingredient density and safety.
-- scientificAnalysis: Compare against standard AAFCO adult maintenance ranges.
-- feedingGuide: Standard weight-based table.
+### [AAFCO Standards]
+- Dog Adult Min: Protein 18%, Fat 5.5%
+- Cat Adult Min: Protein 26%, Fat 9%
+
+### [Analysis Focus]
+{{#if (eq analysisMode "general")}}
+- Focus on the product's objective quality and brand transparency.
+- Provide a Grade (A-F) based on the score.
 {{else}}
-### [Mode B: Custom Pet Matching Instructions]
-- Focus on the interaction between product and {{{petProfile.name}}} ({{{petProfile.breed}}}, {{{petProfile.age}}}yo, {{{petProfile.weight}}}kg).
-- matchingReport: Calculate a Match Score (%) based on how well this food fits the pet's health conditions: {{{petProfile.healthConditions}}} and allergies: {{{petProfile.allergies}}}.
-- veterinaryAdvice: Must address the pet by name and give specific advice for their condition.
-- feedingGuide: Calculate specific grams for this pet's exact weight.
+- Focus on the match between the product and {{{petProfile.name}}}.
+- Calculate Match Score (%) based on allergies ({{{petProfile.allergies}}}) and health ({{{petProfile.healthConditions}}}).
+- Provide advice addressing the pet by name.
 {{/if}}
 
-### [Scientific Baselines]
-- NRC/AAFCO Guidelines (Nutr Rev Pet, 2023).
-- Calorie calculation (AVMA J, 2022): 30~50kcal/kg.
-
-### [Input Context]
-- Pet Type: {{{petType}}}
-- Product: {{{productName}}} ({{{productCategory}}})
-{{#if photoDataUri}}- Label Photo Provided{{/if}}`,
+Product Context: {{{productName}}} ({{{productCategory}}})
+Pet Profile: {{{petProfile.name}}}, {{{petProfile.breed}}}, {{{petProfile.age}}}yo, {{{petProfile.weight}}}kg.
+Photo Provided: {{#if photoDataUri}}Yes{{else}}No{{/if}}`,
 });
 
 const analyzePetFoodIngredientsFlow = ai.defineFlow(
@@ -158,11 +150,7 @@ const analyzePetFoodIngredientsFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      const response = await analyzePetFoodIngredientsPrompt({
-        ...input,
-        isModeGeneral: input.analysisMode === 'general',
-        isModeCustom: input.analysisMode === 'custom',
-      });
+      const response = await analyzePetFoodIngredientsPrompt(input);
       if (!response || !response.output) throw new Error('AI failed to return output.');
       return { ...response.output, status: 'success' as const };
     } catch (error: any) {

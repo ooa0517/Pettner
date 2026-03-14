@@ -7,7 +7,7 @@ import { getAnalysis } from '@/app/actions';
 import AnalysisResult from '@/components/analysis-result';
 import ScannerHome from '@/components/scanner-home';
 import AnalysisLoading from '@/components/analysis-loading';
-import UsageLimitModal from '@/components/usage-limit-modal';
+import LandingPage from '@/components/landing-page';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { saveAnalysisToHistory } from '@/lib/history';
@@ -24,59 +24,33 @@ function HomeContent() {
   const router = useRouter();
   const { toast } = useToast();
   
-  // 로그인한 사용자는 바로 분석 입력 단계('input')에서 시작
-  const [step, setStep] = useState<'input' | 'loading' | 'result'>('input');
+  const [step, setStep] = useState<'landing' | 'input' | 'loading' | 'result'>('landing');
   const [analysisResult, setAnalysisResult] = useState<AnalyzePetFoodIngredientsOutput | null>(null);
   const [resultInput, setResultInput] = useState<AnalyzePetFoodIngredientsInput | null>(null);
-  const [showLimitModal, setShowLimitModal] = useState(false);
 
-  // 🔐 Auth Wall: 로그인하지 않은 경우 즉시 로그인 페이지로 리디렉션
+  // Auth & Step Control
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
+    if (!isUserLoading) {
+      if (user) {
+        setStep('input');
+      } else {
+        setStep('landing');
+      }
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading]);
 
   useEffect(() => {
     const resetParam = searchParams.get('reset');
-    if (resetParam === 'true') {
+    if (resetParam === 'true' && user) {
       setStep('input');
       setAnalysisResult(null);
       setResultInput(null);
     }
-  }, [searchParams]);
-
-  const checkUsageLimit = useCallback(async () => {
-    if (!user || !db) return true;
-    
-    try {
-      const userDocRef = doc(db, 'users', user.uid);
-      const userSnap = await getDoc(userDocRef);
-      
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        if (userData.isPremium) return true;
-        
-        const today = new Date().toISOString().split('T')[0];
-        if (userData.lastUsageDate === today && (userData.dailyUsageCount || 0) >= 5) {
-          return false;
-        }
-      }
-      return true;
-    } catch (e) {
-      return true;
-    }
-  }, [user, db]);
+  }, [searchParams, user]);
 
   const handleAnalysis = async (formData: any) => {
     if (!user) {
       router.push('/login');
-      return;
-    }
-
-    const canAnalyze = await checkUsageLimit();
-    if (!canAnalyze) {
-      setShowLimitModal(true);
       return;
     }
 
@@ -133,16 +107,6 @@ function HomeContent() {
         
         if (user && db) {
           saveAnalysisToHistory(db, user.uid, analysisInput, finalResult);
-          const today = new Date().toISOString().split('T')[0];
-          const userDocRef = doc(db, 'users', user.uid);
-          const userSnap = await getDoc(userDocRef);
-          if (userSnap.exists() && !userSnap.data().isPremium) {
-            if (userSnap.data().lastUsageDate === today) {
-              updateDoc(userDocRef, { dailyUsageCount: increment(1) });
-            } else {
-              updateDoc(userDocRef, { lastUsageDate: today, dailyUsageCount: 1 });
-            }
-          }
         }
         setStep('result');
       } else {
@@ -167,22 +131,17 @@ function HomeContent() {
       </div>
     );
   }
-
-  // 로그인하지 않은 상태면 아무것도 렌더링하지 않음 (useEffect가 리디렉션 처리)
-  if (!user) {
-    return null;
-  }
   
   return (
     <div className="flex flex-col items-center justify-center flex-grow p-4 md:p-8 bg-muted/20">
       <div className="w-full max-w-4xl">
+        {step === 'landing' && <LandingPage />}
         {step === 'input' && <ScannerHome onAnalyze={handleAnalysis} />}
         {step === 'loading' && <AnalysisLoading />}
         {step === 'result' && analysisResult && resultInput && (
           <AnalysisResult result={analysisResult} input={resultInput} onReset={handleReset} />
         )}
       </div>
-      <UsageLimitModal open={showLimitModal} onOpenChange={setShowLimitModal} />
     </div>
   );
 }
