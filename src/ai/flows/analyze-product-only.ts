@@ -2,8 +2,9 @@
 'use server';
 
 /**
- * @fileOverview [Analyzer_A: Product-Only Engine v23.0]
- * - Focuses strictly on product specs, AAFCO compliance, and category-specific highlights.
+ * @fileOverview [Analyzer_A: Product-Only Engine v24.0]
+ * - Focuses on Deterministic Scientific Audit.
+ * - Adds Physical & Origin Audit (Origin mapping, Processing loss, Kibble specs).
  */
 
 import {ai} from '@/ai/genkit';
@@ -35,22 +36,18 @@ const AnalyzeProductOnlyOutputSchema = z.object({
     bestFor: z.array(z.string()),
     worstFor: z.array(z.string())
   }),
-  // Category specific spec data
   nutritionalAnalysis: z.object({
-    // For Food: Radar chart data (0-100 scale vs standard)
     radarData: z.array(z.object({
       nutrient: z.string(),
       value: z.number(),
       standard: z.number()
     })).optional(),
-    // For Treat: Additive focus
     caloriePerUnit: z.string().optional(),
     additiveWarnings: z.array(z.object({
       name: z.string(),
       reason: z.string(),
       riskLevel: z.enum(['low', 'medium', 'high'])
     })).optional(),
-    // For Supplement: Active ingredient focus
     activeIngredients: z.array(z.object({
       name: z.string(),
       amount: z.string(),
@@ -64,6 +61,22 @@ const AnalyzeProductOnlyOutputSchema = z.object({
     reason: z.string(),
     safetyRating: z.string().optional()
   })),
+  physicalOriginAudit: z.object({
+    originRiskMap: z.array(z.object({
+      ingredient: z.string(),
+      origin: z.string(),
+      riskLevel: z.enum(['safe', 'caution'])
+    })),
+    processingAnalysis: z.object({
+      method: z.string(),
+      nutrientLossNote: z.string()
+    }),
+    kibbleSpecs: z.object({
+      texture: z.string(),
+      size: z.string(),
+      digestibilityNote: z.string()
+    })
+  }),
   esgReport: z.object({
     transparencyStatus: z.enum(['DIRECT', 'OEM_LOW', 'OEM_PREMIUM']),
     recallHistory: z.string(),
@@ -77,20 +90,20 @@ const analyzeProductOnlyPrompt = ai.definePrompt({
   name: 'analyzeProductOnlyPrompt',
   input: {schema: AnalyzeProductOnlyInputSchema},
   output: {schema: AnalyzeProductOnlyOutputSchema},
-  prompt: `You are a world-class Food Quality Auditor specializing in pet nutrition.
+  prompt: `You are a Deterministic Food Quality Auditor.
 Target Language: {{{language}}}.
 
-### [Strict Analysis Mode: Analyzer_A]
-Provide a factual, objective audit of the product based on the label image or info.
+### [CRITICAL: DETERMINISTIC MODE]
+You MUST provide consistent results for the same input. Base your analysis strictly on the label text or image provided.
 
-1. [Headline]: Scientific one-liner.
-2. [Suitability]: Best target audience vs. Worst target audience.
-3. [Category-Specific Logic]:
-   - If 'food': Provide radarData for Protein, Fat, Carbs, Fiber, Ash, Moisture (Value vs AAFCO Standard).
-   - If 'treat': Highlight additives (preservatives, colors, sweeteners) and calorie per unit. Use red text logic for warnings.
-   - If 'supplement': Focus on active ingredients (e.g., Glucosamine mg, Probiotics CFU) vs recommended dosage.
-4. [Ingredients]: Traffic light system (positive, neutral, cautionary).
-5. [Reliability]: Check if DIRECT sourcing or OEM. Mention recall history.
+1. [Headline & Suitability]: Factual one-liner and target mapping.
+2. [Nutritional Analysis]: AAFCO standards comparison.
+3. [Ingredients]: Traffic light system.
+4. [Physical & Origin Audit]:
+   - originRiskMap: Mapping major ingredients to their likely origins (e.g. NZ, USA, China) and identifying risks (e.g. synthetic additives from certain regions).
+   - processingAnalysis: Audit the manufacturing method (Extruded, Freeze-dried, Baked). Note potential nutrient loss (e.g. heat-sensitive taurine).
+   - kibbleSpecs: Analyze physical kibble properties (hardness, size, oiliness) and their impact on different breeds/ages.
+5. [Reliability]: ESG report and OEM status.
 
 Product: {{{productName}}} ({{{productCategory}}})
 Type: {{{detailedProductType}}}

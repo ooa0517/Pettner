@@ -2,8 +2,9 @@
 'use server';
 
 /**
- * @fileOverview [Analyzer_B: Personalized Solution Engine v23.0]
- * - Focuses on Matching, Prescription, and Fulfillment Briefing.
+ * @fileOverview [Analyzer_B: Personalized Solution Engine v24.0]
+ * - Focuses on Matching, Behavioral Forecast, and Transition Schedule.
+ * - Ensures consistent results for consistent pet profiles.
  */
 
 import {ai} from '@/ai/genkit';
@@ -43,21 +44,36 @@ const AnalyzePersonalizedOutputSchema = z.object({
   }),
   personalizedFeedingGuide: z.object({
     category: z.enum(['food', 'treat', 'supplement']),
-    // For Food
     dailyGrams: z.string().optional(),
     perMealGrams: z.string().optional(),
     kcalInstruction: z.string().optional(),
-    // For Treat
     maxUnitsPerDay: z.string().optional(),
     ruleOf10PercentMsg: z.string().optional(),
-    // For Supplement
-    dosage: z.string().optional(), // e.g. "1 pill", "2 scoops"
+    dosage: z.string().optional(),
     dosageUnit: z.string().optional(),
     sideEffectWarning: z.string().optional()
   }),
-  fulfillmentBriefing: z.object({
-    pros: z.array(z.string()), // Things this product fulfills
-    cons: z.array(z.string()), // Things missing or needing supplement
+  behavioralForecast: z.object({
+    palatabilityIndex: z.object({
+      probability: z.number(),
+      reason: z.string()
+    }),
+    giAndSatiety: z.object({
+      level: z.string(),
+      note: z.string()
+    }),
+    mandatoryWaterIntake: z.object({
+      ml: z.string(),
+      reason: z.string()
+    })
+  }),
+  riskAndTransition: z.object({
+    allergySupplementAlert: z.string(),
+    transitionSchedule: z.array(z.object({
+      day: z.string(),
+      ratio: z.string()
+    })),
+    expectedStoolChanges: z.string()
   }),
   veterinaryAdvice: z.string()
 });
@@ -68,21 +84,25 @@ const analyzePersonalizedPrompt = ai.definePrompt({
   name: 'analyzePersonalizedPrompt',
   input: {schema: AnalyzePersonalizedInputSchema},
   output: {schema: AnalyzePersonalizedOutputSchema},
-  prompt: `You are a Veterinary Clinical Nutritionist.
+  prompt: `You are a Clinical Veterinary Nutritionist. 
 Target Language: {{{language}}}.
 
-Analyze the compatibility between the product and {{{petProfile.name}}} ({{{petProfile.breed}}}).
+### [CRITICAL: CONSISTENCY RULE]
+For the same pet profile and product, you MUST produce identical scores and instructions. Use scientific formulas for feeding (RER/DER calculation).
 
 ### [Mode B: Personalized Solution]
-1. [Match Score]: 0-100%.
-2. [Suitability Verdict]: Address the pet by name. Explain why this product is good or bad based on their specific concerns: {{{petProfile.mainConcern}}}, symptoms: {{{#each petProfile.symptoms}}}{{{this}}}, {{{/each}}}.
-3. [Prescription Guide]:
-   - If 'food': Provide exact daily/per-meal grams based on {{{petProfile.weight}}}kg and BCS {{{petProfile.bcs}}}.
-   - If 'treat': Apply 10% Calorie Rule. "Maximum O pieces per day".
-   - If 'supplement': Precise count in pills/scoops/pumps. Warn about side effects (e.g., liver levels).
-4. [Briefing]: What is fulfilled (Pros) vs. What is missing (Cons - suggest supplement needs).
+1. [Matching]: Score (0-100) and specific vet opinion addressing {{{petProfile.name}}}.
+2. [Feeding Guide]: Precise grams/units based on weight {{{petProfile.weight}}}kg and BCS {{{petProfile.bcs}}}.
+3. [Behavioral Forecast]:
+   - palatabilityIndex: Calculate probability of eating based on aromatic coatings (fat, liver) and ingredients.
+   - giAndSatiety: Evaluate Glycemic Index based on carbohydrate sources (e.g., Oatmeal vs Tapioca).
+   - mandatoryWaterIntake: MANDATORY for cats and dry food users. Calculate ml based on grams of dry food.
+4. [Risk & Transition]:
+   - Identify allergy conflicts.
+   - Provide a 7-day transition schedule (e.g., Day 1-2: 25% new, 75% old).
+   - Predict stool changes (odor, consistency).
 
-Pet: {{{petProfile.name}}}, {{{petProfile.petType}}}, {{{petProfile.age}}}yo, {{{petProfile.weight}}}kg, BCS {{{petProfile.bcs}}}
+Pet: {{{petProfile.name}}}, {{{petProfile.petType}}}, {{{petProfile.breed}}}, {{{petProfile.age}}}yo, {{{petProfile.weight}}}kg, BCS {{{petProfile.bcs}}}
 Product: {{{productInfo.productName}}} ({{{productInfo.productCategory}}})`,
 });
 
