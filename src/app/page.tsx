@@ -10,6 +10,12 @@ import AnalyzerA from '@/components/analyzer-a';
 import AnalyzerB from '@/components/analyzer-b';
 import { Loader2 } from 'lucide-react';
 
+/**
+ * Pettner Root Controller
+ * Step 1: Splash & Auth
+ * Step 2: Mode Selection
+ * Step 3: Independent Analysis Rooms (A/B)
+ */
 export default function Home() {
   const { user, isUserLoading } = useUser();
   const [showSplash, setShowSplash] = useState(true);
@@ -32,10 +38,12 @@ export default function Home() {
     );
   }
 
+  // Step 1: Force Authentication before anything else
   if (!user) {
     return <AuthScreen />;
   }
 
+  // Step 2 & 3: Mode Selection and Split Logic
   return (
     <div className="flex flex-col min-h-screen bg-muted/20">
       {currentMode === 'select' && (

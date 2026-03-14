@@ -4,11 +4,11 @@
 /**
  * [Analyzer_B: Personalized Analysis]
  * - Strictly independent component for Step 3-B.
- * - Added: Barcode and specialized Ingredient scanning.
+ * - Focuses on Pet's Symptoms, Allergies, and Holistic Matching.
  */
 
 import { useState, useRef } from 'react';
-import { Target, ShoppingBag, Camera, Sparkles, ArrowLeft, Info, HeartPulse, AlertTriangle, Dog, Cat, ScanBarcode, FileText } from 'lucide-react';
+import { Target, ShoppingBag, Camera, Sparkles, ArrowLeft, Info, HeartPulse, AlertTriangle, Dog, Cat, ScanBarcode, FileText, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,7 +40,6 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
   const [petProfile, setPetProfile] = useState<any>({ name: '', breed: '', age: '', weight: '', bcs: '3', symptoms: [], allergies: [], mainConcern: '' });
   const [analysisData, setAnalysisData] = useState<any>(null);
 
-  // Barcode state
   const [isBarcodeScanning, setIsBarcodeScanning] = useState(false);
   const barcodeVideoRef = useRef<HTMLVideoElement>(null);
 
@@ -50,14 +49,14 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       if (barcodeVideoRef.current) barcodeVideoRef.current.srcObject = stream;
     } catch (e) {
-      toast({ variant: 'destructive', title: '카메라 권한 거부됨' });
+      toast({ variant: 'destructive', title: '카메라 권한 오류' });
       setIsBarcodeScanning(false);
     }
   };
 
   const handleNextToSurvey = () => {
     if (!productInfo.image) {
-      toast({ variant: "destructive", title: "성분표 사진 필요", description: "정밀 맞춤 분석을 위해 성분표를 찍어주세요." });
+      toast({ variant: "destructive", title: "성분표 사진 필요", description: "정밀 맞춤 분석을 위해 성분표 사진을 찍어주세요." });
       return;
     }
     setStep('survey');
@@ -74,7 +73,7 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
 
       const analysisInput = {
         productInfo: { productCategory: 'food' as any, detailedProductType: '건식', productName: productInfo.name, photoDataUri },
-        petProfile: { ...petProfile, petType, age: parseFloat(petProfile.age), weight: parseFloat(petProfile.weight) },
+        petProfile: { ...petProfile, petType, age: parseFloat(petProfile.age) || 0, weight: parseFloat(petProfile.weight) || 0 },
       };
 
       const result = await getPersonalizedAnalysis(analysisInput);
@@ -103,7 +102,7 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-12 pb-48 animate-in fade-in duration-700">
-      <Button variant="ghost" onClick={onBack} className="rounded-full h-12 px-6 font-bold gap-2">
+      <Button variant="ghost" onClick={onBack} className="rounded-full h-12 px-6 font-bold gap-2 hover:bg-white shadow-sm">
         <ArrowLeft size={18} /> 처음으로
       </Button>
 
@@ -112,57 +111,65 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
           <div className="p-3 bg-primary rounded-2xl text-white shadow-lg shadow-primary/30"><Target /></div>
           <h2 className="text-3xl font-black tracking-tight">밀착 맞춤 분석 (Analyzer_B)</h2>
         </div>
-        <p className="text-muted-foreground font-medium">우리 아이의 건강 상태에 가장 완벽한 한 끼를 찾아드립니다.</p>
+        <p className="text-muted-foreground font-medium">아이의 증상과 알러지 통계 데이터를 기반으로 최적의 한 끼를 추천합니다.</p>
       </div>
 
       {step === 'product' ? (
-        <div className="space-y-8 animate-in slide-in-from-right-5">
+        <div className="space-y-8 animate-in slide-in-from-right-5 duration-500">
+           {/* Step 1: Product Identification */}
            <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
             <CardHeader className="bg-primary/5 p-10 border-b">
-              <CardTitle className="text-xl font-black flex items-center gap-2">
+              <CardTitle className="text-xl font-black flex items-center gap-3">
                 <ScanBarcode className="text-primary"/> 1단계: 제품 정보 & 바코드
               </CardTitle>
             </CardHeader>
             <CardContent className="p-10 space-y-8">
               <div className="space-y-4">
-                 <label className="text-sm font-black text-muted-foreground ml-2">바코드 촬영 (제품 자동 인식)</label>
+                 <label className="text-xs font-black text-muted-foreground ml-2 uppercase tracking-widest">바코드 촬영 (제품 자동 식별)</label>
                  {!isBarcodeScanning ? (
-                    <div onClick={startBarcodeScan} className="w-full h-32 border-4 border-dashed rounded-[2rem] flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-all">
-                      <ScanBarcode className="h-10 w-10 text-primary opacity-30 mb-2" />
-                      <span className="font-bold">바코드 카메라 실행</span>
+                    <div onClick={startBarcodeScan} className="w-full h-40 border-4 border-dashed rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer hover:bg-muted/10 transition-all group">
+                      <div className="p-4 bg-primary/5 rounded-full group-hover:scale-110 transition-transform">
+                        <ScanBarcode className="h-10 w-10 text-primary opacity-40" />
+                      </div>
+                      <span className="font-black mt-3 text-muted-foreground">바코드 카메라 실행</span>
                     </div>
                  ) : (
-                    <div className="relative rounded-[2rem] overflow-hidden bg-black aspect-video">
+                    <div className="relative rounded-[2.5rem] overflow-hidden bg-black aspect-video shadow-2xl">
                       <video ref={barcodeVideoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-4/5 h-1/3 border-2 border-primary/50 rounded-lg" />
+                        <div className="w-4/5 h-1/3 border-2 border-primary/50 rounded-2xl" />
                       </div>
-                      <Button onClick={() => setIsBarcodeScanning(false)} className="absolute bottom-4 right-4 rounded-full">닫기</Button>
+                      <Button onClick={() => setIsBarcodeScanning(false)} size="icon" className="absolute top-4 right-4 rounded-full bg-black/50 backdrop-blur-md">
+                        <X size={20} />
+                      </Button>
                     </div>
                  )}
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-black text-muted-foreground ml-2">제품명</label>
-                <Input value={productInfo.name} onChange={e => setProductInfo({...productInfo, name: e.target.value})} placeholder="분석할 제품명을 입력하세요." className="h-14 rounded-2xl border-none bg-muted/20 px-6 font-bold" />
+                <label className="text-xs font-black text-muted-foreground ml-2 uppercase tracking-widest">제품명 직접 입력</label>
+                <Input value={productInfo.name} onChange={e => setProductInfo({...productInfo, name: e.target.value})} placeholder="분석할 제품명을 정확히 입력하세요." className="h-16 rounded-2xl border-none bg-muted/20 px-6 font-bold text-lg" />
               </div>
             </CardContent>
           </Card>
 
+          {/* Step 2: Ingredient Scan */}
           <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
             <CardHeader className="bg-primary/5 p-10 border-b">
-              <CardTitle className="text-xl font-black flex items-center gap-2">
+              <CardTitle className="text-xl font-black flex items-center gap-3">
                 <FileText className="text-primary"/> 2단계: 성분표 정밀 스캔
               </CardTitle>
             </CardHeader>
             <CardContent className="p-10">
-              <div onClick={() => document.getElementById('image-b')?.click()} className={cn("relative w-full aspect-[4/3] border-4 border-dashed rounded-[2.5rem] flex flex-col items-center justify-center cursor-pointer transition-all", productInfo.image ? "border-success bg-success/5" : "border-muted/30")}>
+              <div onClick={() => document.getElementById('image-b')?.click()} className={cn("relative w-full aspect-[4/3] border-4 border-dashed rounded-[3rem] flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden", productInfo.image ? "border-success bg-success/5" : "border-muted/30")}>
                 {productInfo.image ? (
-                   <img src={URL.createObjectURL(productInfo.image)} className="absolute inset-0 w-full h-full object-cover rounded-[2.3rem]" alt="Ingredients" />
+                   <img src={URL.createObjectURL(productInfo.image)} className="absolute inset-0 w-full h-full object-cover" alt="Ingredients" />
                 ) : (
                   <>
-                    <Camera className="h-16 w-16 text-primary mb-4 opacity-20" />
-                    <span className="text-xl font-black">제품 뒷면 성분표 촬영</span>
+                    <div className="p-6 bg-primary/5 rounded-full mb-4">
+                      <Camera className="h-16 w-16 text-primary opacity-20" />
+                    </div>
+                    <span className="text-xl font-black text-muted-foreground">제품 뒷면 성분표 촬영 / 업로드</span>
                   </>
                 )}
                 <input id="image-b" type="file" accept="image/*" className="hidden" onChange={e => setProductInfo({...productInfo, image: e.target.files?.[0] || null})} />
@@ -170,68 +177,70 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
             </CardContent>
           </Card>
 
-          <Button onClick={handleNextToSurvey} className="w-full h-24 rounded-[3rem] text-2xl font-black shadow-2xl bg-primary">다음 단계로 (아이 상태 입력)</Button>
+          <Button onClick={handleNextToSurvey} className="w-full h-28 rounded-[3.5rem] text-2xl font-black shadow-2xl bg-primary hover:scale-[1.02] active:scale-95 transition-all">다음 단계로 (아이 상태 입력)</Button>
         </div>
       ) : (
-        <div className="space-y-8 animate-in slide-in-from-right-5">
+        <div className="space-y-8 animate-in slide-in-from-right-5 duration-500">
           <div className="grid grid-cols-2 gap-4">
-            <div onClick={() => setPetType('dog')} className={cn("flex flex-col items-center p-8 border-4 rounded-[2.5rem] cursor-pointer transition-all", petType === 'dog' ? "border-primary bg-primary/5" : "border-muted opacity-40")}>
-              <Dog size={48} className="mb-2"/> <span className="font-black">강아지</span>
+            <div onClick={() => setPetType('dog')} className={cn("flex flex-col items-center p-8 border-4 rounded-[3rem] cursor-pointer transition-all shadow-xl", petType === 'dog' ? "border-primary bg-primary/5" : "border-white bg-white opacity-40")}>
+              <Dog size={64} className={cn("mb-2", petType === 'dog' ? "text-primary" : "")}/> 
+              <span className="font-black text-lg">강아지</span>
             </div>
-            <div onClick={() => setPetType('cat')} className={cn("flex flex-col items-center p-8 border-4 rounded-[2.5rem] cursor-pointer transition-all", petType === 'cat' ? "border-primary bg-primary/5" : "border-muted opacity-40")}>
-              <Cat size={48} className="mb-2"/> <span className="font-black">고양이</span>
+            <div onClick={() => setPetType('cat')} className={cn("flex flex-col items-center p-8 border-4 rounded-[3rem] cursor-pointer transition-all shadow-xl", petType === 'cat' ? "border-primary bg-primary/5" : "border-white bg-white opacity-40")}>
+              <Cat size={64} className={cn("mb-2", petType === 'cat' ? "text-primary" : "")}/> 
+              <span className="font-black text-lg">고양이</span>
             </div>
           </div>
 
           <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
             <CardHeader className="bg-muted/30 p-10 border-b">
-              <CardTitle className="text-xl font-black flex items-center gap-2"><HeartPulse className="text-primary"/> 3단계: 종별 정밀 설문</CardTitle>
+              <CardTitle className="text-xl font-black flex items-center gap-3"><HeartPulse className="text-primary"/> 3단계: 종별 정밀 설문</CardTitle>
             </CardHeader>
-            <CardContent className="p-10 space-y-10">
-              <div className="grid grid-cols-2 gap-4">
+            <CardContent className="p-10 space-y-12">
+              <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-muted-foreground ml-2">이름</label>
-                  <Input value={petProfile.name} onChange={e => setPetProfile({...petProfile, name: e.target.value})} className="rounded-xl h-12 bg-muted/20 border-none px-4 font-bold" />
+                  <label className="text-xs font-black text-muted-foreground ml-2 uppercase tracking-widest">이름</label>
+                  <Input value={petProfile.name} onChange={e => setPetProfile({...petProfile, name: e.target.value})} className="rounded-2xl h-14 bg-muted/20 border-none px-6 font-bold" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-muted-foreground ml-2">품종</label>
-                  <Input value={petProfile.breed} onChange={e => setPetProfile({...petProfile, breed: e.target.value})} className="rounded-xl h-12 bg-muted/20 border-none px-4 font-bold" />
+                  <label className="text-xs font-black text-muted-foreground ml-2 uppercase tracking-widest">품종</label>
+                  <Input value={petProfile.breed} onChange={e => setPetProfile({...petProfile, breed: e.target.value})} className="rounded-2xl h-14 bg-muted/20 border-none px-6 font-bold" />
                 </div>
               </div>
 
               <div className="space-y-6">
-                <label className="font-black flex items-center gap-2"><AlertTriangle className="text-destructive" size={18}/> 현재 겪고 있는 증상</label>
+                <label className="font-black text-lg flex items-center gap-2 border-b pb-2"><AlertTriangle className="text-destructive" size={24}/> 현재 겪고 있는 증상</label>
                 <div className="flex flex-wrap gap-2">
                   {(petType === 'dog' ? DOG_SYMPTOMS : CAT_SYMPTOMS).map(s => (
-                    <Badge key={s} onClick={() => {
+                    <button key={s} onClick={() => {
                       const cur = petProfile.symptoms;
                       setPetProfile({...petProfile, symptoms: cur.includes(s) ? cur.filter((x:any)=>x!==s) : [...cur, s]});
-                    }} variant="outline" className={cn("px-4 py-2 rounded-full font-bold cursor-pointer border-2 transition-all", petProfile.symptoms.includes(s) ? "bg-destructive text-white border-destructive" : "bg-white border-muted text-muted-foreground")}>
+                    }} className={cn("px-6 py-3 rounded-full font-black text-sm border-2 transition-all", petProfile.symptoms.includes(s) ? "bg-destructive text-white border-destructive shadow-lg" : "bg-white border-muted text-muted-foreground")}>
                       {s}
-                    </Badge>
+                    </button>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-6">
-                <label className="font-black flex items-center gap-2"><Info className="text-primary" size={18}/> 기피 알러지 원료</label>
+                <label className="font-black text-lg flex items-center gap-2 border-b pb-2"><Info className="text-primary" size={24}/> 기피 알러지 원료</label>
                 <div className="flex flex-wrap gap-2">
                   {(petType === 'dog' ? DOG_ALLERGIES : CAT_ALLERGIES).map(a => (
-                    <Badge key={a} onClick={() => {
+                    <button key={a} onClick={() => {
                       const cur = petProfile.allergies;
                       setPetProfile({...petProfile, allergies: cur.includes(a) ? cur.filter((x:any)=>x!==a) : [...cur, a]});
-                    }} variant="outline" className={cn("px-4 py-2 rounded-full font-bold cursor-pointer border-2 transition-all", petProfile.allergies.includes(a) ? "bg-primary text-white border-primary" : "bg-white border-muted text-muted-foreground")}>
+                    }} className={cn("px-6 py-3 rounded-full font-black text-sm border-2 transition-all", petProfile.allergies.includes(a) ? "bg-primary text-white border-primary shadow-lg" : "bg-white border-muted text-muted-foreground")}>
                       {a}
-                    </Badge>
+                    </button>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-6">
-                <label className="font-black flex items-center gap-2 text-primary">보호자의 최대 고민</label>
-                <div className="grid grid-cols-2 gap-2">
+                <label className="font-black text-lg flex items-center gap-2 border-b pb-2 text-primary">보호자의 최대 고민</label>
+                <div className="grid grid-cols-2 gap-3">
                   {(petType === 'dog' ? DOG_CONCERNS : CAT_CONCERNS).map(c => (
-                    <div key={c} onClick={() => setPetProfile({...petProfile, mainConcern: c})} className={cn("p-4 border-2 rounded-2xl cursor-pointer text-center font-bold text-xs transition-all", petProfile.mainConcern === c ? "border-primary bg-primary/5 text-primary" : "border-muted text-muted-foreground opacity-60")}>
+                    <div key={c} onClick={() => setPetProfile({...petProfile, mainConcern: c})} className={cn("p-6 border-2 rounded-3xl cursor-pointer text-center font-black text-sm transition-all", petProfile.mainConcern === c ? "border-primary bg-primary/5 text-primary shadow-inner" : "border-muted text-muted-foreground opacity-60")}>
                       {c}
                     </div>
                   ))}
@@ -241,8 +250,8 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
           </Card>
           
           <div className="flex gap-4">
-            <Button variant="outline" onClick={() => setStep('product')} className="h-24 px-8 rounded-[2.5rem] font-bold">이전</Button>
-            <Button onClick={handleAnalyze} className="flex-1 h-24 rounded-[2.5rem] text-2xl font-black shadow-2xl bg-primary">맞춤 분석 시작</Button>
+            <Button variant="outline" onClick={() => setStep('product')} className="h-28 px-10 rounded-[3.5rem] font-bold text-lg border-2">이전</Button>
+            <Button onClick={handleAnalyze} className="flex-1 h-28 rounded-[3.5rem] text-3xl font-black shadow-2xl bg-primary hover:scale-[1.02] active:scale-95 transition-all">맞춤 분석 시작</Button>
           </div>
         </div>
       )}
