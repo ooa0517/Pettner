@@ -1,10 +1,5 @@
-'use client';
 
-/**
- * [Analyzer_B: Personalized Analysis v24.0]
- * - Strictly independent component for Step 3-B.
- * - Focuses on Pet's Symptoms, Allergies, Behavioral Forecast, and Transition Schedule.
- */
+'use client';
 
 import { useState, useRef } from 'react';
 import { Target, ShoppingBag, Camera, Sparkles, ArrowLeft, Info, HeartPulse, AlertTriangle, Dog, Cat, ScanBarcode, FileText, X } from 'lucide-react';
@@ -18,7 +13,8 @@ import AnalysisLoading from '@/components/analysis-loading';
 import AnalysisResult from '@/components/analysis-result';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
+import UsageLimitModal from '@/components/usage-limit-modal';
 
 const DOG_SYMPTOMS = ['눈물 자국', '슬개골 이상', '피부 발진', '귓병', '묽은 변', '기타'];
 const DOG_ALLERGIES = ['닭고기', '소고기', '대두', '밀가루', '연어', '곡물', '없음'];
@@ -28,7 +24,7 @@ const CAT_SYMPTOMS = ['헤어볼 구토', '혈뇨 및 화장실 실수', '턱드
 const CAT_ALLERGIES = ['특정 생선류', '가금류', '곡물', '유제품', '없음'];
 const CAT_CONCERNS = ['음수량 부족', '까다로운 입맛', '잦은 구토', '비만 관리'];
 
-export default function AnalyzerB({ onBack }: { onBack: () => void }) {
+export default function AnalyzerB({ onBack, userData }: { onBack: () => void, userData: any }) {
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
@@ -39,6 +35,7 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
   const [petProfile, setPetProfile] = useState<any>({ name: '', breed: '', age: '', weight: '', bcs: '3', symptoms: [], allergies: [], mainConcern: '' });
   const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
   const [analysisData, setAnalysisData] = useState<any>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
 
   const [isBarcodeScanning, setIsBarcodeScanning] = useState(false);
   const barcodeVideoRef = useRef<HTMLVideoElement>(null);
@@ -56,13 +53,19 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
 
   const handleNextToSurvey = () => {
     if (!productInfo.image) {
-      toast({ variant: "destructive", title: "성분표 사진 필요", description: "정밀 맞춤 분석을 위해 성분표 사진을 찍어주세요." });
+      toast({ variant: "destructive", title: "성분표 사진 필요" });
       return;
     }
     setStep('survey');
   };
 
   const handleAnalyze = async () => {
+    // Usage Check
+    if (!userData?.isPremium && (userData?.dailyUsageCount || 0) >= 5) {
+      setShowLimitModal(true);
+      return;
+    }
+
     setStep('loading');
     try {
       const reader = new FileReader();
@@ -82,16 +85,17 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
       if (result.error) throw new Error(result.error);
 
       if (user && db) {
-        // 이미지 데이터는 용량 제한(1MB)을 위해 히스토리 저장 시 제외함
         const { photoDataUri: _, ...inputWithoutImage } = analysisInput.productInfo;
-        await addDoc(collection(db, 'users', user.uid, 'analysisHistory'), {
+        // Save History
+        addDoc(collection(db, 'users', user.uid, 'analysisHistory'), {
           type: 'B',
-          userInput: {
-            ...analysisInput,
-            productInfo: inputWithoutImage
-          },
+          userInput: { ...analysisInput, productInfo: inputWithoutImage },
           analysisOutput: result.data,
           createdAt: serverTimestamp(),
+        });
+        // Increment Usage
+        updateDoc(doc(db, 'users', user.uid), {
+          dailyUsageCount: increment(1)
         });
       }
 
@@ -107,12 +111,7 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
   if (step === 'result') return (
     <AnalysisResult 
       result={analysisData} 
-      input={{ 
-        ...productInfo, 
-        photoDataUri,
-        analysisMode: 'custom', 
-        petProfile 
-      } as any} 
+      input={{ ...productInfo, photoDataUri, analysisMode: 'custom', petProfile } as any} 
       onReset={() => setStep('product')} 
     />
   );
@@ -120,7 +119,7 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
   return (
     <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-12 pb-48 animate-in fade-in duration-700">
       <Button variant="ghost" onClick={onBack} className="rounded-full h-12 px-6 font-bold gap-2 hover:bg-white shadow-sm">
-        <ArrowLeft size={18} /> 처음으로
+        <ArrowLeft size={18} /> 대시보드로
       </Button>
 
       <div className="space-y-4">
@@ -152,9 +151,6 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
                  ) : (
                     <div className="relative rounded-[2.5rem] overflow-hidden bg-black aspect-video shadow-2xl">
                       <video ref={barcodeVideoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-4/5 h-1/3 border-2 border-primary/50 rounded-2xl" />
-                      </div>
                       <Button onClick={() => setIsBarcodeScanning(false)} size="icon" className="absolute top-4 right-4 rounded-full bg-black/50 backdrop-blur-md">
                         <X size={20} />
                       </Button>
@@ -273,6 +269,8 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
           </div>
         </div>
       )}
+
+      <UsageLimitModal open={showLimitModal} onOpenChange={setShowLimitModal} />
     </div>
   );
 }

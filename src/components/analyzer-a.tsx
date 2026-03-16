@@ -1,12 +1,6 @@
 
 'use client';
 
-/**
- * [Analyzer_A: Product-Only Analysis v24.0]
- * - Strictly independent component for Step 3-A.
- * - Focusing on Product Specs, AAFCO balance, and Brand Transparency.
- */
-
 import { useState, useRef } from 'react';
 import { ShoppingBag, Cookie, HeartPulse, Camera, Sparkles, ArrowLeft, Microscope, Info, ScanBarcode, FileText, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,9 +11,9 @@ import { getGeneralAnalysis } from '@/app/actions';
 import AnalysisLoading from '@/components/analysis-loading';
 import AnalysisResult from '@/components/analysis-result';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useUser, useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
+import UsageLimitModal from '@/components/usage-limit-modal';
 
 const CATEGORIES = [
   { id: 'food', label: '사료', icon: ShoppingBag, types: ['건식', '습식', '동결건조', '화식'] },
@@ -27,7 +21,7 @@ const CATEGORIES = [
   { id: 'supplement', label: '영양제', icon: HeartPulse, types: ['가루', '캡슐', '츄어블', '펌핑'] },
 ];
 
-export default function AnalyzerA({ onBack }: { onBack: () => void }) {
+export default function AnalyzerA({ onBack, userData }: { onBack: () => void, userData: any }) {
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
@@ -38,6 +32,7 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
   const [image, setImage] = useState<File | null>(null);
   const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
   const [analysisData, setAnalysisData] = useState<any>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   
   const [isScanning, setIsScanning] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -48,7 +43,7 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       if (videoRef.current) videoRef.current.srcObject = stream;
     } catch (error) {
-      toast({ variant: 'destructive', title: '카메라 권한 오류', description: '바코드 인식을 위해 카메라 권한을 허용해 주세요.' });
+      toast({ variant: 'destructive', title: '카메라 권한 오류' });
       setIsScanning(false);
     }
   };
@@ -63,9 +58,16 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
 
   const handleAnalyze = async () => {
     if (!image) {
-      toast({ variant: "destructive", title: "성분표 사진 누락", description: "정밀 분석을 위해 제품 뒷면 성분표를 촬영해 주세요." });
+      toast({ variant: "destructive", title: "성분표 사진 누락" });
       return;
     }
+
+    // Usage Check
+    if (!userData?.isPremium && (userData?.dailyUsageCount || 0) >= 5) {
+      setShowLimitModal(true);
+      return;
+    }
+
     setStep('loading');
 
     try {
@@ -85,18 +87,17 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
 
       if (result.error) throw new Error(result.error);
 
-      // [V24.0] Analyzer_A 기록 저장 추가
       if (user && db) {
-        await addDoc(collection(db, 'users', user.uid, 'analysisHistory'), {
+        // Save History
+        addDoc(collection(db, 'users', user.uid, 'analysisHistory'), {
           type: 'A',
-          userInput: {
-            productName,
-            productCategory: category.id,
-            detailedProductType: detailedType,
-            analysisMode: 'general'
-          },
+          userInput: { productName, productCategory: category.id, detailedProductType: detailedType, analysisMode: 'general' },
           analysisOutput: result.data,
           createdAt: serverTimestamp(),
+        });
+        // Increment Usage
+        updateDoc(doc(db, 'users', user.uid), {
+          dailyUsageCount: increment(1)
         });
       }
 
@@ -112,12 +113,7 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
   if (step === 'result') return (
     <AnalysisResult 
       result={analysisData} 
-      input={{ 
-        productName, 
-        productCategory: category.id, 
-        analysisMode: 'general',
-        photoDataUri 
-      } as any} 
+      input={{ productName, productCategory: category.id, analysisMode: 'general', photoDataUri } as any} 
       onReset={() => setStep('input')} 
     />
   );
@@ -125,7 +121,7 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
   return (
     <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-12 pb-48 animate-in fade-in duration-700">
       <Button variant="ghost" onClick={onBack} className="rounded-full h-12 px-6 font-bold gap-2 hover:bg-white shadow-sm">
-        <ArrowLeft size={18} /> 처음으로
+        <ArrowLeft size={18} /> 대시보드로
       </Button>
 
       <div className="space-y-4">
@@ -184,9 +180,7 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
                 <div className="relative rounded-[2.5rem] overflow-hidden bg-black aspect-video shadow-2xl">
                   <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-4/5 h-1/3 border-2 border-primary/50 rounded-2xl animate-pulse flex items-center justify-center">
-                       <div className="w-full h-0.5 bg-primary/30 animate-bounce" />
-                    </div>
+                    <div className="w-4/5 h-1/3 border-2 border-primary/50 rounded-2xl animate-pulse" />
                   </div>
                   <Button onClick={stopScanning} size="icon" className="absolute top-4 right-4 rounded-full bg-black/50 backdrop-blur-md">
                     <X size={20} />
@@ -236,6 +230,10 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
       <Button onClick={handleAnalyze} disabled={!image} className="w-full h-28 rounded-[3.5rem] text-3xl font-black shadow-2xl bg-primary hover:scale-[1.02] active:scale-95 transition-all">
         <Sparkles className="mr-4 h-10 w-10" /> 분석 시작
       </Button>
+
+      <UsageLimitModal open={showLimitModal} onOpenChange={setShowLimitModal} />
     </div>
   );
 }
+
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';

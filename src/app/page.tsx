@@ -1,24 +1,35 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import SplashScreen from '@/components/splash-screen';
 import AuthScreen from '@/components/auth-screen';
-import ModeSelector from '@/components/mode-selector';
+import Dashboard from '@/components/dashboard';
 import AnalyzerA from '@/components/analyzer-a';
 import AnalyzerB from '@/components/analyzer-b';
 import { Loader2 } from 'lucide-react';
+import { doc } from 'firebase/firestore';
 
 /**
- * Pettner Root Controller v24.0
- * Step 1: Splash & Auth (Enforced)
- * Step 2: Mode Selection (Split path)
- * Step 3: Independent Analysis Rooms (A/B)
+ * Pettner Root Controller v25.0
+ * - Authentication Enforcement
+ * - Dashboard-driven Navigation
+ * - Strict Mode Decoupling (A/B)
  */
 export default function Home() {
   const { user, isUserLoading } = useUser();
+  const db = useFirestore();
   const [showSplash, setShowSplash] = useState(true);
-  const [currentMode, setCurrentMode] = useState<'select' | 'analyzer-a' | 'analyzer-b'>('select');
+  const [currentMode, setCurrentMode] = useState<'dashboard' | 'analyzer-a' | 'analyzer-b'>('dashboard');
+
+  // 사용자 데이터(사용량, 프리미엄 여부) 실시간 구독
+  const userDocRef = useMemoFirebase(() => {
+    if (!db || !user) return null;
+    return doc(db, 'users', user.uid);
+  }, [db, user]);
+  
+  const { data: userData } = useDoc(userDocRef);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 2000);
@@ -42,20 +53,21 @@ export default function Home() {
     return <AuthScreen />;
   }
 
-  // Step 2 & 3: Mode Selection and Independent Component Rendering
+  // Step 2 & 3: Personal Dashboard & Independent Analysis Rooms
   return (
     <div className="flex flex-col min-h-screen bg-muted/20">
-      {currentMode === 'select' && (
-        <ModeSelector 
+      {currentMode === 'dashboard' && (
+        <Dashboard 
+          userData={userData}
           onSelectA={() => setCurrentMode('analyzer-a')} 
           onSelectB={() => setCurrentMode('analyzer-b')} 
         />
       )}
       {currentMode === 'analyzer-a' && (
-        <AnalyzerA onBack={() => setCurrentMode('select')} />
+        <AnalyzerA userData={userData} onBack={() => setCurrentMode('dashboard')} />
       )}
       {currentMode === 'analyzer-b' && (
-        <AnalyzerB onBack={() => setCurrentMode('select')} />
+        <AnalyzerB userData={userData} onBack={() => setCurrentMode('dashboard')} />
       )}
     </div>
   );
