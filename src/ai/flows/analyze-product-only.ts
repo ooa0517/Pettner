@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -96,12 +97,14 @@ Target Language: {{{language}}}.
 You MUST provide consistent results for the same input. Base your analysis strictly on the label text or image provided.
 
 1. [Headline & Suitability]: Factual one-liner and target mapping.
-2. [Nutritional Analysis]: AAFCO standards comparison.
+2. [Nutritional Analysis]: 
+   - For 'food', MUST provide 'radarData' with nutrients: Protein, Fat, Fiber, Ash, Calcium, Phosphorus. 
+   - Values and standards should be based on AAFCO Dog/Cat Adult maintenance.
 3. [Ingredients]: Traffic light system (100% audit).
 4. [Physical & Origin Audit]:
-   - originRiskMap: Mapping major ingredients to their likely origins (e.g. NZ, USA, China) and identifying risks (e.g. synthetic additives from certain regions).
-   - processingAnalysis: Audit the manufacturing method (Extruded, Freeze-dried, Baked). Note potential nutrient loss (e.g. heat-sensitive taurine).
-   - kibbleSpecs: Analyze physical kibble properties (hardness, size, oiliness) and their impact on different breeds/ages.
+   - originRiskMap: Mapping major ingredients to their likely origins (e.g. NZ, USA, China) and identifying risks.
+   - processingAnalysis: Audit the manufacturing method (Extruded, Freeze-dried, Baked). Note potential nutrient loss.
+   - kibbleSpecs: Analyze physical kibble properties (hardness, size, oiliness).
 5. [Reliability]: ESG report and OEM status.
 
 Product: {{{productName}}} ({{{productCategory}}})

@@ -1,3 +1,4 @@
+
 'use client';
 
 /**
@@ -17,6 +18,8 @@ import AnalysisLoading from '@/components/analysis-loading';
 import AnalysisResult from '@/components/analysis-result';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useUser, useFirestore } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const CATEGORIES = [
   { id: 'food', label: '사료', icon: ShoppingBag, types: ['건식', '습식', '동결건조', '화식'] },
@@ -25,6 +28,8 @@ const CATEGORIES = [
 ];
 
 export default function AnalyzerA({ onBack }: { onBack: () => void }) {
+  const { user } = useUser();
+  const db = useFirestore();
   const { toast } = useToast();
   const [step, setStep] = useState<'input' | 'loading' | 'result'>('input');
   const [category, setCategory] = useState<any>(CATEGORIES[0]);
@@ -79,6 +84,22 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
       });
 
       if (result.error) throw new Error(result.error);
+
+      // [V24.0] Analyzer_A 기록 저장 추가
+      if (user && db) {
+        await addDoc(collection(db, 'users', user.uid, 'analysisHistory'), {
+          type: 'A',
+          userInput: {
+            productName,
+            productCategory: category.id,
+            detailedProductType: detailedType,
+            analysisMode: 'general'
+          },
+          analysisOutput: result.data,
+          createdAt: serverTimestamp(),
+        });
+      }
+
       setAnalysisData(result.data);
       setStep('result');
     } catch (e: any) {

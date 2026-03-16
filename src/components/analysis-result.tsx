@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -16,7 +17,8 @@ import {
   UtensilsCrossed,
   Activity,
   Factory,
-  Search
+  Search,
+  ArrowRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -61,7 +63,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
         <AlertCircle className="w-20 h-20 text-destructive mx-auto opacity-30"/>
         <h1 className="text-3xl font-black">분석 실패</h1>
         <p className="text-muted-foreground">데이터를 불러오는 중 오류가 발생했습니다.</p>
-        <Button onClick={onReset}>다시 시도</Button>
+        <Button onClick={onReset} className="rounded-full px-8">다시 시도</Button>
       </div>
     );
   }
@@ -111,7 +113,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
                   <p className="font-black text-sm">{item.ingredient}</p>
                   <p className="text-[10px] text-muted-foreground font-bold">{item.origin}</p>
                 </div>
-                <Badge className={item.riskLevel === 'safe' ? "bg-success" : "bg-orange-500"}>
+                <Badge className={cn("text-[10px] font-black", item.riskLevel === 'safe' ? "bg-success text-white" : "bg-orange-500 text-white")}>
                   {item.riskLevel === 'safe' ? '안전' : '주의점검'}
                 </Badge>
               </div>
@@ -121,17 +123,17 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="p-6 bg-primary/5 rounded-3xl space-y-2">
-            <p className="font-black text-sm text-primary uppercase">가공 공법 분석</p>
-            <p className="font-bold text-lg">{result.physicalOriginAudit?.processingAnalysis?.method}</p>
-            <p className="text-xs text-muted-foreground leading-relaxed">{result.physicalOriginAudit?.processingAnalysis?.nutrientLossNote}</p>
+            <p className="font-black text-xs text-primary uppercase tracking-widest">가공 공법 분석</p>
+            <p className="font-black text-lg">{result.physicalOriginAudit?.processingAnalysis?.method}</p>
+            <p className="text-xs text-muted-foreground font-medium leading-relaxed">{result.physicalOriginAudit?.processingAnalysis?.nutrientLossNote}</p>
           </div>
-          <div className="p-6 bg-muted/30 rounded-3xl space-y-2">
-            <p className="font-black text-sm uppercase">알갱이(Kibble) 특성</p>
+          <div className="p-6 bg-muted/30 rounded-3xl space-y-3">
+            <p className="font-black text-xs uppercase tracking-widest text-muted-foreground">알갱이(Kibble) 특성</p>
             <div className="flex gap-2">
-              <Badge variant="outline" className="bg-white">{result.physicalOriginAudit?.kibbleSpecs?.texture}</Badge>
-              <Badge variant="outline" className="bg-white">{result.physicalOriginAudit?.kibbleSpecs?.size}</Badge>
+              <Badge variant="outline" className="bg-white border-none shadow-sm font-bold">{result.physicalOriginAudit?.kibbleSpecs?.texture}</Badge>
+              <Badge variant="outline" className="bg-white border-none shadow-sm font-bold">{result.physicalOriginAudit?.kibbleSpecs?.size}</Badge>
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">{result.physicalOriginAudit?.kibbleSpecs?.digestibilityNote}</p>
+            <p className="text-xs text-muted-foreground font-medium leading-relaxed">{result.physicalOriginAudit?.kibbleSpecs?.digestibilityNote}</p>
           </div>
         </div>
       </CardContent>
@@ -447,8 +449,16 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
 
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-2xl border-t z-50 flex justify-center shadow-2xl">
         <div className="w-full max-w-4xl flex gap-4">
-          <Button onClick={onReset} variant="outline" className="flex-1 h-16 rounded-2xl border-2 font-black text-primary">새로운 분석 시작</Button>
-          <Button onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(input.productName || result.productIdentity?.name)}`, '_blank')} className="flex-[2] h-16 rounded-2xl text-xl font-black shadow-xl"><ShoppingBag size={24} className="mr-3" /> 최저가 확인</Button>
+          {!isPublicView ? (
+            <>
+              <Button onClick={onReset} variant="outline" className="flex-1 h-16 rounded-2xl border-2 font-black text-primary">새로운 분석 시작</Button>
+              <Button onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(input.productName || result.productIdentity?.name)}`, '_blank')} className="flex-[2] h-16 rounded-2xl text-xl font-black shadow-xl"><ShoppingBag size={24} className="mr-3" /> 최저가 확인</Button>
+            </>
+          ) : (
+            <Button asChild className="w-full h-16 rounded-2xl text-xl font-black shadow-xl">
+                <a href={`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(input.productName || result.productIdentity?.name)}`} target="_blank"><ShoppingBag size={24} className="mr-3" /> 제품 최저가 보러가기</a>
+            </Button>
+          )}
         </div>
       </div>
     </div>
