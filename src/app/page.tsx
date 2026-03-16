@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -13,9 +12,8 @@ import { doc } from 'firebase/firestore';
 
 /**
  * Pettner Root Controller v26.0
- * - Authentication Enforcement with High-End Auth Screen
- * - Dashboard-driven Navigation
- * - Strict Mode Decoupling (A/B)
+ * - Flow: Splash -> Authentication Check -> Dashboard -> Analysis Rooms
+ * - Strict Mode Decoupling (Analyzer_A / Analyzer_B)
  */
 export default function Home() {
   const { user, isUserLoading } = useUser();
@@ -32,16 +30,17 @@ export default function Home() {
   const { data: userData } = useDoc(userDocRef);
 
   useEffect(() => {
-    // 스플래시 로고 노출 시간 (2.5초로 약간 연장하여 여운 제공)
+    // 스플래시 로고 노출 시간 (2.5초로 브랜드 여운 제공)
     const timer = setTimeout(() => setShowSplash(false), 2500);
     return () => clearTimeout(timer);
   }, []);
 
+  // Step 1: Splash Screen
   if (showSplash) {
     return <SplashScreen />;
   }
 
-  // 스플래시 이후 인증 로딩 중일 때 표시
+  // Step 2: Auth Loading (스플래시 이후 로딩 중일 때)
   if (isUserLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#F8F9FF]">
@@ -50,12 +49,12 @@ export default function Home() {
     );
   }
 
-  // Step 1: Force Authentication (High-End Version)
+  // Step 3: High-End Authentication Screen (로그인하지 않은 경우)
   if (!user) {
     return <AuthScreen />;
   }
 
-  // Step 2 & 3: Personal Dashboard & Independent Analysis Rooms
+  // Step 4: Authenticated Zone (Dashboard & Independent Analysis Rooms)
   return (
     <div className="flex flex-col min-h-screen bg-muted/20">
       {currentMode === 'dashboard' && (

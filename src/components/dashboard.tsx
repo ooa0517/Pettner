@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Microscope, Target, ArrowRight, History, PlusCircle, Crown, Sparkles, Zap, ChevronRight, Cat, Dog, HeartPulse, FileSearch } from 'lucide-react';
+import { Microscope, Target, ArrowRight, History, PlusCircle, Crown, Zap, ChevronRight, Cat, Dog, HeartPulse, FileSearch } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,7 +52,6 @@ export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardP
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-10 pb-32 animate-in fade-in duration-700">
-      {/* User Greeting & Status */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-1">
           <h1 className="text-4xl font-black font-headline tracking-tighter">
@@ -80,7 +79,6 @@ export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardP
         </div>
       </div>
 
-      {/* Main Analysis Modes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card 
           onClick={onSelectA}
@@ -120,7 +118,6 @@ export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardP
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Pets Section */}
         <div className="lg:col-span-2 space-y-6">
           <div className="flex justify-between items-center px-2">
             <h3 className="text-2xl font-black flex items-center gap-2">
@@ -161,7 +158,6 @@ export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardP
           </div>
         </div>
 
-        {/* Recent History & Sample Section */}
         <div className="space-y-6">
           <div className="flex justify-between items-center px-2">
             <h3 className="text-2xl font-black flex items-center gap-2">

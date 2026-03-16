@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -8,8 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { 
   Sparkles, Mail, Lock, Loader2, LogIn, UserPlus, 
-  CheckCircle2, ShieldCheck, Microscope, Zap, ArrowRight,
-  ChevronRight
+  ShieldCheck, Microscope, Zap, ChevronRight
 } from 'lucide-react';
 import { signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { useAuth } from '@/firebase';
@@ -18,6 +16,11 @@ import { cn } from '@/lib/utils';
 
 type AuthMode = 'login' | 'signup';
 
+/**
+ * Pettner Ultra-Premium Auth Screen v26.0
+ * - SaaS Luxury Style Layout
+ * - Glassmorphism effects and value-driven UI
+ */
 export default function AuthScreen() {
   const auth = useAuth();
   const { toast } = useToast();
@@ -37,7 +40,7 @@ export default function AuthScreen() {
     setLoading(true);
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
-      toast({ title: "로그인 성공", description: "Pettner 프리미엄 서비스에 오신 것을 환영합니다!" });
+      toast({ title: "반가워요!", description: "성공적으로 인증되었습니다." });
     } catch (e: any) {
       toast({ variant: "destructive", title: "인증 실패", description: e.message });
     } finally {
@@ -52,10 +55,10 @@ export default function AuthScreen() {
     try {
       if (mode === 'login') {
         await signInWithEmailAndPassword(auth, email, password);
-        toast({ title: "반가워요!", description: "성공적으로 로그인되었습니다." });
+        toast({ title: "환영합니다", description: "성공적으로 로그인되었습니다." });
       } else {
         await createUserWithEmailAndPassword(auth, email, password);
-        toast({ title: "회원가입을 축하합니다!", description: "이제 우리 아이를 위한 정밀 분석을 시작해보세요." });
+        toast({ title: "가입 완료", description: "Pettner의 정밀 리포트 서비스를 시작합니다." });
       }
     } catch (e: any) {
       toast({ variant: "destructive", title: "오류 발생", description: e.message });
@@ -66,18 +69,18 @@ export default function AuthScreen() {
 
   return (
     <div className="min-h-screen w-full flex flex-col lg:flex-row bg-[#F8F9FF] overflow-hidden">
-      {/* Left Section: Brand Experience (Visible on Desktop) */}
+      {/* Left Hero Section (Desktop Only) */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-primary items-center justify-center p-20 text-white overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-white rounded-full blur-[120px]" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-400 rounded-full blur-[100px]" />
         </div>
         
-        <div className="relative z-10 space-y-12 max-w-lg">
+        <div className="relative z-10 space-y-12 max-w-lg animate-in fade-in slide-in-from-left-8 duration-1000">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
               <Sparkles className="w-4 h-4 text-amber-300" />
-              <span className="text-xs font-black uppercase tracking-widest">Pettner Precision v25.0</span>
+              <span className="text-xs font-black uppercase tracking-widest">Pettner Precision v26.0</span>
             </div>
             <h1 className="text-6xl font-black tracking-tighter leading-[1.1]">
               사료 한 알의 <br/>과학적 진실.
@@ -103,9 +106,8 @@ export default function AuthScreen() {
         </div>
       </div>
 
-      {/* Right Section: Auth Action */}
+      {/* Right Auth Action Section */}
       <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12 relative">
-        {/* Mobile Logo Branding */}
         <div className="lg:hidden mb-10 text-center space-y-2">
            <div className="bg-primary p-4 rounded-3xl inline-block shadow-2xl shadow-primary/20 mb-4 animate-bounce">
              <Sparkles className="w-8 h-8 text-white" />
@@ -198,7 +200,6 @@ export default function AuthScreen() {
           </CardContent>
         </Card>
 
-        {/* Footer info */}
         <p className="mt-12 text-[10px] text-muted-foreground font-medium text-center max-w-xs leading-relaxed opacity-50">
           가입 시 Pettner의 이용약관 및 개인정보 처리방침에 동의하게 됩니다. <br/>
           © 2024 Pettner Precision Team.
