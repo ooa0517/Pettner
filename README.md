@@ -1,33 +1,31 @@
-# 🐾 Pettner 정식 배포 및 GitHub 연결 매뉴얼
+# 🐾 Pettner (V24.0) - Precision Pet Nutrition Analyzer
 
-지정하신 저장소(`https://github.com/ooa0517/Pettner`)와 연결하여 정식 서비스를 시작하는 가이드입니다.
+Pettner는 AI와 수의 영양학 데이터를 결합하여 반려동물 먹거리의 진실을 분석하는 프리미엄 리포트 서비스입니다.
 
-## 🚀 1단계: GitHub 저장소에 코드 올리기
+## 🚀 주요 기능
 
-1.  **Firebase Studio 상단 툴바**에서 **'GitHub'** 아이콘 또는 **'Share'** 버튼을 클릭합니다.
-2.  저장소 선택 또는 연결 팝업이 뜨면 `ooa0517/Pettner` 저장소를 선택합니다.
-3.  **Push** 또는 **Commit**을 눌러 현재 코드를 GitHub로 전송합니다.
+### 1. Analyzer_A: 제품 객관적 분석
+- **제품 스펙 감사**: 반려동물 정보 없이 오직 제품의 성분과 품질만 팩트 체크합니다.
+- **원산지 리스크 지도**: 원료의 수급처를 파악하여 안전성을 진단합니다.
+- **가공 공법 분석**: 열처리 방식에 따른 영양 손실률을 예측합니다.
 
-## 🌐 2단계: Firebase App Hosting 연결 (진짜 URL 생성)
+### 2. Analyzer_B: 1:1 밀착 맞춤 분석
+- **메디컬 매칭**: 아이의 알러지, 질환, 증상을 기반으로 제품과의 궁합 점수(%)를 산출합니다.
+- **행동 예측**: 성분 기반의 기호성 지수와 포만감 지속력을 리포트합니다.
+- **정밀 처방**: g 단위 급여량은 물론, 간식 10% 룰과 영양제 알/펌프 단위 처방을 제공합니다.
 
-현재 미리보기 주소는 본인만 접근 가능하므로, 누구나 접속 가능한 주소를 만들려면 다음 과정을 거치세요.
+### 3. 스마트 스캔 & 결제
+- **바코드 스캔**: 제품 바코드를 통해 정보를 빠르게 식별합니다.
+- **평생 무제한 패스**: 토스페이먼츠를 통한 1회 결제로 모든 기능을 평생 무제한 이용 가능합니다.
 
-1.  [Firebase Console](https://console.firebase.google.com/)에 접속합니다.
-2.  왼쪽 메뉴에서 **Build > App Hosting**을 선택합니다.
-3.  **시작하기**를 누르고 GitHub 계정을 연동한 후, `ooa0517/Pettner` 저장소를 선택합니다.
-4.  배포 설정은 기본값을 권장하며, 완료되면 `https://pettner-xxxx.web.app`과 같은 **정식 도메인**이 생성됩니다.
+## 🛠 기술 아키텍처
+- **AI Engine**: Google Genkit (Deterministic Mode)
+- **Infrastructure**: Firebase (Auth, Firestore, App Hosting)
+- **Framework**: Next.js 15 + Tailwind + ShadCN UI
 
-## 🔐 3단계: 도메인 승인 (필수 설정)
-
-정식 URL에서 로그인이 작동하려면 다음 설정이 반드시 필요합니다.
-
-1.  **Authentication 설정**: `Authentication > Settings > Authorized domains`에 접속합니다.
-2.  **도메인 추가** 버튼을 누르고 위에서 생성된 **정식 도메인 주소**를 입력합니다.
-3.  이 과정을 거쳐야만 정식 URL에서 구글 로그인 등이 정상 작동합니다.
-
-## 💳 4단계: 결제 키 교체 (오픈 시)
-
-현재 테스트용 토스페이먼츠 키가 연결되어 있습니다. 실제 서비스 오픈 시에는 토스페이먼츠 관리자 페이지에서 발급받은 **라이브 키**로 `src/components/payment-modal.tsx`를 수정하세요.
+## 📄 시스템 상세 가이드
+- [시스템 청사진 (App Blueprint)](docs/APP_BLUEPRINT.md)
+- [데이터 구조 (Backend IR)](docs/backend.json)
 
 ---
 © 2024 Pettner Team. All rights reserved.
