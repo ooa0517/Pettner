@@ -7,23 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import { 
   ShoppingBag, AlertCircle, 
   Stethoscope, Microscope, 
-  PieChart, Scale,
-  CheckCircle2,
-  Search,
-  Factory,
-  Target,
-  Bot,
+  Scale,
   ThumbsUp,
-  Zap,
   AlertTriangle,
-  ArrowRight,
   TrendingUp,
-  Info,
   Globe,
-  Waves,
   Calendar,
   UtensilsCrossed,
-  Activity
+  Activity,
+  Factory,
+  Search
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -162,11 +155,11 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
             <span className="text-[10px] font-black text-muted-foreground uppercase">Matching Score</span>
           </div>
         </div>
-        <Badge className="bg-primary text-white font-black px-6 py-2 rounded-full text-lg">
-          {input.petProfile?.name}을 위한 1:1 맞춤 진단
+        <Badge className="bg-primary text-white font-black px-6 py-2 rounded-full text-lg shadow-lg">
+          {input.petProfile?.name || '우리 아이'}를 위한 1:1 맞춤 진단
         </Badge>
       </div>
-      <div className="p-8 rounded-[2.5rem] bg-primary/5 border-l-8 border-primary space-y-4">
+      <div className="p-8 rounded-[2.5rem] bg-primary/5 border-l-8 border-primary space-y-4 shadow-sm">
         <h3 className="text-xl font-black flex items-center gap-2 text-primary"><Stethoscope size={24}/> 주치의 핵심 소견</h3>
         <p className="text-lg font-bold leading-relaxed text-foreground/90 break-keep">
           {result.matchingReport?.suitabilityVerdict}
@@ -321,7 +314,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
           <div className="flex flex-col md:flex-row gap-8">
             {input.photoDataUri && (
               <div className="w-full md:w-1/3">
-                <img src={input.photoDataUri} alt="Product" className="rounded-3xl w-full h-auto object-cover aspect-[3/4] shadow-lg"/>
+                <img src={input.photoDataUri} alt="Product" className="rounded-3xl w-full h-auto object-cover aspect-[3/4] shadow-lg border-4 border-white"/>
               </div>
             )}
             <div className="flex flex-col justify-between flex-1">
@@ -339,6 +332,13 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
                     </h1>
                     <p className="text-lg text-muted-foreground font-bold">{result.productIdentity?.brand} · {result.productIdentity?.category}</p>
                 </div>
+                
+                {mode === 'custom' && (
+                  <div className="bg-primary/5 p-4 rounded-2xl border border-primary/10 mt-4">
+                    <p className="text-xs font-black text-primary uppercase mb-1">Target Pet</p>
+                    <p className="font-bold text-sm">{input.petProfile?.name} ({input.petProfile?.breed}, {input.petProfile?.weight}kg)</p>
+                  </div>
+                )}
             </div>
           </div>
 

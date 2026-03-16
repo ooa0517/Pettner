@@ -37,6 +37,7 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
   const [petType, setPetType] = useState<'dog' | 'cat'>('dog');
   const [productInfo, setProductInfo] = useState({ name: '', image: null as File | null });
   const [petProfile, setPetProfile] = useState<any>({ name: '', breed: '', age: '', weight: '', bcs: '3', symptoms: [], allergies: [], mainConcern: '' });
+  const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
   const [analysisData, setAnalysisData] = useState<any>(null);
 
   const [isBarcodeScanning, setIsBarcodeScanning] = useState(false);
@@ -65,13 +66,14 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
     setStep('loading');
     try {
       const reader = new FileReader();
-      const photoDataUri = await new Promise<string>((resolve) => {
+      const uri = await new Promise<string>((resolve) => {
         reader.onload = () => resolve(reader.result as string);
         reader.readAsDataURL(productInfo.image!);
       });
+      setPhotoDataUri(uri);
 
       const analysisInput = {
-        productInfo: { productCategory: 'food' as any, detailedProductType: '건식', productName: productInfo.name, photoDataUri },
+        productInfo: { productCategory: 'food' as any, detailedProductType: '건식', productName: productInfo.name, photoDataUri: uri },
         petProfile: { ...petProfile, petType, age: parseFloat(petProfile.age) || 0, weight: parseFloat(petProfile.weight) || 0 },
       };
 
@@ -80,9 +82,14 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
       if (result.error) throw new Error(result.error);
 
       if (user && db) {
+        // 이미지 데이터는 용량 제한(1MB)을 위해 히스토리 저장 시 제외함
+        const { photoDataUri: _, ...inputWithoutImage } = analysisInput.productInfo;
         await addDoc(collection(db, 'users', user.uid, 'analysisHistory'), {
           type: 'B',
-          userInput: analysisInput,
+          userInput: {
+            ...analysisInput,
+            productInfo: inputWithoutImage
+          },
           analysisOutput: result.data,
           createdAt: serverTimestamp(),
         });
@@ -97,7 +104,18 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
   };
 
   if (step === 'loading') return <AnalysisLoading />;
-  if (step === 'result') return <AnalysisResult result={analysisData} input={{ ...productInfo, analysisMode: 'custom', petProfile } as any} onReset={() => setStep('product')} />;
+  if (step === 'result') return (
+    <AnalysisResult 
+      result={analysisData} 
+      input={{ 
+        ...productInfo, 
+        photoDataUri,
+        analysisMode: 'custom', 
+        petProfile 
+      } as any} 
+      onReset={() => setStep('product')} 
+    />
+  );
 
   return (
     <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-12 pb-48 animate-in fade-in duration-700">
@@ -191,7 +209,7 @@ export default function AnalyzerB({ onBack }: { onBack: () => void }) {
 
           <Card className="border-none shadow-2xl rounded-[3rem] overflow-hidden bg-white">
             <CardHeader className="bg-muted/30 p-10 border-b">
-              <CardTitle className="text-xl font-black flex items-center gap-3"><HeartPulse className="text-primary"/> 3단계: 종별 정밀 설문</CardTitle>
+              <CardTitle className="text-xl font-black flex items-center gap-3"><HeartPulse className="text-primary" size={28}/> 3단계: 종별 정밀 설문</CardTitle>
             </CardHeader>
             <CardContent className="p-10 space-y-12">
               <div className="grid grid-cols-2 gap-6">

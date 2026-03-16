@@ -31,6 +31,7 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
   const [detailedType, setDetailedType] = useState(CATEGORIES[0].types[0]);
   const [productName, setProductName] = useState('');
   const [image, setImage] = useState<File | null>(null);
+  const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
   const [analysisData, setAnalysisData] = useState<any>(null);
   
   const [isScanning, setIsScanning] = useState(false);
@@ -64,16 +65,17 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
 
     try {
       const reader = new FileReader();
-      const photoDataUri = await new Promise<string>((resolve) => {
+      const uri = await new Promise<string>((resolve) => {
         reader.onload = () => resolve(reader.result as string);
         reader.readAsDataURL(image);
       });
+      setPhotoDataUri(uri);
 
       const result = await getGeneralAnalysis({
         productCategory: category.id as any,
         detailedProductType: detailedType,
         productName,
-        photoDataUri,
+        photoDataUri: uri,
       });
 
       if (result.error) throw new Error(result.error);
@@ -86,7 +88,18 @@ export default function AnalyzerA({ onBack }: { onBack: () => void }) {
   };
 
   if (step === 'loading') return <AnalysisLoading />;
-  if (step === 'result') return <AnalysisResult result={analysisData} input={{ productName, productCategory: category.id, analysisMode: 'general' } as any} onReset={() => setStep('input')} />;
+  if (step === 'result') return (
+    <AnalysisResult 
+      result={analysisData} 
+      input={{ 
+        productName, 
+        productCategory: category.id, 
+        analysisMode: 'general',
+        photoDataUri 
+      } as any} 
+      onReset={() => setStep('input')} 
+    />
+  );
 
   return (
     <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-12 pb-48 animate-in fade-in duration-700">
