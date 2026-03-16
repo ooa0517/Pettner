@@ -12,8 +12,8 @@ import { Loader2 } from 'lucide-react';
 import { doc } from 'firebase/firestore';
 
 /**
- * Pettner Root Controller v25.0
- * - Authentication Enforcement
+ * Pettner Root Controller v26.0
+ * - Authentication Enforcement with High-End Auth Screen
  * - Dashboard-driven Navigation
  * - Strict Mode Decoupling (A/B)
  */
@@ -32,7 +32,8 @@ export default function Home() {
   const { data: userData } = useDoc(userDocRef);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShowSplash(false), 2000);
+    // 스플래시 로고 노출 시간 (2.5초로 약간 연장하여 여운 제공)
+    const timer = setTimeout(() => setShowSplash(false), 2500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -40,15 +41,16 @@ export default function Home() {
     return <SplashScreen />;
   }
 
+  // 스플래시 이후 인증 로딩 중일 때 표시
   if (isUserLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-screen bg-[#F8F9FF]">
+        <Loader2 className="h-10 w-10 animate-spin text-primary opacity-20" />
       </div>
     );
   }
 
-  // Step 1: Force Authentication
+  // Step 1: Force Authentication (High-End Version)
   if (!user) {
     return <AuthScreen />;
   }
