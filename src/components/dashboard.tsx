@@ -1,14 +1,14 @@
-
 'use client';
 
-import { Microscope, Target, ArrowRight, History, PlusCircle, Crown, Sparkles, Zap, ChevronRight, Cat, Dog, HeartPulse } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { useEffect } from 'react';
+import { Microscope, Target, ArrowRight, History, PlusCircle, Crown, Sparkles, Zap, ChevronRight, Cat, Dog, HeartPulse, FileSearch } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
+import { collection, query, orderBy, limit, doc, updateDoc } from 'firebase/firestore';
 
 interface DashboardProps {
   userData: any;
@@ -21,14 +21,25 @@ export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardP
   const { user } = useUser();
   const db = useFirestore();
 
-  // 최근 분석 기록 (최신 3개)
+  // 날짜 변경 시 무료 사용량 리셋 체크
+  useEffect(() => {
+    if (user && db && userData) {
+      const today = new Date().toISOString().split('T')[0];
+      if (userData.lastUsageDate !== today) {
+        updateDoc(doc(db, 'users', user.uid), {
+          dailyUsageCount: 0,
+          lastUsageDate: today
+        }).catch(console.error);
+      }
+    }
+  }, [user, db, userData]);
+
   const historyQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return query(collection(db, 'users', user.uid, 'analysisHistory'), orderBy('createdAt', 'desc'), limit(3));
   }, [db, user]);
   const { data: recentHistory } = useCollection(historyQuery);
 
-  // 등록된 반려동물
   const petsQuery = useMemoFirebase(() => {
     if (!db || !user) return null;
     return collection(db, 'users', user.uid, 'pets');
@@ -150,11 +161,11 @@ export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardP
           </div>
         </div>
 
-        {/* Recent History Section */}
+        {/* Recent History & Sample Section */}
         <div className="space-y-6">
           <div className="flex justify-between items-center px-2">
             <h3 className="text-2xl font-black flex items-center gap-2">
-              <History className="text-primary" /> 최근 기록
+              <History className="text-primary" /> 분석 기록
             </h3>
             <Button variant="ghost" onClick={() => router.push('/history')} className="font-bold text-muted-foreground">
               전체보기
@@ -182,8 +193,17 @@ export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardP
                 </Card>
               ))
             ) : (
-              <div className="p-10 text-center space-y-2">
-                <p className="text-xs text-muted-foreground font-bold">아직 분석 기록이 없습니다.</p>
+              <div className="p-8 text-center space-y-4 bg-primary/5 rounded-[2rem] border border-dashed border-primary/20">
+                <div className="p-3 bg-white rounded-2xl inline-block shadow-sm">
+                  <FileSearch className="text-primary h-6 w-6" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-black">아직 분석 기록이 없네요!</p>
+                  <p className="text-[10px] text-muted-foreground font-medium">실제 리포트가 어떻게 나오는지 궁금하신가요?</p>
+                </div>
+                <Button variant="link" onClick={() => router.push('/sample-report')} className="text-xs font-black text-primary p-0 h-auto underline decoration-2">
+                  샘플 리포트 먼저 확인하기 →
+                </Button>
               </div>
             )}
           </div>
