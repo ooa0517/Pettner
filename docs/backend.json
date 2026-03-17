@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "User": {
@@ -80,6 +79,7 @@
       "type": "object",
       "description": "Represents a historical record of an ingredient analysis.",
       "properties": {
+        "type": { "type": "string", "enum": ["A", "B"] },
         "userInput": {
           "type": "object",
           "description": "The input provided by the user for analysis."
