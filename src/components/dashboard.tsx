@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -21,7 +22,6 @@ export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardP
   const { user } = useUser();
   const db = useFirestore();
 
-  // 날짜 변경 시 무료 사용량 리셋 체크
   useEffect(() => {
     if (user && db && userData) {
       const today = new Date().toISOString().split('T')[0];
@@ -89,8 +89,8 @@ export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardP
               <Microscope size={32} />
             </div>
             <div className="flex-1 space-y-1">
-              <h3 className="text-xl font-black">제품 객관적 분석</h3>
-              <p className="text-sm text-muted-foreground font-medium">제품의 팩트 스펙만 빠르게 확인</p>
+              <h3 className="text-xl font-black">제품 객관적 감사</h3>
+              <p className="text-sm text-muted-foreground font-medium">먹거리의 팩트 스펙만 빠르게 확인</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
               <ArrowRight size={20} />
@@ -107,7 +107,7 @@ export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardP
               <Target size={32} />
             </div>
             <div className="flex-1 space-y-1">
-              <h3 className="text-xl font-black">1:1 밀착 맞춤 분석</h3>
+              <h3 className="text-xl font-black">1:1 밀착 맞춤 진단</h3>
               <p className="text-sm text-white/70 font-medium">아이의 상태에 따른 정밀 처방전</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-white text-primary flex items-center justify-center group-hover:scale-110 transition-all">
@@ -180,7 +180,7 @@ export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardP
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-8 rounded-full bg-primary/20 group-hover:bg-primary transition-colors" />
                       <div>
-                        <p className="font-bold text-sm truncate max-w-[120px]">{item.analysisOutput?.productIdentity?.name || '제품 분석'}</p>
+                        <p className="font-bold text-sm truncate max-w-[120px]">{item.analysisOutput?.productIdentity?.name || '식품 분석'}</p>
                         <p className="text-[10px] text-muted-foreground font-medium">{item.createdAt?.toDate().toLocaleDateString()}</p>
                       </div>
                     </div>

@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { ShoppingBag, Cookie, HeartPulse, Camera, Sparkles, ArrowLeft, Microscope, Info, ScanBarcode, FileText, X } from 'lucide-react';
+import { ShoppingBag, Cookie, HeartPulse, Camera, Sparkles, ArrowLeft, Microscope, Info, ScanBarcode, FileText, X, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,9 +14,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 import UsageLimitModal from '@/components/usage-limit-modal';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 
 const CATEGORIES = [
-  { id: 'food', label: '사료', icon: ShoppingBag, types: ['건식', '습식', '동결건조', '화식'] },
+  { id: 'food', label: '식품(주식)', icon: ShoppingBag, types: ['건식', '습식', '동결건조', '화식'] },
   { id: 'treat', label: '간식', icon: Cookie, types: ['육포', '츄르', '껌', '트릿'] },
   { id: 'supplement', label: '영양제', icon: HeartPulse, types: ['가루', '캡슐', '츄어블', '펌핑'] },
 ];
@@ -35,16 +36,38 @@ export default function AnalyzerA({ onBack, userData }: { onBack: () => void, us
   const [showLimitModal, setShowLimitModal] = useState(false);
   
   const [isScanning, setIsScanning] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const startScanning = async () => {
+    setCameraError(null);
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast({ 
+        variant: 'destructive', 
+        title: '카메라 미지원', 
+        description: '이 브라우저에서는 카메라 기능을 사용할 수 없습니다. 최신 Chrome 또는 Safari를 사용해 주세요.' 
+      });
+      return;
+    }
+
     setIsScanning(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      if (videoRef.current) videoRef.current.srcObject = stream;
-    } catch (error) {
-      toast({ variant: 'destructive', title: '카메라 권한 오류' });
-      setIsScanning(false);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error: any) {
+      console.error('Camera Access Error:', error);
+      let errorMsg = '카메라 접근 권한이 거부되었습니다.';
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        errorMsg = '카메라 사용 권한이 차단되었습니다. 브라우저 설정(주소창 옆 자물쇠 아이콘)에서 카메라 권한을 허용해 주세요.';
+      }
+      setCameraError(errorMsg);
+      toast({ 
+        variant: 'destructive', 
+        title: '카메라 권한 오류', 
+        description: errorMsg 
+      });
     }
   };
 
@@ -54,6 +77,7 @@ export default function AnalyzerA({ onBack, userData }: { onBack: () => void, us
       stream.getTracks().forEach(track => track.stop());
     }
     setIsScanning(false);
+    setCameraError(null);
   };
 
   const handleAnalyze = async () => {
@@ -62,7 +86,6 @@ export default function AnalyzerA({ onBack, userData }: { onBack: () => void, us
       return;
     }
 
-    // Usage Check
     if (!userData?.isPremium && (userData?.dailyUsageCount || 0) >= 5) {
       setShowLimitModal(true);
       return;
@@ -88,14 +111,12 @@ export default function AnalyzerA({ onBack, userData }: { onBack: () => void, us
       if (result.error) throw new Error(result.error);
 
       if (user && db) {
-        // Save History
         addDoc(collection(db, 'users', user.uid, 'analysisHistory'), {
           type: 'A',
           userInput: { productName, productCategory: category.id, detailedProductType: detailedType, analysisMode: 'general' },
           analysisOutput: result.data,
           createdAt: serverTimestamp(),
         });
-        // Increment Usage
         updateDoc(doc(db, 'users', user.uid), {
           dailyUsageCount: increment(1)
         });
@@ -127,7 +148,7 @@ export default function AnalyzerA({ onBack, userData }: { onBack: () => void, us
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-primary/10 rounded-2xl text-primary"><Microscope /></div>
-          <h2 className="text-3xl font-black tracking-tight">제품 객관적 분석 (Analyzer_A)</h2>
+          <h2 className="text-3xl font-black tracking-tight">제품 객관적 감사 (Analyzer_A)</h2>
         </div>
         <p className="text-muted-foreground font-medium">제품의 영양 스펙과 제조사 투명성을 팩트 기반으로 감사힙니다.</p>
       </div>
@@ -178,13 +199,23 @@ export default function AnalyzerA({ onBack, userData }: { onBack: () => void, us
                 </div>
              ) : (
                 <div className="relative rounded-[2.5rem] overflow-hidden bg-black aspect-video shadow-2xl">
-                  <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-4/5 h-1/3 border-2 border-primary/50 rounded-2xl animate-pulse" />
-                  </div>
-                  <Button onClick={stopScanning} size="icon" className="absolute top-4 right-4 rounded-full bg-black/50 backdrop-blur-md">
-                    <X size={20} />
-                  </Button>
+                  {cameraError ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted p-8 text-center space-y-4">
+                      <AlertTriangle className="text-destructive h-12 w-12" />
+                      <p className="font-black text-foreground break-keep">{cameraError}</p>
+                      <Button onClick={stopScanning} variant="outline" className="rounded-full">닫기</Button>
+                    </div>
+                  ) : (
+                    <>
+                      <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-4/5 h-1/3 border-2 border-primary/50 rounded-2xl animate-pulse" />
+                      </div>
+                      <Button onClick={stopScanning} size="icon" className="absolute top-4 right-4 rounded-full bg-black/50 backdrop-blur-md">
+                        <X size={20} />
+                      </Button>
+                    </>
+                  )}
                 </div>
              )}
           </div>
@@ -235,5 +266,3 @@ export default function AnalyzerA({ onBack, userData }: { onBack: () => void, us
     </div>
   );
 }
-
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';

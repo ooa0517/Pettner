@@ -38,17 +38,38 @@ export default function AnalyzerB({ onBack, userData }: { onBack: () => void, us
   const [showLimitModal, setShowLimitModal] = useState(false);
 
   const [isBarcodeScanning, setIsBarcodeScanning] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const barcodeVideoRef = useRef<HTMLVideoElement>(null);
 
   const startBarcodeScan = async () => {
+    setCameraError(null);
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      toast({ variant: 'destructive', title: '카메라 미지원 브라우저' });
+      return;
+    }
+
     setIsBarcodeScanning(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       if (barcodeVideoRef.current) barcodeVideoRef.current.srcObject = stream;
-    } catch (e) {
-      toast({ variant: 'destructive', title: '카메라 권한 오류' });
-      setIsBarcodeScanning(false);
+    } catch (e: any) {
+      console.error('Barcode Camera Error:', e);
+      let errorMsg = '카메라 권한이 거부되었습니다.';
+      if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+        errorMsg = '카메라 권한이 차단되었습니다. 브라우저 설정에서 카메라 사용을 허용해 주세요.';
+      }
+      setCameraError(errorMsg);
+      toast({ variant: 'destructive', title: '카메라 권한 오류', description: errorMsg });
     }
+  };
+
+  const stopBarcodeScan = () => {
+    if (barcodeVideoRef.current?.srcObject) {
+      const stream = barcodeVideoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+    }
+    setIsBarcodeScanning(false);
+    setCameraError(null);
   };
 
   const handleNextToSurvey = () => {
@@ -60,7 +81,6 @@ export default function AnalyzerB({ onBack, userData }: { onBack: () => void, us
   };
 
   const handleAnalyze = async () => {
-    // Usage Check
     if (!userData?.isPremium && (userData?.dailyUsageCount || 0) >= 5) {
       setShowLimitModal(true);
       return;
@@ -86,14 +106,12 @@ export default function AnalyzerB({ onBack, userData }: { onBack: () => void, us
 
       if (user && db) {
         const { photoDataUri: _, ...inputWithoutImage } = analysisInput.productInfo;
-        // Save History
         addDoc(collection(db, 'users', user.uid, 'analysisHistory'), {
           type: 'B',
           userInput: { ...analysisInput, productInfo: inputWithoutImage },
           analysisOutput: result.data,
           createdAt: serverTimestamp(),
         });
-        // Increment Usage
         updateDoc(doc(db, 'users', user.uid), {
           dailyUsageCount: increment(1)
         });
@@ -125,7 +143,7 @@ export default function AnalyzerB({ onBack, userData }: { onBack: () => void, us
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <div className="p-3 bg-primary rounded-2xl text-white shadow-lg shadow-primary/30"><Target /></div>
-          <h2 className="text-3xl font-black tracking-tight">밀착 맞춤 분석 (Analyzer_B)</h2>
+          <h2 className="text-3xl font-black tracking-tight">밀착 맞춤 진단 (Analyzer_B)</h2>
         </div>
         <p className="text-muted-foreground font-medium">아이의 증상과 알러지 데이터를 기반으로 1:1 매칭 처방전을 생성합니다.</p>
       </div>
@@ -150,10 +168,20 @@ export default function AnalyzerB({ onBack, userData }: { onBack: () => void, us
                     </div>
                  ) : (
                     <div className="relative rounded-[2.5rem] overflow-hidden bg-black aspect-video shadow-2xl">
-                      <video ref={barcodeVideoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
-                      <Button onClick={() => setIsBarcodeScanning(false)} size="icon" className="absolute top-4 right-4 rounded-full bg-black/50 backdrop-blur-md">
-                        <X size={20} />
-                      </Button>
+                      {cameraError ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted p-8 text-center space-y-4">
+                          <AlertTriangle className="text-destructive h-12 w-12" />
+                          <p className="font-black text-foreground break-keep">{cameraError}</p>
+                          <Button onClick={stopBarcodeScan} variant="outline" className="rounded-full">닫기</Button>
+                        </div>
+                      ) : (
+                        <>
+                          <video ref={barcodeVideoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+                          <Button onClick={stopBarcodeScan} size="icon" className="absolute top-4 right-4 rounded-full bg-black/50 backdrop-blur-md">
+                            <X size={20} />
+                          </Button>
+                        </>
+                      )}
                     </div>
                  )}
               </div>
@@ -265,7 +293,7 @@ export default function AnalyzerB({ onBack, userData }: { onBack: () => void, us
           
           <div className="flex gap-4">
             <Button variant="outline" onClick={() => setStep('product')} className="h-28 px-10 rounded-[3.5rem] font-bold text-lg border-2">이전</Button>
-            <Button onClick={handleAnalyze} className="flex-1 h-28 rounded-[3.5rem] text-3xl font-black shadow-2xl bg-primary hover:scale-[1.02] active:scale-95 transition-all">맞춤 분석 시작</Button>
+            <Button onClick={handleAnalyze} className="flex-1 h-28 rounded-[3.5rem] text-3xl font-black shadow-2xl bg-primary hover:scale-[1.02] active:scale-95 transition-all">맞춤 진단 시작</Button>
           </div>
         </div>
       )}
