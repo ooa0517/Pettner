@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 import UsageLimitModal from '@/components/usage-limit-modal';
+import { useLanguage } from '@/contexts/language-context';
 
 const DOG_SYMPTOMS = ['눈물 자국', '슬개골 이상', '피부 발진', '귓병', '묽은 변', '기타'];
 const DOG_ALLERGIES = ['닭고기', '소고기', '대두', '밀가루', '연어', '곡물', '없음'];
@@ -28,6 +29,7 @@ export default function AnalyzerB({ onBack, userData }: { onBack: () => void, us
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
+  const { language } = useLanguage();
   
   const [step, setStep] = useState<'product' | 'survey' | 'loading' | 'result'>('product');
   const [petType, setPetType] = useState<'dog' | 'cat'>('dog');
@@ -50,7 +52,6 @@ export default function AnalyzerB({ onBack, userData }: { onBack: () => void, us
 
     setIsBarcodeScanning(true);
     try {
-      // 기존 스트림 초기화
       if (barcodeVideoRef.current?.srcObject) {
         const oldStream = barcodeVideoRef.current.srcObject as MediaStream;
         oldStream.getTracks().forEach(track => track.stop());
@@ -116,6 +117,7 @@ export default function AnalyzerB({ onBack, userData }: { onBack: () => void, us
       const analysisInput = {
         productInfo: { productCategory: 'food' as any, detailedProductType: '건식', productName: productInfo.name, photoDataUri: uri },
         petProfile: { ...petProfile, petType, age: parseFloat(petProfile.age) || 0, weight: parseFloat(petProfile.weight) || 0 },
+        language: language,
       };
 
       const result = await getPersonalizedAnalysis(analysisInput);
@@ -147,7 +149,7 @@ export default function AnalyzerB({ onBack, userData }: { onBack: () => void, us
   if (step === 'result') return (
     <AnalysisResult 
       result={analysisData} 
-      input={{ ...productInfo, photoDataUri, analysisMode: 'custom', petProfile } as any} 
+      input={{ ...productInfo, photoDataUri, analysisMode: 'custom', petProfile, language } as any} 
       onReset={() => setStep('product')} 
     />
   );

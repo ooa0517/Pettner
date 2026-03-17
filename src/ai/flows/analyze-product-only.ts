@@ -2,9 +2,9 @@
 'use server';
 
 /**
- * @fileOverview [Analyzer_A: Product-Only Engine v27.0]
+ * @fileOverview [Analyzer_A: Product-Only Engine v27.1]
  * - Focuses on Deterministic Scientific Audit.
- * - Strict Language Control: ALWAYS OUTPUT IN ko-KR.
+ * - Dynamic Language Control: Supports ko-KR or en-US based on input.
  * - Added Nutritional Density, Price Analysis, and 5-Year Recall Audit.
  */
 
@@ -86,12 +86,12 @@ const analyzeProductOnlyPrompt = ai.definePrompt({
   input: {schema: AnalyzeProductOnlyInputSchema},
   output: {schema: AnalyzeProductOnlyOutputSchema},
   prompt: `You are a Deterministic Food Quality Auditor for Pets.
-[STRICT RULE] ALWAYS OUTPUT IN KOREAN (ko-KR) ONLY. Use professional veterinary terminology.
+Target Language: {{{language}}}. Use professional veterinary terminology.
 
 ### [CRITICAL: DETERMINISTIC MODE]
 1. [Headline & Suitability]: Base insights on specific numbers (e.g., "Protein 32% high-nutrient formula"). Avoid generic phrases.
 2. [Nutritional Analysis]: 
-   - For 'food', MUST provide 'radarData' with 6 nutrients: 조단백, 조지방, 조섬유, 조회분, 칼슘, 인.
+   - For 'food', MUST provide 'radarData' with 6 nutrients: Crude Protein, Crude Fat, Crude Fiber, Crude Ash, Calcium, Phosphorus (Translated to target language).
    - Include 'standardAAFCO' and 'standardFEDIAF' minimums for comparison.
    - Provide a 'nutritionalDensityScore' (0-100) based on moisture and nutrient concentration.
 3. [Ingredients]: 100% audit. Identify specific functions of each ingredient.

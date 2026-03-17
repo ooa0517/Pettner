@@ -15,6 +15,7 @@ import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 import UsageLimitModal from '@/components/usage-limit-modal';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { useLanguage } from '@/contexts/language-context';
 
 const CATEGORIES = [
   { id: 'food', label: '식품(주식)', icon: ShoppingBag, types: ['건식', '습식', '동결건조', '화식'] },
@@ -26,6 +27,7 @@ export default function AnalyzerA({ onBack, userData }: { onBack: () => void, us
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
+  const { language } = useLanguage();
   const [step, setStep] = useState<'input' | 'loading' | 'result'>('input');
   const [category, setCategory] = useState<any>(CATEGORIES[0]);
   const [detailedType, setDetailedType] = useState(CATEGORIES[0].types[0]);
@@ -52,7 +54,6 @@ export default function AnalyzerA({ onBack, userData }: { onBack: () => void, us
 
     setIsScanning(true);
     try {
-      // 기존 스트림이 있다면 중지 시도
       if (videoRef.current?.srcObject) {
         const oldStream = videoRef.current.srcObject as MediaStream;
         oldStream.getTracks().forEach(track => track.stop());
@@ -78,7 +79,7 @@ export default function AnalyzerA({ onBack, userData }: { onBack: () => void, us
       }
       
       setCameraError(errorMsg);
-      setIsScanning(true); // 에러 화면을 보여주기 위해 유지
+      setIsScanning(true);
     }
   };
 
@@ -118,6 +119,7 @@ export default function AnalyzerA({ onBack, userData }: { onBack: () => void, us
         detailedProductType: detailedType,
         productName,
         photoDataUri: uri,
+        language: language,
       });
 
       if (result.error) throw new Error(result.error);
@@ -146,7 +148,7 @@ export default function AnalyzerA({ onBack, userData }: { onBack: () => void, us
   if (step === 'result') return (
     <AnalysisResult 
       result={analysisData} 
-      input={{ productName, productCategory: category.id, analysisMode: 'general', photoDataUri } as any} 
+      input={{ productName, productCategory: category.id, analysisMode: 'general', photoDataUri, language } as any} 
       onReset={() => setStep('input')} 
     />
   );

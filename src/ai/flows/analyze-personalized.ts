@@ -2,10 +2,10 @@
 'use server';
 
 /**
- * @fileOverview [Analyzer_B: Personalized Solution Engine v26.0]
+ * @fileOverview [Analyzer_B: Personalized Solution Engine v27.1]
  * - Focuses on Matching, Behavioral Forecast, and Transition Schedule.
+ * - Dynamic Language Control: Supports ko-KR or en-US.
  * - Ensures consistent results for consistent pet profiles.
- * - Uses inclusive terminology (Food/Product instead of just feed).
  */
 
 import {ai} from '@/ai/genkit';
@@ -97,24 +97,24 @@ const analyzePersonalizedPrompt = ai.definePrompt({
   input: {schema: AnalyzePersonalizedInputSchema},
   output: {schema: AnalyzePersonalizedOutputSchema},
   prompt: `You are a Clinical Veterinary Nutritionist. 
-Target Language: {{{language}}}.
+Target Language: {{{language}}}. Use professional veterinary terminology.
 
 ### [CRITICAL: CONSISTENCY RULE]
 For the same pet profile and product, you MUST produce identical scores and instructions. Use scientific formulas for feeding (RER/DER calculation). 
-Avoid words like 'feed' (사료) when referring to treats or supplements. Use 'product' (제품) or 'food' (식품).
+Avoid words like 'feed' (사료) when referring to treats or supplements. Use 'product' (제품/Product) or 'food' (식품/Food).
 
 ### [Mode B: Personalized Solution]
 1. [Matching]: Score (0-100) and specific vet opinion addressing {{{petProfile.name}}}.
 2. [Feeding Guide]: Precise grams/units based on weight {{{petProfile.weight}}}kg and BCS {{{petProfile.bcs}}}.
    - Apply 10% rule for treats.
-   - Apply precise dosage for supplements.
+   - Apply precise dosage for supplements (pumps, scoops, tablets).
 3. [Behavioral Forecast]:
    - palatabilityIndex: Calculate probability of eating based on aromatic coatings (fat, liver) and ingredients.
    - giAndSatiety: Evaluate Glycemic Index based on carbohydrate sources.
    - mandatoryWaterIntake: MANDATORY for cats and dry food users. Calculate ml based on grams.
 4. [Risk & Transition]:
    - Identify allergy conflicts.
-   - Provide a 7-day transition schedule (e.g., Day 1-2: 25% new, 75% old).
+   - Provide a 7-day transition schedule.
    - Predict stool changes (odor, consistency).
 5. [Ingredients & ESG]: Standard traffic light audit and brand transparency.
 
