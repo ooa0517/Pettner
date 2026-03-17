@@ -17,7 +17,7 @@ import { cn } from '@/lib/utils';
 type AuthMode = 'login' | 'signup';
 
 /**
- * Pettner Ultra-Premium Auth Screen v26.0
+ * Pettner Ultra-Premium Auth Screen v26.1
  * - SaaS Luxury Style Layout
  * - Glassmorphism effects and value-driven UI
  */
@@ -80,10 +80,10 @@ export default function AuthScreen() {
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
               <Sparkles className="w-4 h-4 text-amber-300" />
-              <span className="text-xs font-black uppercase tracking-widest">Pettner Precision v26.0</span>
+              <span className="text-xs font-black uppercase tracking-widest">Pettner Precision v26.1</span>
             </div>
             <h1 className="text-6xl font-black tracking-tighter leading-[1.1]">
-              사료 한 알의 <br/>과학적 진실.
+              먹거리 한 입의 <br/>과학적 진실.
             </h1>
             <p className="text-xl text-white/80 font-medium leading-relaxed">
               가입 즉시 5,000편 이상의 수의 영양학 데이터가 당신의 아이를 위해 작동하기 시작합니다.
@@ -113,7 +113,7 @@ export default function AuthScreen() {
              <Sparkles className="w-8 h-8 text-white" />
            </div>
            <h2 className="text-3xl font-black tracking-tight">Pettner</h2>
-           <p className="text-muted-foreground font-medium">수의사가 설계한 정밀 분석 시스템</p>
+           <p className="text-muted-foreground font-medium">수의사가 설계한 영양 분석 시스템</p>
         </div>
 
         <Card className="w-full max-w-md border-none shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] rounded-[3rem] bg-white overflow-hidden animate-in fade-in zoom-in-95 duration-700">
@@ -169,7 +169,7 @@ export default function AuthScreen() {
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors h-4 w-4" />
                     <Input 
                       type="password" 
-                      value={password}
+                      value={password} 
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••" 
                       className="h-14 pl-12 rounded-2xl bg-muted/30 border-none focus-visible:ring-2 focus-visible:ring-primary/20 font-bold" 

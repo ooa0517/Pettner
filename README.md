@@ -1,4 +1,4 @@
-# 🐾 Pettner (V24.0) - Precision Pet Nutrition Analyzer
+# 🐾 Pettner (V26.1) - Precision Pet Nutrition Analyzer
 
 Pettner는 AI와 수의 영양학 데이터를 결합하여 반려동물 먹거리의 진실을 분석하는 프리미엄 리포트 서비스입니다.
 

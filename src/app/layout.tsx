@@ -1,42 +1,10 @@
+'use client';
 
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Providers } from '@/contexts/providers';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import Script from 'next/script';
-
-export const viewport: Viewport = {
-  themeColor: '#4B45ED',
-  width: 'device-width',
-  initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-};
-
-export const metadata: Metadata = {
-  title: 'Pettner | 수의 영양학 기반 성분 분석기',
-  description: 'AI 수의사 선생님이 꼼꼼하게 분석해주는 우리 아이 사료 성분 리포트. 이제 스마트하게 급여하세요!',
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'Pettner',
-  },
-  openGraph: {
-    type: 'website',
-    siteName: 'Pettner',
-    title: 'Pettner | 반려동물 사료 성분 분석기',
-    description: '사진 한 장으로 끝내는 우리 아이 맞춤 영양 분석 리포트',
-    images: [
-      {
-        url: 'https://picsum.photos/seed/pettner-og/1200/630',
-        width: 1200,
-        height: 630,
-        alt: 'Pettner 분석기 미리보기',
-      },
-    ],
-  },
-};
 
 export default function RootLayout({
   children,

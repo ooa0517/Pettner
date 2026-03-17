@@ -1,4 +1,3 @@
-
 'use client';
 
 import { 
@@ -25,7 +24,7 @@ export default function LandingPage() {
 
   const handleStart = () => {
     if (user) {
-      window.location.reload(); // 리프레시하여 ScannerHome으로 진입
+      window.location.reload(); 
     } else {
       router.push('/login');
     }
@@ -36,14 +35,14 @@ export default function LandingPage() {
       {/* Hero Section */}
       <div className="text-center space-y-8 max-w-3xl mx-auto">
         <Badge className="bg-primary/10 text-primary border-none px-6 py-2 rounded-full font-black text-xs tracking-widest uppercase animate-bounce">
-          Pettner Precision v21.0
+          Pettner Precision v26.1
         </Badge>
         <h1 className="text-6xl md:text-7xl font-black font-headline tracking-tighter text-foreground leading-none">
-          사료 한 알의 <br/><span className="text-primary">과학적 진실</span>
+          먹거리 한 입의 <br/><span className="text-primary">과학적 진실</span>
         </h1>
         <p className="text-xl text-muted-foreground font-medium leading-relaxed">
           5,000편 이상의 수의 영양학 논문과 AAFCO 표준을 기반으로 <br className="hidden md:block"/>
-          우리 아이에게 딱 맞는 사료인지 1초 만에 분석합니다.
+          우리 아이에게 딱 맞는 한 끼인지 1초 만에 분석합니다.
         </p>
         <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-4">
           <Button onClick={handleStart} size="lg" className="h-20 px-12 rounded-[2rem] text-2xl font-black shadow-2xl shadow-primary/30 hover:scale-105 transition-all">
@@ -61,15 +60,15 @@ export default function LandingPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <CardFeature 
           icon={<ShoppingBag size={48} className="text-primary opacity-20" />}
-          title="제품 성분 분석 (General)"
-          desc="AAFCO 기준 충족 여부, 원재료 품질, 제조 공정 투명성을 객관적으로 감사하여 사료의 등급을 매깁니다."
+          title="영양 성분 분석 (General)"
+          desc="AAFCO 기준 충족 여부, 원재료 품질, 제조 공정 투명성을 객관적으로 감사하여 식품의 등급을 매깁니다."
           badges={["Grade A~F", "AAFCO 가이드라인", "ESG 제조 감사"]}
           onClick={handleStart}
         />
         <CardFeature 
           icon={<Target size={48} className="text-primary" />}
           title="우리 아이 맞춤 매칭 (Custom)"
-          desc="아이의 알레르기, 질환, 나이를 고려하여 사료와의 상성을 %로 환산하고 전용 메디컬 리포트를 생성합니다."
+          desc="아이의 알레르기, 질환, 나이를 고려하여 먹거리와의 상성을 %로 환산하고 전용 메디컬 리포트를 생성합니다."
           badges={["1:1 상성 매칭", "알레르기 필터링", "맞춤 급여량"]}
           highlight
           onClick={handleStart}
