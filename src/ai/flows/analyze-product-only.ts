@@ -2,10 +2,10 @@
 'use server';
 
 /**
- * @fileOverview [Analyzer_A: Product-Only Engine v26.0]
+ * @fileOverview [Analyzer_A: Product-Only Engine v27.0]
  * - Focuses on Deterministic Scientific Audit.
- * - Adds Physical & Origin Audit (Origin mapping, Processing loss, Kibble specs).
- * - Uses inclusive terminology.
+ * - Strict Language Control: ALWAYS OUTPUT IN ko-KR.
+ * - Added Nutritional Density, Price Analysis, and 5-Year Recall Audit.
  */
 
 import {ai} from '@/ai/genkit';
@@ -35,26 +35,19 @@ const AnalyzeProductOnlyOutputSchema = z.object({
   summary: z.object({
     headline: z.string(),
     bestFor: z.array(z.string()),
-    worstFor: z.array(z.string())
+    worstFor: z.array(z.string()),
+    nutritionalDensityScore: z.number().describe('0-100 score for nutrient density'),
+    densityComment: z.string().describe('Expert comment on density')
   }),
   nutritionalAnalysis: z.object({
     radarData: z.array(z.object({
       nutrient: z.string(),
       value: z.number(),
-      standard: z.number()
+      standardAAFCO: z.number(),
+      standardFEDIAF: z.number()
     })).optional(),
     caloriePerUnit: z.string().optional(),
-    additiveWarnings: z.array(z.object({
-      name: z.string(),
-      reason: z.string(),
-      riskLevel: z.enum(['low', 'medium', 'high'])
-    })).optional(),
-    activeIngredients: z.array(z.object({
-      name: z.string(),
-      amount: z.string(),
-      recommended: z.string(),
-      status: z.string()
-    })).optional()
+    priceEfficiency: z.string().optional().describe('Analysis of cost-effectiveness per kg or unit')
   }),
   ingredientAnalysis: z.array(z.object({
     name: z.string(),
@@ -80,8 +73,9 @@ const AnalyzeProductOnlyOutputSchema = z.object({
   }),
   esgReport: z.object({
     transparencyStatus: z.enum(['DIRECT', 'OEM_LOW', 'OEM_PREMIUM']),
-    recallHistory: z.string(),
-    certifications: z.array(z.string())
+    recallHistory: z.string().describe('Last 5 years recall history fact check'),
+    certifications: z.array(z.string()),
+    cleanMarkGranted: z.boolean().describe('Whether to grant the Pettner Clean Mark')
   })
 });
 
@@ -92,21 +86,23 @@ const analyzeProductOnlyPrompt = ai.definePrompt({
   input: {schema: AnalyzeProductOnlyInputSchema},
   output: {schema: AnalyzeProductOnlyOutputSchema},
   prompt: `You are a Deterministic Food Quality Auditor for Pets.
-Target Language: {{{language}}}.
+[STRICT RULE] ALWAYS OUTPUT IN KOREAN (ko-KR) ONLY. Use professional veterinary terminology.
 
 ### [CRITICAL: DETERMINISTIC MODE]
-Base your analysis strictly on the label text or image provided. Use 'product' or 'food' instead of 'feed'.
-
-1. [Headline & Suitability]: Factual one-liner and target mapping.
+1. [Headline & Suitability]: Base insights on specific numbers (e.g., "Protein 32% high-nutrient formula"). Avoid generic phrases.
 2. [Nutritional Analysis]: 
-   - For 'food', MUST provide 'radarData' with nutrients: Protein, Fat, Fiber, Ash, Calcium, Phosphorus. 
-   - Values and standards should be based on AAFCO Dog/Cat Adult maintenance.
-3. [Ingredients]: Traffic light system (100% audit).
+   - For 'food', MUST provide 'radarData' with 6 nutrients: 조단백, 조지방, 조섬유, 조회분, 칼슘, 인.
+   - Include 'standardAAFCO' and 'standardFEDIAF' minimums for comparison.
+   - Provide a 'nutritionalDensityScore' (0-100) based on moisture and nutrient concentration.
+3. [Ingredients]: 100% audit. Identify specific functions of each ingredient.
 4. [Physical & Origin Audit]:
-   - originRiskMap: Mapping major ingredients to their likely origins (e.g. NZ, USA, China).
-   - processingAnalysis: Audit the manufacturing method (Extruded, Freeze-dried, Baked).
-   - kibbleSpecs: Analyze physical properties (hardness, size, oiliness).
-5. [Reliability]: ESG report and OEM status.
+   - originRiskMap: Map major ingredients to origins (NZ, USA, China, etc.).
+   - processingAnalysis: Audit the method (Extruded, Freeze-dried, etc.).
+   - kibbleSpecs: Analyze physical properties (hardness, mm size, oiliness).
+5. [Reliability & Killer Content]: 
+   - Recall History: Specifically check the last 5 years for this brand/manufacturer.
+   - Clean Mark: Grant 'true' only if no major recalls and high transparency.
+   - Price Efficiency: Estimate cost-effectiveness based on ingredient quality vs market average.
 
 Product: {{{productName}}} ({{{productCategory}}})
 Type: {{{detailedProductType}}}
