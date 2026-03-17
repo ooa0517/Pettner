@@ -2,9 +2,10 @@
 'use server';
 
 /**
- * @fileOverview [Analyzer_A: Product-Only Engine v24.0]
+ * @fileOverview [Analyzer_A: Product-Only Engine v26.0]
  * - Focuses on Deterministic Scientific Audit.
  * - Adds Physical & Origin Audit (Origin mapping, Processing loss, Kibble specs).
+ * - Uses inclusive terminology.
  */
 
 import {ai} from '@/ai/genkit';
@@ -90,11 +91,11 @@ const analyzeProductOnlyPrompt = ai.definePrompt({
   name: 'analyzeProductOnlyPrompt',
   input: {schema: AnalyzeProductOnlyInputSchema},
   output: {schema: AnalyzeProductOnlyOutputSchema},
-  prompt: `You are a Deterministic Food Quality Auditor.
+  prompt: `You are a Deterministic Food Quality Auditor for Pets.
 Target Language: {{{language}}}.
 
 ### [CRITICAL: DETERMINISTIC MODE]
-You MUST provide consistent results for the same input. Base your analysis strictly on the label text or image provided.
+Base your analysis strictly on the label text or image provided. Use 'product' or 'food' instead of 'feed'.
 
 1. [Headline & Suitability]: Factual one-liner and target mapping.
 2. [Nutritional Analysis]: 
@@ -102,9 +103,9 @@ You MUST provide consistent results for the same input. Base your analysis stric
    - Values and standards should be based on AAFCO Dog/Cat Adult maintenance.
 3. [Ingredients]: Traffic light system (100% audit).
 4. [Physical & Origin Audit]:
-   - originRiskMap: Mapping major ingredients to their likely origins (e.g. NZ, USA, China) and identifying risks.
-   - processingAnalysis: Audit the manufacturing method (Extruded, Freeze-dried, Baked). Note potential nutrient loss.
-   - kibbleSpecs: Analyze physical kibble properties (hardness, size, oiliness).
+   - originRiskMap: Mapping major ingredients to their likely origins (e.g. NZ, USA, China).
+   - processingAnalysis: Audit the manufacturing method (Extruded, Freeze-dried, Baked).
+   - kibbleSpecs: Analyze physical properties (hardness, size, oiliness).
 5. [Reliability]: ESG report and OEM status.
 
 Product: {{{productName}}} ({{{productCategory}}})

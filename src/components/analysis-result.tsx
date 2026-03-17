@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -18,7 +19,10 @@ import {
   Factory,
   Search,
   Share2,
-  ArrowLeft
+  ArrowLeft,
+  Droplets,
+  Clock,
+  ArrowRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -115,7 +119,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
   const renderPhysicalAudit = () => (
     <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
       <CardContent className="p-10 space-y-8">
-        <h3 className="text-2xl font-black flex items-center gap-3"><UtensilsCrossed className="text-primary"/> 물리적 스펙 & 태생 분석</h3>
+        <h3 className="text-2xl font-black flex items-center gap-3"><UtensilsCrossed className="text-primary"/> 물리적 스펙 & 태생 감사</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {result.physicalOriginAudit?.originRiskMap?.map((item: any, i: number) => (
             <div key={i} className="p-4 bg-muted/20 rounded-2xl flex justify-between items-center group hover:bg-muted/30 transition-colors">
@@ -155,7 +159,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
           <svg className="w-full h-full transform -rotate-90">
             <circle cx="88" cy="88" r="80" stroke="currentColor" strokeWidth="14" fill="transparent" className="text-muted/20" />
             <circle cx="88" cy="88" r="80" stroke="currentColor" strokeWidth="14" fill="transparent" 
-              strokeDasharray={502} strokeDashoffset={502 - (502 * result.matchingReport?.matchScore) / 100}
+              strokeDasharray={502} strokeDashoffset={502 - (502 * (result.matchingReport?.matchScore || 0)) / 100}
               className="text-primary transition-all duration-1000 ease-out" />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -201,27 +205,59 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
 
   const renderFeedingGuide = () => (
     <div className="space-y-6">
-      <h3 className="font-black text-2xl flex items-center gap-2"><Scale className="text-primary"/> 정밀 배식 처방</h3>
+      <h3 className="font-black text-2xl flex items-center gap-2"><Scale className="text-primary"/> 정밀 급여 처방</h3>
       <Card className="border-none shadow-xl bg-primary/5 rounded-[2.5rem]">
         <CardContent className="p-8 space-y-6 text-center">
           {category === 'food' && (
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white p-6 rounded-3xl shadow-sm border border-primary/10"><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Daily Goal</p><p className="text-3xl font-black text-primary tracking-tighter">{result.personalizedFeedingGuide?.dailyGrams}</p></div>
-              <div className="bg-white p-6 rounded-3xl shadow-sm border border-primary/10"><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">Per Meal</p><p className="text-3xl font-black text-primary tracking-tighter">{result.personalizedFeedingGuide?.perMealGrams}</p></div>
+              <div className="bg-white p-6 rounded-3xl shadow-sm border border-primary/10"><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">1일 권장량</p><p className="text-3xl font-black text-primary tracking-tighter">{result.personalizedFeedingGuide?.dailyGrams}</p></div>
+              <div className="bg-white p-6 rounded-3xl shadow-sm border border-primary/10"><p className="text-[10px] font-black text-muted-foreground uppercase mb-1">1회 급여량</p><p className="text-3xl font-black text-primary tracking-tighter">{result.personalizedFeedingGuide?.perMealGrams}</p></div>
             </div>
           )}
-          {category === 'treat' && (
-            <div className="bg-white p-10 rounded-3xl shadow-lg border-2 border-orange-500/20">
-              <p className="text-xs font-black text-orange-500 uppercase mb-2 tracking-widest">Max Limit Per Day</p>
-              <p className="text-5xl font-black text-orange-500 tracking-tighter">{result.personalizedFeedingGuide?.maxUnitsPerDay}</p>
+          {(category === 'treat' || category === 'supplement') && (
+            <div className="bg-white p-10 rounded-3xl shadow-lg border-2 border-accent/20">
+              <p className="text-xs font-black text-accent uppercase mb-2 tracking-widest">일일 최대 급여 제한</p>
+              <p className="text-5xl font-black text-accent tracking-tighter">{result.personalizedFeedingGuide?.maxUnitsPerDay || result.personalizedFeedingGuide?.dosage}</p>
+              <p className="text-xs font-bold text-muted-foreground mt-2">{result.personalizedFeedingGuide?.dosageUnit}</p>
             </div>
           )}
           <p className="text-sm font-bold text-primary/70 bg-white/50 py-3 rounded-2xl border border-dashed border-primary/20">
-            {result.personalizedFeedingGuide?.kcalInstruction || result.personalizedFeedingGuide?.ruleOf10PercentMsg}
+            {result.personalizedFeedingGuide?.kcalInstruction || result.personalizedFeedingGuide?.ruleOf10PercentMsg || result.personalizedFeedingGuide?.sideEffectWarning}
           </p>
         </CardContent>
       </Card>
     </div>
+  );
+
+  const renderRiskAndTransition = () => (
+    <Card className="border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden">
+      <CardContent className="p-10 space-y-8">
+        <h3 className="text-2xl font-black flex items-center gap-3"><Clock className="text-primary"/> 제품 교체 & 리스크 관리</h3>
+        
+        <div className="space-y-4">
+          <p className="text-sm font-black text-muted-foreground uppercase tracking-widest ml-1">7일 안전 급여 교체 스케줄</p>
+          <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
+            {result.riskAndTransition?.transitionSchedule?.map((item: any, i: number) => (
+              <div key={i} className="flex flex-col items-center p-3 bg-muted/20 rounded-2xl border border-muted/10">
+                <span className="text-[10px] font-black text-muted-foreground mb-1">{item.day}</span>
+                <span className="text-xs font-black text-primary">{item.ratio}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="p-6 bg-orange-500/5 rounded-3xl border border-orange-500/10 space-y-2">
+            <h4 className="font-black text-sm text-orange-600 flex items-center gap-2 mb-2"><AlertTriangle size={16}/> 알러지 & 성분 충돌</h4>
+            <p className="text-sm font-bold leading-relaxed">{result.riskAndTransition?.allergySupplementAlert}</p>
+          </div>
+          <div className="p-6 bg-success/5 rounded-3xl border border-success/10 space-y-2">
+            <h4 className="font-black text-sm text-success flex items-center gap-2 mb-2"><Activity size={16}/> 예상 배변 변화</h4>
+            <p className="text-sm font-bold leading-relaxed">{result.riskAndTransition?.expectedStoolChanges}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 
   return (
@@ -302,19 +338,27 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
             <h3 className="text-2xl font-black flex items-center gap-3"><Activity className="text-primary"/> 행동 및 섭취 예측</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center p-8 bg-muted/20 rounded-[2rem] border border-muted/10 group hover:border-primary/20 transition-all">
-                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-2">기호성 예측</p>
+                <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-2">입맛 적합도</p>
                 <p className="text-5xl font-black text-primary tracking-tighter">{result.behavioralForecast?.palatabilityIndex?.probability}%</p>
               </div>
               <div className="text-center p-8 bg-muted/20 rounded-[2rem] border border-muted/10">
                 <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-2">포만감 수준</p>
                 <p className="text-2xl font-black text-foreground">{result.behavioralForecast?.giAndSatiety?.level}</p>
               </div>
-              <div className="text-center p-8 bg-primary/5 rounded-[2rem] border border-primary/10">
-                <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-2">강제 음수량</p>
+              <div className="text-center p-8 bg-blue-500/5 rounded-[2rem] border border-blue-500/10">
+                <p className="text-[10px] font-black uppercase text-blue-600 tracking-widest mb-2">강제 음수량 가이드</p>
                 <p className="text-4xl font-black text-blue-600 tracking-tighter">{result.behavioralForecast?.mandatoryWaterIntake?.ml}</p>
               </div>
             </div>
+            <div className="p-6 bg-muted/10 rounded-2xl flex items-start gap-3">
+              <Info size={18} className="text-muted-foreground shrink-0 mt-0.5" />
+              <p className="text-xs font-medium text-muted-foreground leading-relaxed break-keep">
+                {result.behavioralForecast?.palatabilityIndex?.reason} {result.behavioralForecast?.mandatoryWaterIntake?.reason}
+              </p>
+            </div>
           </Card>
+
+          {renderRiskAndTransition()}
         </div>
       )}
 
@@ -324,7 +368,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
             <div className="flex items-center gap-5 text-left">
               <div className="p-5 bg-primary/10 rounded-[1.8rem] text-primary"><Microscope size={32} /></div>
               <div>
-                <h3 className="font-black text-2xl tracking-tight">전성분 100% 정밀 분석</h3>
+                <h3 className="font-black text-2xl tracking-tight">전성분 100% 정밀 감사</h3>
                 <p className="text-sm text-muted-foreground font-medium">안전성 및 영양 가치 신호등 시스템</p>
               </div>
             </div>

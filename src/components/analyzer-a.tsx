@@ -52,22 +52,33 @@ export default function AnalyzerA({ onBack, userData }: { onBack: () => void, us
 
     setIsScanning(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      // 기존 스트림이 있다면 중지 시도
+      if (videoRef.current?.srcObject) {
+        const oldStream = videoRef.current.srcObject as MediaStream;
+        oldStream.getTracks().forEach(track => track.stop());
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
+      
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
     } catch (error: any) {
       console.error('Camera Access Error:', error);
       let errorMsg = '카메라 접근 권한이 거부되었습니다.';
+      
       if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
         errorMsg = '카메라 사용 권한이 차단되었습니다. 브라우저 설정(주소창 옆 자물쇠 아이콘)에서 카메라 권한을 허용해 주세요.';
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        errorMsg = '카메라를 시작할 수 없습니다. 다른 앱이나 탭에서 카메라를 이미 사용 중인지 확인해 주세요.';
+      } else {
+        errorMsg = '하드웨어 오류로 카메라를 실행할 수 없습니다. 기기를 재부팅하거나 브라우저를 다시 실행해 보세요.';
       }
+      
       setCameraError(errorMsg);
-      toast({ 
-        variant: 'destructive', 
-        title: '카메라 권한 오류', 
-        description: errorMsg 
-      });
+      setIsScanning(true); // 에러 화면을 보여주기 위해 유지
     }
   };
 
@@ -75,6 +86,7 @@ export default function AnalyzerA({ onBack, userData }: { onBack: () => void, us
     if (videoRef.current?.srcObject) {
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
     }
     setIsScanning(false);
     setCameraError(null);

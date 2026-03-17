@@ -1,9 +1,11 @@
+
 'use server';
 
 /**
- * @fileOverview [Analyzer_B: Personalized Solution Engine v24.0]
+ * @fileOverview [Analyzer_B: Personalized Solution Engine v26.0]
  * - Focuses on Matching, Behavioral Forecast, and Transition Schedule.
  * - Ensures consistent results for consistent pet profiles.
+ * - Uses inclusive terminology (Food/Product instead of just feed).
  */
 
 import {ai} from '@/ai/genkit';
@@ -98,7 +100,8 @@ const analyzePersonalizedPrompt = ai.definePrompt({
 Target Language: {{{language}}}.
 
 ### [CRITICAL: CONSISTENCY RULE]
-For the same pet profile and product, you MUST produce identical scores and instructions. Use scientific formulas for feeding (RER/DER calculation).
+For the same pet profile and product, you MUST produce identical scores and instructions. Use scientific formulas for feeding (RER/DER calculation). 
+Avoid words like 'feed' (사료) when referring to treats or supplements. Use 'product' (제품) or 'food' (식품).
 
 ### [Mode B: Personalized Solution]
 1. [Matching]: Score (0-100) and specific vet opinion addressing {{{petProfile.name}}}.
@@ -107,8 +110,8 @@ For the same pet profile and product, you MUST produce identical scores and inst
    - Apply precise dosage for supplements.
 3. [Behavioral Forecast]:
    - palatabilityIndex: Calculate probability of eating based on aromatic coatings (fat, liver) and ingredients.
-   - giAndSatiety: Evaluate Glycemic Index based on carbohydrate sources (e.g., Oatmeal vs Tapioca).
-   - mandatoryWaterIntake: MANDATORY for cats and dry food users. Calculate ml based on grams of dry food.
+   - giAndSatiety: Evaluate Glycemic Index based on carbohydrate sources.
+   - mandatoryWaterIntake: MANDATORY for cats and dry food users. Calculate ml based on grams.
 4. [Risk & Transition]:
    - Identify allergy conflicts.
    - Provide a 7-day transition schedule (e.g., Day 1-2: 25% new, 75% old).

@@ -50,16 +50,33 @@ export default function AnalyzerB({ onBack, userData }: { onBack: () => void, us
 
     setIsBarcodeScanning(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      if (barcodeVideoRef.current) barcodeVideoRef.current.srcObject = stream;
+      // 기존 스트림 초기화
+      if (barcodeVideoRef.current?.srcObject) {
+        const oldStream = barcodeVideoRef.current.srcObject as MediaStream;
+        oldStream.getTracks().forEach(track => track.stop());
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
+      
+      if (barcodeVideoRef.current) {
+        barcodeVideoRef.current.srcObject = stream;
+      }
     } catch (e: any) {
       console.error('Barcode Camera Error:', e);
       let errorMsg = '카메라 권한이 거부되었습니다.';
+      
       if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
         errorMsg = '카메라 권한이 차단되었습니다. 브라우저 설정에서 카메라 사용을 허용해 주세요.';
+      } else if (e.name === 'NotReadableError' || e.name === 'TrackStartError') {
+        errorMsg = '카메라를 시작할 수 없습니다. 다른 앱이나 탭에서 카메라를 이미 사용 중인지 확인해 주세요.';
+      } else {
+        errorMsg = '카메라 하드웨어에 접근할 수 없습니다. 재시도해 보세요.';
       }
+      
       setCameraError(errorMsg);
-      toast({ variant: 'destructive', title: '카메라 권한 오류', description: errorMsg });
+      setIsBarcodeScanning(true);
     }
   };
 
@@ -67,6 +84,7 @@ export default function AnalyzerB({ onBack, userData }: { onBack: () => void, us
     if (barcodeVideoRef.current?.srcObject) {
       const stream = barcodeVideoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach(track => track.stop());
+      barcodeVideoRef.current.srcObject = null;
     }
     setIsBarcodeScanning(false);
     setCameraError(null);
@@ -171,7 +189,7 @@ export default function AnalyzerB({ onBack, userData }: { onBack: () => void, us
                       {cameraError ? (
                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted p-8 text-center space-y-4">
                           <AlertTriangle className="text-destructive h-12 w-12" />
-                          <p className="font-black text-foreground break-keep">{cameraError}</p>
+                          <p className="font-black text-foreground break-keep px-4">{cameraError}</p>
                           <Button onClick={stopBarcodeScan} variant="outline" className="rounded-full">닫기</Button>
                         </div>
                       ) : (
