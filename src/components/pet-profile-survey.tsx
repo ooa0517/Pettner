@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -10,42 +9,30 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { 
-  Activity, HeartPulse, ArrowRight, ArrowLeft, Dog, Cat, 
-  Calendar, Footprints, Droplets, Loader2, Scale,
-  AlertTriangle, Home, Clock, Pill, Edit3
+  Dog, Cat, Scale, HeartPulse, ArrowRight, ArrowLeft, Loader2, CheckCircle2,
+  AlertTriangle, Target, Cookie, Footprints, Utensils
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-
-const BCS_DESCRIPTIONS: Record<string, string> = {
-  '1': '매우 마름 (지방 거의 없음)',
-  '2': '마름 (지방 적음)',
-  '3': '이상적 (적당한 체형)',
-  '4': '통통함 (약간의 과체중)',
-  '5': '비만 (심한 과체중)',
-};
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const petProfileSchema = z.object({
-  petType: z.enum(['dog', 'cat']),
   name: z.string().min(1, '이름을 입력해주세요'),
-  gender: z.enum(['male', 'female', 'unknown']).default('unknown'),
-  breed: z.string().default('믹스/기타'),
-  age: z.number().min(0).optional().default(0),
-  weight: z.number().min(0).optional().default(0),
-  neutered: z.enum(['yes', 'no', 'unknown']).default('unknown'),
-  bcs: z.string().default('3'),
-  activityLevel: z.enum(['LOW', 'NORMAL', 'HIGH', 'VERY_HIGH', 'UNKNOWN']).default('UNKNOWN'),
-  walkingTime: z.string().default('UNKNOWN'),
-  livingEnvironment: z.enum(['INDOOR', 'OUTDOOR', 'BOTH', 'UNKNOWN']).default('UNKNOWN'),
-  healthConditions: z.array(z.string()).default([]),
-  customHealthCondition: z.string().optional(),
-  allergies: z.array(z.string()).default([]),
-  customAllergy: z.string().optional(),
-  waterIntake: z.enum(['LOW', 'NORMAL', 'HIGH', 'UNKNOWN']).default('UNKNOWN'),
-  stoolCondition: z.enum(['GOOD', 'SOFT', 'HARD', 'DIARRHEA', 'UNKNOWN']).default('UNKNOWN'),
-  medications: z.string().default(''),
+  petType: z.enum(['dog', 'cat']),
+  breed: z.string().min(1, '품종을 입력해주세요'),
+  ageYears: z.number().min(0).max(20),
+  ageMonths: z.number().min(0).max(11),
+  gender: z.enum(['male', 'female']),
+  isNeutered: z.boolean().default(false),
+  weight: z.number().min(0.1),
+  bcs: z.enum(['THIN', 'IDEAL', 'OVERWEIGHT', 'OBESE']).default('IDEAL'),
+  stoolStatus: z.enum(['HARD', 'IDEAL', 'SOFT']).default('IDEAL'),
+  eatingHabit: z.enum(['FAST', 'NORMAL', 'SLOW']).default('NORMAL'),
+  usagePurpose: z.enum(['DIET', 'SKIN', 'ODOR', 'FACTCHECK']).default('FACTCHECK'),
+  medications: z.string().optional(),
 });
 
 type PetProfileValues = z.infer<typeof petProfileSchema>;
@@ -61,330 +48,165 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
     resolver: zodResolver(petProfileSchema),
     defaultValues: {
       petType: 'dog',
-      gender: 'unknown',
-      neutered: 'unknown',
-      healthConditions: [],
-      customHealthCondition: '',
-      allergies: [],
-      customAllergy: '',
-      activityLevel: 'UNKNOWN',
-      walkingTime: 'UNKNOWN',
-      livingEnvironment: 'UNKNOWN',
-      bcs: '3',
-      waterIntake: 'UNKNOWN',
-      stoolCondition: 'UNKNOWN',
-      medications: '',
-      breed: '',
+      ageYears: 1,
+      ageMonths: 0,
+      gender: 'male',
+      isNeutered: false,
+      weight: 5.0,
+      bcs: 'IDEAL',
+      stoolStatus: 'IDEAL',
+      eatingHabit: 'NORMAL',
+      usagePurpose: 'FACTCHECK',
     }
   });
 
-  const selectedConditions = watch('healthConditions');
-  const selectedAllergies = watch('allergies');
-  const selectedPetType = watch('petType');
-  const currentActivity = watch('activityLevel');
-  const currentWalking = watch('walkingTime');
-  const currentEnv = watch('livingEnvironment');
-  const currentBCS = watch('bcs');
-  const currentNeutered = watch('neutered');
-  const currentGender = watch('gender');
-
-  const dogConditions = ['슬개골 탈구', '관절염', '피부 알러지', '눈물 자국', '심장 질환', '소화 불량', '췌장염', '신장 질환', '기타(직접 입력)'];
-  const catConditions = ['방광염/요로결석', '신장 질환', '헤어볼', '구강 건강', '심부전', '피부 건강', '당뇨', '기타(직접 입력)'];
-  const allergyList = ['닭고기', '소고기', '돼지고기', '연어', '곡물(그레인)', '계란', '유제품', '기타(직접 입력)', '없음/모름'];
-
-  const conditions = selectedPetType === 'dog' ? dogConditions : catConditions;
+  const selectedType = watch('petType');
+  const ageYears = watch('ageYears');
+  const ageMonths = watch('ageMonths');
+  const weight = watch('weight');
+  const gender = watch('gender');
+  const isNeutered = watch('isNeutered');
+  const bcs = watch('bcs');
+  const stool = watch('stoolStatus');
+  const habit = watch('eatingHabit');
+  const purpose = watch('usagePurpose');
 
   const onSubmit = async (data: PetProfileValues) => {
-    if (!user || !db) {
-      toast({ variant: "destructive", title: "로그인 필요", description: "프로필을 저장하려면 로그인이 필요합니다." });
-      return;
-    }
-
+    if (!user || !db) return;
     setIsSaving(true);
     try {
-      const petsRef = collection(db, 'users', user.uid, 'pets');
-      
-      // 기타 입력값 합치기
-      const finalHealthConditions = [...data.healthConditions];
-      if (data.customHealthCondition && finalHealthConditions.includes('기타(직접 입력)')) {
-        finalHealthConditions.push(`기타: ${data.customHealthCondition}`);
-      }
-      
-      const finalAllergies = [...data.allergies];
-      if (data.customAllergy && finalAllergies.includes('기타(직접 입력)')) {
-        finalAllergies.push(`기타: ${data.customAllergy}`);
-      }
-
-      await addDoc(petsRef, {
+      await addDoc(collection(db, 'users', user.uid, 'pets'), {
         ...data,
-        healthConditions: finalHealthConditions,
-        allergies: finalAllergies,
         updatedAt: serverTimestamp(),
       });
       toast({ title: "프로필 등록 완료" });
       onComplete();
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
       toast({ variant: "destructive", title: "저장 실패" });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const nextStep = () => setStep(s => s + 1);
-  const prevStep = () => setStep(s => s - 1);
-
   return (
     <Card className="w-full max-w-2xl mx-auto shadow-none border-none bg-white rounded-none overflow-hidden">
-      <CardHeader className="text-center bg-primary/5 p-8 border-b">
-        <div className="flex justify-center mb-6">
-          {[1, 2, 3, 4].map(i => (
-            <React.Fragment key={i}>
-              <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all", step === i ? "bg-primary text-white scale-110" : "bg-muted text-muted-foreground")}>
-                {i}
-              </div>
-              {i < 4 && <div className="w-6 h-0.5 bg-muted self-center mx-1" />}
-            </React.Fragment>
+      <CardHeader className="text-center bg-primary/5 p-10 border-b">
+        <div className="flex justify-center mb-6 gap-2">
+          {[1, 2].map(i => (
+            <div key={i} className={cn("w-12 h-2 rounded-full transition-all", step >= i ? "bg-primary" : "bg-muted")} />
           ))}
         </div>
-        <CardTitle className="text-2xl font-black">초정밀 메디컬 프로필 V19.2</CardTitle>
-        <CardDescription>아이의 생활 습관과 건강 상태를 꼼꼼히 체크합니다.</CardDescription>
+        <CardTitle className="text-3xl font-black">15초 컷 프로필 등록</CardTitle>
+        <CardDescription className="text-base font-medium">정밀 분석을 위해 최소한의 정보만 받습니다.</CardDescription>
       </CardHeader>
 
       <form onSubmit={handleSubmit(onSubmit)}>
-        <CardContent className="p-8 space-y-8 min-h-[450px]">
-          {step === 1 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div onClick={() => setValue('petType', 'dog')} className={cn("flex flex-col items-center p-6 border-4 rounded-3xl cursor-pointer transition-all", watch('petType') === 'dog' ? "border-primary bg-primary/5" : "border-muted opacity-40")}>
-                  <Dog size={40} className="mb-2"/> 
-                  <span className="font-black">강아지</span>
-                </div>
-                <div onClick={() => setValue('petType', 'cat')} className={cn("flex flex-col items-center p-6 border-4 rounded-3xl cursor-pointer transition-all", watch('petType') === 'cat' ? "border-primary bg-primary/5" : "border-muted opacity-40")}>
-                  <Cat size={40} className="mb-2"/> 
-                  <span className="font-black">고양이</span>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="font-bold ml-1">이름</Label>
-                  <Input placeholder="아이 이름" {...register('name')} className="rounded-xl h-12 bg-muted/20 border-none" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-bold ml-1">품종</Label>
-                  <Input placeholder="예: 말티푸" {...register('breed')} className="rounded-xl h-12 bg-muted/20 border-none" />
-                </div>
+        <CardContent className="p-10 space-y-10 min-h-[500px]">
+          {step === 1 ? (
+            <div className="space-y-8 animate-in fade-in slide-in-from-right-5">
+              <div className="space-y-4">
+                <Label className="font-black text-lg ml-1">아이 이름</Label>
+                <Input placeholder="이름 입력" {...register('name')} className="h-16 rounded-2xl bg-muted/20 border-none px-6 text-xl font-bold" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-4">
-                  <Label className="font-bold ml-1">성별</Label>
-                  <div className="flex gap-2">
-                    {[
-                      { id: 'male', label: '남아' },
-                      { id: 'female', label: '여아' }
-                    ].map(v => (
-                      <div key={v.id} onClick={() => setValue('gender', v.id as any)} className={cn("flex-1 text-center py-3 border-2 rounded-xl font-bold cursor-pointer transition-all", currentGender === v.id ? "border-primary bg-primary/5 text-primary" : "border-muted text-muted-foreground")}>
-                        {v.label}
-                      </div>
-                    ))}
-                  </div>
+                <div onClick={() => setValue('petType', 'dog')} className={cn("flex flex-col items-center p-8 border-4 rounded-[2.5rem] cursor-pointer transition-all gap-3", selectedType === 'dog' ? "border-primary bg-primary/5 shadow-xl" : "border-muted opacity-40")}>
+                  <Dog size={48} className={selectedType === 'dog' ? "text-primary" : ""} />
+                  <span className="font-black text-lg">강아지</span>
                 </div>
-                <div className="space-y-4">
-                  <Label className="font-bold ml-1">중성화</Label>
-                  <div className="flex gap-2">
-                    {[
-                      { id: 'yes', label: '완료' },
-                      { id: 'no', label: '미완' }
-                    ].map(v => (
-                      <div key={v.id} onClick={() => setValue('neutered', v.id as any)} className={cn("flex-1 text-center py-3 border-2 rounded-xl font-bold cursor-pointer transition-all", currentNeutered === v.id ? "border-primary bg-primary/5 text-primary" : "border-muted text-muted-foreground")}>
-                        {v.label}
-                      </div>
-                    ))}
-                  </div>
+                <div onClick={() => setValue('petType', 'cat')} className={cn("flex flex-col items-center p-8 border-4 rounded-[2.5rem] cursor-pointer transition-all gap-3", selectedType === 'cat' ? "border-primary bg-primary/5 shadow-xl" : "border-muted opacity-40")}>
+                  <Cat size={48} className={selectedType === 'cat' ? "text-primary" : ""} />
+                  <span className="font-black text-lg">고양이</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="font-bold ml-1 text-xs">나이 (살)</Label>
-                  <Input type="number" step="0.1" {...register('age', { valueAsNumber: true })} className="rounded-xl h-12 bg-muted/20 border-none" />
+              <div className="space-y-4">
+                <Label className="font-black text-lg ml-1">품종 검색</Label>
+                <Input placeholder="예: 말티즈, 코리안숏헤어" {...register('breed')} className="h-14 rounded-2xl bg-muted/20 border-none px-6 font-bold" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <Label className="font-black text-sm ml-1">나이 ({ageYears}년 {ageMonths}개월)</Label>
+                  <Slider value={[ageYears]} onValueChange={([v]) => setValue('ageYears', v)} max={20} step={1} className="py-4" />
+                  <Slider value={[ageMonths]} onValueChange={([v]) => setValue('ageMonths', v)} max={11} step={1} className="py-4" />
                 </div>
-                <div className="space-y-2">
-                  <Label className="font-bold ml-1 text-xs">체중 (kg)</Label>
-                  <Input type="number" step="0.1" {...register('weight', { valueAsNumber: true })} className="rounded-xl h-12 bg-muted/20 border-none" />
+                <div className="space-y-4">
+                  <Label className="font-black text-sm ml-1">몸무게 ({weight}kg)</Label>
+                  <Slider value={[weight]} onValueChange={([v]) => setValue('weight', v)} max={50} step={0.1} className="py-4" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-6 bg-muted/20 rounded-3xl">
+                <div className="flex gap-4">
+                  <Button type="button" onClick={() => setValue('gender', 'male')} variant={gender === 'male' ? 'default' : 'outline'} className="rounded-xl font-bold">남아</Button>
+                  <Button type="button" onClick={() => setValue('gender', 'female')} variant={gender === 'female' ? 'default' : 'outline'} className="rounded-xl font-bold">여아</Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox id="neutered" checked={isNeutered} onCheckedChange={(v) => setValue('isNeutered', !!v)} className="w-6 h-6 rounded-lg" />
+                  <Label htmlFor="neutered" className="font-black text-sm cursor-pointer">중성화 완료</Label>
                 </div>
               </div>
             </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-5">
+          ) : (
+            <div className="space-y-10 animate-in fade-in slide-in-from-right-5">
               <div className="space-y-4">
-                <Label className="font-black text-lg flex items-center gap-2">
-                  <Clock size={20} className="text-primary" /> 일일 평균 산책 시간
-                </Label>
-                <div className="grid grid-cols-2 gap-2">
+                <Label className="font-black text-xl flex items-center gap-2"><Scale className="text-primary"/> 체형(BCS) 선택</Label>
+                <div className="grid grid-cols-4 gap-2">
                   {[
-                    { id: 'NONE', label: '안함' },
-                    { id: 'UNDER_30', label: '30분 미만' },
-                    { id: '30_60', label: '30분 ~ 1시간' },
-                    { id: 'OVER_60', label: '1시간 이상' },
-                    { id: 'UNKNOWN', label: '모름/비정기적' }
-                  ].map(v => (
-                    <div key={v.id} onClick={() => setValue('walkingTime', v.id)} className={cn("p-4 border-2 rounded-2xl cursor-pointer text-center font-bold text-sm", currentWalking === v.id ? "border-primary bg-primary/5 text-primary" : "border-muted text-muted-foreground")}>
-                      {v.label}
+                    { id: 'THIN', label: '마름' },
+                    { id: 'IDEAL', label: '적당함' },
+                    { id: 'OVERWEIGHT', label: '통통함' },
+                    { id: 'OBESE', label: '뚱뚱함' }
+                  ].map(item => (
+                    <div key={item.id} onClick={() => setValue('bcs', item.id as any)} className={cn("p-4 border-2 rounded-2xl cursor-pointer text-center transition-all", bcs === item.id ? "border-primary bg-primary/5" : "border-muted opacity-60")}>
+                      <span className="font-black text-xs">{item.label}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-4">
-                <Label className="font-black text-lg flex items-center gap-2">
-                  <Home size={20} className="text-primary" /> 생활 환경
-                </Label>
+                <Label className="font-black text-xl flex items-center gap-2"><Footprints className="text-primary"/> 평소 배변 상태</Label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { id: 'INDOOR', label: '실내 전용' },
-                    { id: 'OUTDOOR', label: '실외/마당' },
-                    { id: 'BOTH', label: '실내외 병행' }
-                  ].map(v => (
-                    <div key={v.id} onClick={() => setValue('livingEnvironment', v.id as any)} className={cn("p-3 border-2 rounded-xl cursor-pointer text-center font-bold text-xs", currentEnv === v.id ? "border-primary bg-primary/5 text-primary" : "border-muted text-muted-foreground")}>
-                      {v.label}
+                    { id: 'HARD', label: '딱딱한 토끼똥' },
+                    { id: 'IDEAL', label: '촉촉한 맛동산' },
+                    { id: 'SOFT', label: '묽은 변·설사' }
+                  ].map(item => (
+                    <div key={item.id} onClick={() => setValue('stoolStatus', item.id as any)} className={cn("p-4 border-2 rounded-2xl cursor-pointer text-center transition-all", stool === item.id ? "border-primary bg-primary/5" : "border-muted opacity-60")}>
+                      <span className="font-black text-xs">{item.label}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-4">
-                <Label className="font-black text-lg flex items-center gap-2">
-                  <Scale size={20} className="text-primary" /> BCS (체형 지수)
-                </Label>
-                <div className="space-y-3">
-                  <div className="flex gap-2">
-                    {['1', '2', '3', '4', '5'].map(v => (
-                      <div key={v} onClick={() => setValue('bcs', v)} className={cn("flex-1 h-12 border-2 rounded-xl flex items-center justify-center font-black cursor-pointer transition-all", currentBCS === v ? "border-primary bg-primary text-white" : "border-muted text-muted-foreground")}>
-                        {v}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
-                    <p className="text-sm font-black text-primary text-center">
-                      {currentBCS ? BCS_DESCRIPTIONS[currentBCS] : '체형을 선택해주세요'}
-                    </p>
-                  </div>
-                </div>
-                <p className="text-[10px] text-muted-foreground text-center font-medium">1: 마름 / 3: 이상적 / 5: 비만</p>
-              </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-5">
-              <div className="space-y-4">
-                <Label className="font-black text-lg flex items-center gap-2">
-                  <AlertTriangle size={20} className="text-destructive" /> 알러지 및 주의 성분
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {allergyList.map(a => (
-                    <div key={a} onClick={() => {
-                      const cur = selectedAllergies;
-                      if (a === '없음/모름') {
-                        setValue('allergies', ['없음/모름']);
-                        return;
-                      }
-                      const filtered = cur.filter(x => x !== '없음/모름');
-                      setValue('allergies', filtered.includes(a) ? filtered.filter(x => x !== a) : [...filtered, a]);
-                    }} className={cn("px-4 py-2 rounded-full text-xs font-bold border-2 cursor-pointer transition-all", selectedAllergies.includes(a) ? "bg-destructive text-white border-destructive" : "bg-white border-muted text-muted-foreground")}>
-                      {a}
-                    </div>
-                  ))}
-                </div>
-                {selectedAllergies.includes('기타(직접 입력)') && (
-                  <div className="animate-in slide-in-from-top-2">
-                    <Label className="text-xs font-bold text-destructive mb-1 block ml-2">상세 알러지 성분 입력</Label>
-                    <Input 
-                      placeholder="예: 오리고기, 칠면조, 특정 과일 등" 
-                      {...register('customAllergy')} 
-                      className="rounded-xl h-11 bg-muted/20 border-none"
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-4">
-                <Label className="font-black text-lg flex items-center gap-2">
-                  <HeartPulse size={20} className="text-primary" /> 주요 건강 고민
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {conditions.map(c => (
-                    <div key={c} onClick={() => {
-                      const cur = selectedConditions;
-                      setValue('healthConditions', cur.includes(c) ? cur.filter(x => x !== c) : [...cur, c]);
-                    }} className={cn("px-4 py-2 rounded-full text-xs font-bold border-2 cursor-pointer transition-all", selectedConditions.includes(c) ? "bg-primary text-white border-primary" : "bg-white border-muted text-muted-foreground")}>
-                      {c}
-                    </div>
-                  ))}
-                </div>
-                {selectedConditions.includes('기타(직접 입력)') && (
-                  <div className="animate-in slide-in-from-top-2">
-                    <Label className="text-xs font-bold text-primary mb-1 block ml-2">상세 건강 상태 입력</Label>
-                    <Input 
-                      placeholder="예: 쿠싱 증후군, 특정 수술 이력 등" 
-                      {...register('customHealthCondition')} 
-                      className="rounded-xl h-11 bg-muted/20 border-none"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="space-y-6 animate-in fade-in slide-in-from-right-5">
-              <div className="space-y-4">
-                <Label className="font-black text-lg flex items-center gap-2">
-                  <Droplets size={20} className="text-blue-500" /> 평소 음수량
-                </Label>
-                <div className="flex gap-2">
+                <Label className="font-black text-xl flex items-center gap-2"><Utensils className="text-primary"/> 식습관</Label>
+                <div className="grid grid-cols-3 gap-2">
                   {[
-                    { id: 'LOW', label: '매우 적음' },
-                    { id: 'NORMAL', label: '보통' },
-                    { id: 'HIGH', label: '많음' }
-                  ].map(v => (
-                    <div key={v.id} onClick={() => setValue('waterIntake', v.id as any)} className={cn("flex-1 text-center py-3 border-2 rounded-xl font-bold text-xs cursor-pointer", watch('waterIntake') === v.id ? "bg-blue-500 text-white border-blue-500" : "bg-white border-muted")}>
-                      {v.label}
+                    { id: 'FAST', label: '진공청소기' },
+                    { id: 'NORMAL', label: '오독오독' },
+                    { id: 'SLOW', label: '깨작거림' }
+                  ].map(item => (
+                    <div key={item.id} onClick={() => setValue('eatingHabit', item.id as any)} className={cn("p-4 border-2 rounded-2xl cursor-pointer text-center transition-all", habit === item.id ? "border-primary bg-primary/5" : "border-muted opacity-60")}>
+                      <span className="font-black text-xs">{item.label}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="font-black text-lg flex items-center gap-2">
-                  <Pill size={20} className="text-amber-600" /> 복용 중인 약물 / 영양제
-                </Label>
-                <Input 
-                  placeholder="예: 심장약, 유산균, 관절 영양제 등" 
-                  {...register('medications')} 
-                  className="rounded-xl h-16 bg-muted/20 border-none px-4" 
-                />
-                <p className="text-[11px] text-muted-foreground ml-1">AI가 성분과 약물 간의 상충 여부를 검토합니다.</p>
-              </div>
-
               <div className="space-y-4">
-                <Label className="font-black text-lg flex items-center gap-2">
-                  <Footprints size={20} className="text-amber-800" /> 배변 상태
-                </Label>
+                <Label className="font-black text-xl flex items-center gap-2"><Target className="text-primary"/> 앱 사용 목적</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {[
-                    { id: 'GOOD', label: '건강함' },
-                    { id: 'SOFT', label: '묽음' },
-                    { id: 'HARD', label: '딱딱함' },
-                    { id: 'DIARRHEA', label: '설사' }
-                  ].map(v => (
-                    <div key={v.id} onClick={() => setValue('stoolCondition', v.id as any)} className={cn("text-center py-2 rounded-xl text-xs font-bold border-2 cursor-pointer", watch('stoolCondition') === v.id ? "bg-amber-800 text-white border-amber-800" : "bg-white border-muted")}>
-                      {v.label}
+                    { id: 'DIET', label: '다이어트' },
+                    { id: 'SKIN', label: '눈물·피부 개선' },
+                    { id: 'ODOR', label: '냄새 완화' },
+                    { id: 'FACTCHECK', label: '성분 팩트체크' }
+                  ].map(item => (
+                    <div key={item.id} onClick={() => setValue('usagePurpose', item.id as any)} className={cn("p-5 border-2 rounded-3xl cursor-pointer text-center transition-all", purpose === item.id ? "border-primary bg-primary/5" : "border-muted opacity-60")}>
+                      <span className="font-black text-sm">{item.label}</span>
                     </div>
                   ))}
                 </div>
@@ -393,19 +215,13 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
           )}
         </CardContent>
 
-        <CardFooter className="flex justify-between border-t p-8 bg-muted/5">
-          {step > 1 ? (
-            <Button type="button" variant="ghost" onClick={prevStep} className="h-14 px-8 rounded-2xl font-bold">이전</Button>
-          ) : <div/>}
-          
-          {step < 4 ? (
-            <Button type="button" onClick={nextStep} className="h-14 px-10 rounded-2xl font-black bg-primary">다음 단계</Button>
-          ) : (
-            <Button type="submit" disabled={isSaving} className="h-14 px-10 rounded-2xl font-black bg-primary shadow-lg shadow-primary/20">
-              {isSaving && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
-              프로필 완성하기
-            </Button>
+        <CardFooter className="p-10 bg-muted/5 border-t flex gap-4">
+          {step === 2 && (
+            <Button type="button" variant="outline" onClick={() => setStep(1)} className="h-20 px-8 rounded-3xl font-bold">이전</Button>
           )}
+          <Button type="button" onClick={() => step === 1 ? setStep(2) : handleSubmit(onSubmit)()} disabled={isSaving} className="flex-1 h-20 rounded-3xl text-xl font-black shadow-xl shadow-primary/20">
+            {isSaving ? <Loader2 className="animate-spin" /> : step === 1 ? <>다음 단계로 <ArrowRight className="ml-2" /></> : "프로필 완성하기"}
+          </Button>
         </CardFooter>
       </form>
     </Card>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { collection, addDoc, serverTimestamp, type Firestore } from 'firebase/firestore';
@@ -7,12 +6,11 @@ import { FirestorePermissionError } from '@/firebase/errors';
 
 /**
  * 분석 결과를 Firebase Firestore에 저장합니다.
- * A/B 타입 구분을 지원합니다.
+ * 통합 마스터 타입(MASTER)을 지원합니다.
  */
 export function saveAnalysisToHistory(
     db: Firestore, 
     userId: string, 
-    type: 'A' | 'B',
     userInput: any, 
     analysisOutput: any
 ) {
@@ -21,7 +19,7 @@ export function saveAnalysisToHistory(
   const historyCollectionRef = collection(db, 'users', userId, 'analysisHistory');
   
   const dataToSave = {
-    type,
+    type: 'MASTER',
     userInput,
     analysisOutput,
     createdAt: serverTimestamp(),

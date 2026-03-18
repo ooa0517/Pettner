@@ -1,11 +1,9 @@
-
 import { config } from 'dotenv';
 config();
 
 /**
  * Pettner AI Development Entry
- * - Imports specialized forensic engines for Type A and Type B analysis.
+ * - Imports the Unified 1:1 Master Engine.
  */
-import '@/ai/flows/analyze-product-only.ts';
-import '@/ai/flows/analyze-personalized.ts';
+import '@/ai/flows/analyze-master.ts';
 import '@/ai/flows/summarize-ingredient-analysis.ts';

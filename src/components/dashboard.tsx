@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useEffect } from 'react';
-import { Microscope, Target, ArrowRight, History, PlusCircle, Crown, Zap, ChevronRight, Cat, Dog, HeartPulse, FileSearch } from 'lucide-react';
+import { Microscope, ArrowRight, History, PlusCircle, Crown, Zap, ChevronRight, Cat, Dog, HeartPulse, FileSearch, Sparkles, Target } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,11 +12,10 @@ import { collection, query, orderBy, limit, doc, updateDoc } from 'firebase/fire
 
 interface DashboardProps {
   userData: any;
-  onSelectA: () => void;
-  onSelectB: () => void;
+  onStartAnalysis: () => void;
 }
 
-export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardProps) {
+export default function Dashboard({ userData, onStartAnalysis }: DashboardProps) {
   const router = useRouter();
   const { user } = useUser();
   const db = useFirestore();
@@ -79,42 +77,33 @@ export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardP
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="relative group">
         <Card 
-          onClick={onSelectA}
-          className="group cursor-pointer transition-all hover:scale-[1.02] border-none shadow-xl rounded-[2.5rem] bg-white overflow-hidden"
+          onClick={onStartAnalysis}
+          className="group cursor-pointer transition-all hover:scale-[1.01] active:scale-95 border-none shadow-2xl rounded-[3.5rem] bg-primary text-white overflow-hidden"
         >
-          <CardContent className="p-8 flex items-center gap-6">
-            <div className="p-5 bg-muted rounded-[1.5rem] text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-              <Microscope size={32} />
+          <CardContent className="p-12 md:p-16 flex flex-col md:flex-row items-center gap-10">
+            <div className="p-8 bg-white/20 rounded-[2.5rem] text-white backdrop-blur-xl border border-white/30 shadow-inner">
+              <Target size={64} className="animate-pulse" />
             </div>
-            <div className="flex-1 space-y-1">
-              <h3 className="text-xl font-black">제품 객관적 감사</h3>
-              <p className="text-sm text-muted-foreground font-medium">먹거리의 팩트 스펙만 빠르게 확인</p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
-              <ArrowRight size={20} />
+            <div className="flex-1 space-y-4 text-center md:text-left">
+              <Badge className="bg-white/20 text-white border-none px-4 py-1.5 rounded-full font-black text-xs tracking-widest uppercase">
+                Veterinary 1:1 Master
+              </Badge>
+              <h3 className="text-4xl md:text-5xl font-black tracking-tight leading-none">우리 아이 맞춤 진단</h3>
+              <p className="text-xl text-white/80 font-medium leading-relaxed">
+                아이의 건강 상태와 식품 성분을 1:1로 매칭하여<br className="hidden md:block"/>
+                수의사가 설계한 정밀 처방 리포트를 생성합니다.
+              </p>
+              <div className="flex items-center gap-3 font-black text-2xl pt-2">
+                분석 시작하기 <ArrowRight className="group-hover:translate-x-2 transition-transform" />
+              </div>
             </div>
           </CardContent>
         </Card>
-
-        <Card 
-          onClick={onSelectB}
-          className="group cursor-pointer transition-all hover:scale-[1.02] border-none shadow-xl rounded-[2.5rem] bg-primary text-white overflow-hidden"
-        >
-          <CardContent className="p-8 flex items-center gap-6">
-            <div className="p-5 bg-white/20 rounded-[1.5rem] text-white">
-              <Target size={32} />
-            </div>
-            <div className="flex-1 space-y-1">
-              <h3 className="text-xl font-black">1:1 밀착 맞춤 진단</h3>
-              <p className="text-sm text-white/70 font-medium">아이의 상태에 따른 정밀 처방전</p>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-white text-primary flex items-center justify-center group-hover:scale-110 transition-all">
-              <ArrowRight size={20} />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="absolute -top-4 -right-4 bg-amber-500 text-white p-4 rounded-3xl shadow-xl transform rotate-12 animate-bounce">
+          <Sparkles />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -131,14 +120,14 @@ export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardP
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {pets && pets.length > 0 ? (
               pets.map(pet => (
-                <Card key={pet.id} className="border-none shadow-md rounded-[2rem] bg-white overflow-hidden">
+                <Card key={pet.id} className="border-none shadow-md rounded-[2rem] bg-white overflow-hidden hover:shadow-xl transition-all cursor-pointer" onClick={onStartAnalysis}>
                   <CardContent className="p-6 flex items-center gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center text-primary">
                       {pet.petType === 'cat' ? <Cat size={28} /> : <Dog size={28} />}
                     </div>
                     <div>
                       <p className="font-black text-lg">{pet.name}</p>
-                      <p className="text-xs text-muted-foreground font-bold">{pet.breed} · {pet.age}살</p>
+                      <p className="text-xs text-muted-foreground font-bold">{pet.breed} · {pet.ageYears}살 {pet.ageMonths}개월</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -180,11 +169,11 @@ export default function Dashboard({ userData, onSelectA, onSelectB }: DashboardP
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-8 rounded-full bg-primary/20 group-hover:bg-primary transition-colors" />
                       <div>
-                        <p className="font-bold text-sm truncate max-w-[120px]">{item.analysisOutput?.productIdentity?.name || '식품 분석'}</p>
+                        <p className="font-bold text-sm truncate max-w-[120px]">{item.userInput?.productInfo?.productName || '1:1 진단 리포트'}</p>
                         <p className="text-[10px] text-muted-foreground font-medium">{item.createdAt?.toDate().toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-[10px] font-black">{item.type === 'A' ? 'Type A' : 'Type B'}</Badge>
+                    <Badge variant="outline" className="text-[10px] font-black">MASTER</Badge>
                   </CardContent>
                 </Card>
               ))

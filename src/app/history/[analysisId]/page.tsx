@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,7 +5,6 @@ import { useUser, useFirestore } from '@/firebase';
 import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, Timestamp } from 'firebase/firestore';
 import { Loader2, ArrowLeft, Share2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import AnalysisResult from '@/components/analysis-result';
 import { useLanguage } from '@/contexts/language-context';
 import { Button } from '@/components/ui/button';
@@ -14,7 +12,7 @@ import Link from 'next/link';
 
 type AnalysisRecord = {
   id: string;
-  type: 'A' | 'B';
+  type: string;
   createdAt: Timestamp;
   analysisOutput: any;
   userInput: any;
@@ -83,10 +81,8 @@ export default function HistoryDetailPage() {
             <div className="p-6 bg-rose-500/10 rounded-full w-fit mx-auto text-rose-500">
               <Share2 size={48} />
             </div>
-            <div className="space-y-2">
-              <h2 className="text-2xl font-black">접근 오류</h2>
-              <p className="text-muted-foreground font-medium">{error || "기록이 존재하지 않습니다."}</p>
-            </div>
+            <h2 className="text-2xl font-black">접근 오류</h2>
+            <p className="text-muted-foreground font-medium">{error || "기록이 존재하지 않습니다."}</p>
             <Button asChild className="w-full h-14 rounded-2xl font-black">
               <Link href="/history">목록으로 돌아가기</Link>
             </Button>
@@ -95,13 +91,6 @@ export default function HistoryDetailPage() {
       </div>
     );
   }
-
-  // AnalysisResult 컴포넌트가 기대하는 input 형식으로 변환
-  const inputForComponent = {
-    ...record.userInput,
-    analysisMode: record.type === 'A' ? 'general' : 'custom',
-    language: language,
-  };
 
   return (
     <div className="flex-grow p-4 md:p-8 bg-muted/20 min-h-screen">
@@ -118,7 +107,7 @@ export default function HistoryDetailPage() {
         
         <AnalysisResult 
           result={record.analysisOutput} 
-          input={inputForComponent}
+          input={{ ...record.userInput, language }}
           onReset={() => router.push('/')}
           isPublicView={true}
         />
