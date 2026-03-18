@@ -1,20 +1,38 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import SplashScreen from '@/components/splash-screen';
-import AuthScreen from '@/components/auth-screen';
-import Dashboard from '@/components/dashboard';
-import AnalyzerA from '@/components/analyzer-a';
-import AnalyzerB from '@/components/analyzer-b';
 import { Loader2 } from 'lucide-react';
 import { doc } from 'firebase/firestore';
 
 /**
- * Pettner Root Controller v26.0
+ * Pettner Root Controller v27.3
+ * - Dynamic Import applied to resolve ChunkLoadError and optimize bundle size.
  * - Flow: Splash -> Authentication Check -> Dashboard -> Analysis Rooms
- * - Strict Mode Decoupling (Analyzer_A / Analyzer_B)
  */
+
+// 중량 컴포넌트들을 동적으로 로드하여 초기 app/page 청크 크기를 줄입니다.
+const AuthScreen = dynamic(() => import('@/components/auth-screen'), { 
+  loading: () => <div className="flex items-center justify-center min-h-screen bg-[#F8F9FF]"><Loader2 className="h-10 w-10 animate-spin text-primary opacity-20" /></div>,
+  ssr: false 
+});
+
+const Dashboard = dynamic(() => import('@/components/dashboard'), { 
+  ssr: false 
+});
+
+const AnalyzerA = dynamic(() => import('@/components/analyzer-a'), { 
+  loading: () => <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>,
+  ssr: false 
+});
+
+const AnalyzerB = dynamic(() => import('@/components/analyzer-b'), { 
+  loading: () => <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>,
+  ssr: false 
+});
+
 export default function Home() {
   const { user, isUserLoading } = useUser();
   const db = useFirestore();
@@ -30,17 +48,17 @@ export default function Home() {
   const { data: userData } = useDoc(userDocRef);
 
   useEffect(() => {
-    // 스플래시 로고 노출 시간 (2.5초로 브랜드 여운 제공)
+    // 스플래시 로고 노출 시간 (브랜드 여운 제공 및 초기 청크 로딩 시간 확보)
     const timer = setTimeout(() => setShowSplash(false), 2500);
     return () => clearTimeout(timer);
   }, []);
 
-  // Step 1: Splash Screen
+  // Step 1: Splash Screen (Initial Entry)
   if (showSplash) {
     return <SplashScreen />;
   }
 
-  // Step 2: Auth Loading (스플래시 이후 로딩 중일 때)
+  // Step 2: Auth & Service Loading
   if (isUserLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#F8F9FF]">
@@ -49,12 +67,12 @@ export default function Home() {
     );
   }
 
-  // Step 3: High-End Authentication Screen (로그인하지 않은 경우)
+  // Step 3: Unauthenticated Access
   if (!user) {
     return <AuthScreen />;
   }
 
-  // Step 4: Authenticated Zone (Dashboard & Independent Analysis Rooms)
+  // Step 4: Authenticated Zone (Dynamic Mode Switching)
   return (
     <div className="flex flex-col min-h-screen bg-muted/20">
       {currentMode === 'dashboard' && (
