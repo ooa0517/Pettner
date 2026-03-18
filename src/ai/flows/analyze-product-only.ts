@@ -1,10 +1,11 @@
+
 'use server';
 
 /**
- * @fileOverview [Analyzer_A: Product-Only Engine v27.1]
- * - Focuses on Deterministic Scientific Audit.
- * - Dynamic Language Control: Supports ko-KR or en-US based on input.
- * - Added Nutritional Density, Price Analysis, and 5-Year Recall Audit.
+ * @fileOverview [Analyzer_A: Hyper-Gap Audit Engine v28.0]
+ * - Focuses on Meat vs Carb Ratio (Back-calculation).
+ * - Satiety Index, Stool/Odor Forecast, and Global Risk Radar.
+ * - Statistical Allergy Risk integration.
  */
 
 import {ai} from '@/ai/genkit';
@@ -26,17 +27,15 @@ const AnalyzeProductOnlyOutputSchema = z.object({
     name: z.string(),
     brand: z.string(),
     category: z.string(),
-    pettnerCompliance: z.object({
-      isCompliant: z.boolean(),
-      reason: z.string()
-    })
   }),
   summary: z.object({
-    headline: z.string(),
-    bestFor: z.array(z.string()),
-    worstFor: z.array(z.string()),
-    nutritionalDensityScore: z.number().describe('0-100 score for nutrient density'),
-    densityComment: z.string().describe('Expert comment on density')
+    headline: z.string().describe('One-line sharp summary based on numbers'),
+    expertOpinion: z.string(),
+  }),
+  meatCarbRatio: z.object({
+    proteinPct: z.number(),
+    carbPct: z.number(),
+    commentary: z.string().describe('Fact-bomb about hidden carbs'),
   }),
   nutritionalAnalysis: z.object({
     radarData: z.array(z.object({
@@ -44,37 +43,30 @@ const AnalyzeProductOnlyOutputSchema = z.object({
       value: z.number(),
       standardAAFCO: z.number(),
       standardFEDIAF: z.number()
-    })).optional(),
-    caloriePerUnit: z.string().optional(),
-    priceEfficiency: z.string().optional().describe('Analysis of cost-effectiveness per kg or unit')
+    })),
+    nutritionalDensityScore: z.number(),
+  }),
+  wasteAndOdorForecast: z.object({
+    stoolCondition: z.string().describe('Prediction of stool shape/consistency'),
+    odorLevel: z.string().describe('Prediction of breath and stool odor'),
+    reasoning: z.string(),
   }),
   ingredientAnalysis: z.array(z.object({
     name: z.string(),
     category: z.enum(['positive', 'neutral', 'cautionary']),
     reason: z.string(),
-    safetyRating: z.string().optional()
+    allergyStat: z.string().optional().describe('Statistical allergy risk ranking/info'),
   })),
-  physicalOriginAudit: z.object({
-    originRiskMap: z.array(z.object({
-      ingredient: z.string(),
-      origin: z.string(),
-      riskLevel: z.enum(['safe', 'caution'])
-    })),
-    processingAnalysis: z.object({
-      method: z.string(),
-      nutrientLossNote: z.string()
-    }),
-    kibbleSpecs: z.object({
-      texture: z.string(),
-      size: z.string(),
-      digestibilityNote: z.string()
-    })
+  satietyIndex: z.object({
+    level: z.enum(['LOW', 'NORMAL', 'HIGH']),
+    durationLabel: z.string(),
+    analysis: z.string().describe('Expert analysis on how long the pet feels full'),
   }),
-  esgReport: z.object({
-    transparencyStatus: z.enum(['DIRECT', 'OEM_LOW', 'OEM_PREMIUM']),
-    recallHistory: z.string().describe('Last 5 years recall history fact check'),
-    certifications: z.array(z.string()),
-    cleanMarkGranted: z.boolean().describe('Whether to grant the Pettner Clean Mark')
+  marketAndRisk: z.object({
+    priceEfficiency: z.string().describe('Price per kg analysis'),
+    manufacturerTrust: z.string(),
+    globalRiskRadar: z.string().describe('Recent overseas lawsuits, FDA recalls, or brand controversies'),
+    cleanMark: z.boolean(),
   })
 });
 
@@ -84,24 +76,17 @@ const analyzeProductOnlyPrompt = ai.definePrompt({
   name: 'analyzeProductOnlyPrompt',
   input: {schema: AnalyzeProductOnlyInputSchema},
   output: {schema: AnalyzeProductOnlyOutputSchema},
-  prompt: `You are a Deterministic Food Quality Auditor for Pets.
+  prompt: `You are a Deterministic Food Quality Auditor for Pets. 
 Target Language: {{{language}}}. Use professional veterinary terminology.
 
-### [CRITICAL: DETERMINISTIC MODE]
-1. [Headline & Suitability]: Base insights on specific numbers (e.g., "Protein 32% high-nutrient formula"). Avoid generic phrases.
-2. [Nutritional Analysis]: 
-   - For 'food', MUST provide 'radarData' with 6 nutrients: Crude Protein, Crude Fat, Crude Fiber, Crude Ash, Calcium, Phosphorus (Translated to target language).
-   - Include 'standardAAFCO' and 'standardFEDIAF' minimums for comparison.
-   - Provide a 'nutritionalDensityScore' (0-100) based on moisture and nutrient concentration.
-3. [Ingredients]: 100% audit. Identify specific functions of each ingredient.
-4. [Physical & Origin Audit]:
-   - originRiskMap: Map major ingredients to origins (NZ, USA, China, etc.).
-   - processingAnalysis: Audit the method (Extruded, Freeze-dried, etc.).
-   - kibbleSpecs: Analyze physical properties (hardness, mm size, oiliness).
-5. [Reliability & Killer Content]: 
-   - Recall History: Specifically check the last 5 years for this brand/manufacturer.
-   - Clean Mark: Grant 'true' only if no major recalls and high transparency.
-   - Price Efficiency: Estimate cost-effectiveness based on ingredient quality vs market average.
+### [CRITICAL: HYPER-GAP AUDIT MODE]
+1. [Meat vs Carb]: AI must back-calculate carbohydrates (Carbs = 100 - (Protein + Fat + Fiber + Ash + Moisture)). 
+   - Expose "Hidden Carbs" that companies hide. 
+   - Commentary must be sharp (e.g., "High protein claim but 40%+ carbs").
+2. [Stool & Odor]: Predict physical outcomes based on fiber sources (beet pulp, etc.) and protein sources (fish meal vs fresh meat).
+3. [Ingredient Allergy Stat]: For each ingredient, include a statistical note (e.g., "Beef: #1 allergy source in Korea").
+4. [Satiety Index]: Analyze calorie density vs volume. Label as 'Energy-concentrated' or 'High-volume'.
+5. [Global Risk Radar]: Specifically search for recent (2023-2024) FDA reports, DCM investigations, or class-action lawsuits regarding the brand.
 
 Product: {{{productName}}} ({{{productCategory}}})
 Type: {{{detailedProductType}}}
