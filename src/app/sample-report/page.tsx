@@ -2,113 +2,102 @@
 'use client';
 
 import AnalysisResult from '@/components/analysis-result';
-import type { AnalyzePetFoodIngredientsOutput, AnalyzePetFoodIngredientsInput } from '@/ai/flows/analyze-pet-food-ingredients';
+import type { AnalyzeProductOnlyOutput } from '@/ai/flows/analyze-product-only';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
+import { useLanguage } from '@/contexts/language-context';
 
+/**
+ * Pettner V28.3 Forensic Sample Report
+ * - Showcase: ANF Holistic (Type A Audit)
+ * - Highlights: NFE Formula, Biometric Forecast, Risk Radar
+ */
 export default function SampleReportPage() {
-  // 나무(말티푸, 12.6kg, BCS 5)를 위한 초정밀 분석 데이터 V19.2 규격
-  const mockResult: AnalyzePetFoodIngredientsOutput = {
+  const { language } = useLanguage();
+
+  const mockResult: AnalyzeProductOnlyOutput = {
     status: 'success',
     productIdentity: {
-      name: "인스팅트 오리지널 그레인프리 치킨",
-      brand: "인스팅트 (Instinct)",
-      category: "건식 사료",
-      pettnerCompliance: {
-        isCompliant: true,
-        reason: "AAFCO 영양 기준을 충족하며, 고품질 육류 단백질을 주원료로 사용합니다."
-      }
+      name: "ANF 홀리스틱 닭고기와 쌀 (성견용)",
+      brand: "ANF",
+      category: "건식 사료 (Extruded)",
     },
-    scoreCard: {
-      totalScore: 88,
-      grade: "A (우수)",
-      headline: "나무의 건강 상태를 고려할 때 매우 우수한 단백질 공급원이지만, 체중 관리를 위해 급여량 조절이 필요합니다.",
-      statusTags: ["✅ 고단백", "✅ 그레인프리", "⚠️ 칼로리 밀도 높음"],
-      scoringBasis: "단백질 품질(30%), 지방 균형(20%), 원재료 안전성(20%), 미네랄/비타민(15%), 칼로리 적합성(15%) 기준에 따라 산출되었습니다. (J Vet Nutr, 2023)"
+    summary: {
+      headline: "AAFCO 기준을 충족하는 안정적인 밸런스 식단이나, 실제 탄수화물 비중이 40%를 상회하여 체중 관리가 필요한 반려견에게는 급여량 조절이 필수적입니다.",
+      expertOpinion: "고단백 마케팅을 표방하고 있으나, 주원료 중 쌀과 귀리의 비중이 상당히 높습니다. 이는 소화 흡수율 면에서는 유리할 수 있으나, 혈당 지수(GI) 관리가 필요한 노령견이나 비만견에게는 잠재적 리스크가 될 수 있습니다."
     },
-    ingredientAnalysis: {
-      ingredientList100: [
-        { name: "닭고기", category: "positive", reason: "고품질 동물성 단백질원으로 필수 아미노산이 풍부합니다. (Pet Food Sci J, 2024)", safetyRating: "High Quality" },
-        { name: "닭고기 지방", category: "positive", reason: "에너지원 및 오메가-6 지방산 공급원입니다.", safetyRating: "Safe" },
-        { name: "타피오카 전분", category: "cautionary", reason: "높은 당지수로 인해 과체중 아이의 혈당 조절에 영향을 줄 수 있습니다.", safetyRating: "Allergy Risk Low" }
+    meatCarbRatio: {
+      proteinPct: 28,
+      carbPct: 42,
+      commentary: "이 제품은 '고단백'을 강조하지만, 수학적 역산 결과 실제로는 곡물(탄수화물) 비중이 40%가 넘는 '탄수화물 중심' 사료입니다. 에너지의 절반 가까이가 당질에서 발생하므로 활동량이 적은 아이들에겐 주의가 필요합니다."
+    },
+    nutritionalAnalysis: {
+      radarData: [
+        { nutrient: "Protein", value: 28, standardAAFCO: 18, standardFEDIAF: 21 },
+        { nutrient: "Fat", value: 15, standardAAFCO: 5.5, standardFEDIAF: 8.5 },
+        { nutrient: "Fiber", value: 4, standardAAFCO: 2, standardFEDIAF: 2 },
+        { nutrient: "Moisture", value: 10, standardAAFCO: 10, standardFEDIAF: 10 },
+        { nutrient: "Ash", value: 8, standardAAFCO: 7, standardFEDIAF: 7 },
+        { nutrient: "Carbs", value: 42, standardAAFCO: 30, standardFEDIAF: 35 }
       ],
-      suitabilityAudit: {
-        suitableFor: ["성견", "활동량 많은 개", "곡물 알러지 견"],
-        notSuitableFor: ["비만 견(제한 급여 필요)", "고양이"],
-        unsuitableReasons: "높은 지방 함량으로 인해 엄격한 체중 관리가 필요한 경우 주의가 필요합니다."
-      }
+      nutritionalDensityScore: 72,
     },
-    scientificAnalysis: {
-      nutrientMass: {
-        protein_g: 35.0,
-        fat_g: 18.0,
-        carbs_g: 22.0,
-        kcal: 3800
-      },
-      comparativeChart: [
-        { nutrient: "조단백질", productValue: 35.0, standardMin: 18.0, standardMax: 30.0 },
-        { nutrient: "조지방", productValue: 18.0, standardMin: 5.5, standardMax: 20.0 }
-      ],
-      aafcoComparison: [
-        { nutrient: "Protein", unit: "%", productValue: 35.0, aafcoMin: 18.0, status: "optimal" },
-        { nutrient: "Fat", unit: "%", productValue: 18.0, aafcoMin: 5.5, status: "pass" }
-      ]
+    wasteAndOdorForecast: {
+      stoolCondition: "쌀과 귀리 기반의 풍부한 식이섬유 덕분에 형태가 매우 단단하고 안정적인 변 상태를 보일 확률이 90% 이상입니다.",
+      odorLevel: "가수분해되지 않은 닭고기 단백질원을 사용하므로, 평소 닭고기 알러지가 있는 아이라면 변 냄새가 다소 강해지거나 눈물 자국이 늘어날 수 있습니다.",
+      reasoning: "곡물 탄수화물과 가금류 지방의 조합은 장내 발효를 촉진하여 전형적인 건식 사료의 배변 특성을 나타냅니다."
     },
-    feedingGuide: {
-      productPurpose: "성견의 근육 유지 및 일상적인 에너지 공급을 목적으로 하는 프리미엄 식단입니다.",
-      feedingTable: [
-        { weightRange: "10-15kg", lowActivityGrams: "150g", highActivityGrams: "200g", totalKcalRange: "570-760kcal" }
-      ]
+    ingredientAnalysis: [
+      { name: "닭고기분 (Chicken Meal)", category: "positive", reason: "응축된 고품질 단백질 공급원이지만, 특정 개체에 따라 알러지 반응이 있을 수 있습니다.", allergyStat: "국내 반려견 알러지 발현율 1위 (약 32%)" },
+      { name: "쌀 (Brewers Rice)", category: "neutral", reason: "소화가 매우 잘 되는 탄수화물원이지만, 혈당을 빠르게 올릴 수 있는 고혈당 원료입니다.", allergyStat: "알러지 위험 낮음 (약 4%)" },
+      { name: "닭고기 지방", category: "positive", reason: "피부와 모질에 필수적인 오메가-6 지방산의 핵심 공급원입니다.", allergyStat: "안전" },
+      { name: "비트 펄프", category: "cautionary", reason: "변의 형태를 인위적으로 단단하게 만드는 기능이 있어, 실제 장 건강을 오판하게 할 우려가 있습니다.", allergyStat: "주의 성분" }
+    ],
+    satietyIndex: {
+      level: "NORMAL",
+      durationLabel: "약 4~6시간 지속",
+      analysis: "부피 대비 에너지가 적절히 배분된 표준형 제품입니다. 급여 후 아이가 금방 배고파한다면 야채 토핑을 추가하여 부피감을 늘려주는 것이 좋습니다."
     },
-    esgReport: {
-      transparencyStatus: "DIRECT",
-      environmental: "지속 가능한 원료 소싱 및 친환경 패키징을 실천하고 있습니다.",
-      recallHistory: "최근 5년간 중대한 안전 관련 리콜 이력이 없습니다.",
-      certifications: ["ISO 9001", "HACCP"]
-    },
-    veterinaryAdvice: "나무는 현재 과체중 상태이므로 제품 권장 급여량의 하단(150g)부터 시작하시고, 운동량을 서서히 늘리는 것을 권장합니다."
+    marketAndRisk: {
+      priceEfficiency: "1kg당 약 11,500원 (글로벌 프리미엄 브랜드 중 상위 30% 수준의 합리적 가격)",
+      manufacturerTrust: "ANF (미국) 전용 시설 생산. 위생 관리 및 원료 투명성 매우 높음.",
+      globalRiskRadar: "최근 5년간 중대한 안전 관련 리콜 이력이 확인되지 않은 'Clean Mark' 등급 제조사입니다. 2024년 기준 북미 시장에서도 안정적인 신뢰도를 유지 중입니다.",
+      cleanMark: true,
+    }
   };
 
-  const mockInput: AnalyzePetFoodIngredientsInput = {
-    petType: 'dog',
-    analysisMode: 'custom',
-    productName: '인스팅트 오리지널 그레인프리 치킨',
+  const mockInput = {
+    analysisMode: 'general',
+    productName: 'ANF 홀리스틱 닭고기와 쌀',
     productCategory: 'food',
-    detailedProductType: '건식 사료',
-    petProfile: {
-      name: '나무',
-      breed: '말티푸',
-      age: 4,
-      weight: 12.6,
-      bcs: '5',
-      healthConditions: ['비만'],
-      activityLevel: 'NORMAL'
-    }
+    language: language
   };
 
   return (
     <div className="flex-grow p-4 md:p-8 bg-muted/20">
-      <div className="max-w-4xl mx-auto space-y-6 pb-20">
+      <div className="max-w-4xl mx-auto space-y-8 pb-32">
         <div className="flex items-center justify-between">
-            <Button asChild variant="ghost" className="hover:bg-primary/5">
+            <Button asChild variant="ghost" className="hover:bg-primary/5 rounded-full font-bold">
                 <Link href="/">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> 메인으로
+                    <ArrowLeft className="mr-2 h-4 w-4" /> 대시보드로 돌아가기
                 </Link>
             </Button>
-            <div className="flex items-center gap-2 text-primary font-bold">
-                <Sparkles className="w-5 h-5" />
-                <span>VETERINARY MEDICAL REPORT</span>
+            <div className="flex items-center gap-2 text-primary font-black text-xs tracking-widest bg-white px-4 py-2 rounded-full shadow-sm border">
+                <ShieldCheck className="w-4 h-4" />
+                <span>VETERINARY FORENSIC SAMPLE</span>
             </div>
         </div>
 
-        <div className="bg-primary text-white p-6 rounded-3xl shadow-xl shadow-primary/20 flex flex-col md:flex-row items-center gap-6">
-          <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-md">
-            <span className="text-4xl">🔬</span>
+        <div className="bg-gradient-to-br from-primary to-blue-600 text-white p-10 rounded-[3rem] shadow-2xl shadow-primary/20 flex flex-col md:flex-row items-center gap-8 border-4 border-white/20">
+          <div className="p-6 bg-white/20 rounded-[2rem] backdrop-blur-xl border border-white/30 shadow-inner">
+            <span className="text-5xl">🕵️‍♂️</span>
           </div>
-          <div>
-            <h2 className="text-2xl font-black">초정밀 수의학 진단 리포트 (예시)</h2>
-            <p className="text-primary-foreground/80 font-medium">말티푸 나무(12.6kg, 비만)를 위한 맞춤형 분석 결과입니다.</p>
+          <div className="text-center md:text-left space-y-2">
+            <h2 className="text-3xl font-black tracking-tight leading-tight">수의학적 "수사 리포트" (예시)</h2>
+            <p className="text-primary-foreground/90 font-medium text-lg leading-relaxed">
+              사료 회사가 표기하지 않는 잉여 탄수화물과<br/>신체 변화 예측 데이터까지 한눈에 확인하세요.
+            </p>
           </div>
         </div>
 
@@ -116,6 +105,7 @@ export default function SampleReportPage() {
           result={mockResult} 
           input={mockInput} 
           onReset={() => window.location.href = '/'} 
+          isPublicView={true}
         />
       </div>
     </div>

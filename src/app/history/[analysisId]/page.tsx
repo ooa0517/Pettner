@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useUser, useFirestore } from '@/firebase';
 import { useRouter, useParams } from 'next/navigation';
 import { doc, getDoc, Timestamp } from 'firebase/firestore';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Share2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import AnalysisResult from '@/components/analysis-result';
 import { useLanguage } from '@/contexts/language-context';
@@ -30,7 +30,7 @@ export default function HistoryDetailPage() {
   const [record, setRecord] = useState<AnalysisRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -49,7 +49,7 @@ export default function HistoryDetailPage() {
           if (docSnap.exists()) {
             setRecord({ id: docSnap.id, ...docSnap.data() } as AnalysisRecord);
           } else {
-            setError("기록을 찾을 수 없습니다.");
+            setError("해당 분석 리포트를 찾을 수 없습니다.");
           }
         } catch (err) {
           console.error("Error fetching record: ", err);
@@ -66,26 +66,31 @@ export default function HistoryDetailPage() {
 
   if (isUserLoading || isLoading) {
     return (
-      <div className="flex items-center justify-center flex-grow p-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-screen bg-muted/20">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="font-black text-muted-foreground animate-pulse">리포트를 불러오는 중...</p>
+        </div>
       </div>
     );
   }
 
   if (error || !record) {
     return (
-       <div className="flex-grow p-4 md:p-8">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <Button asChild variant="outline" className="rounded-full">
-            <Link href="/history">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              목록으로 돌아가기
-            </Link>
-          </Button>
-          <Alert variant="destructive" className="rounded-3xl">
-            <AlertTitle>오류 발생</AlertTitle>
-            <AlertDescription>{error || "데이터가 존재하지 않습니다."}</AlertDescription>
-          </Alert>
+       <div className="flex-grow p-4 md:p-8 flex items-center justify-center bg-muted/20 min-h-screen">
+        <div className="max-w-md w-full space-y-8 text-center">
+          <div className="bg-white p-12 rounded-[3rem] shadow-xl space-y-6">
+            <div className="p-6 bg-rose-500/10 rounded-full w-fit mx-auto text-rose-500">
+              <Share2 size={48} />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-2xl font-black">접근 오류</h2>
+              <p className="text-muted-foreground font-medium">{error || "기록이 존재하지 않습니다."}</p>
+            </div>
+            <Button asChild className="w-full h-14 rounded-2xl font-black">
+              <Link href="/history">목록으로 돌아가기</Link>
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -99,13 +104,18 @@ export default function HistoryDetailPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center flex-grow p-4 md:p-8 bg-muted/20">
-      <div className="w-full max-w-4xl">
-        <div className="mb-8">
-            <Button asChild variant="ghost" className="rounded-full font-bold gap-2">
-                <Link href="/history"><ArrowLeft size={18}/> 분석 기록 목록</Link>
+    <div className="flex-grow p-4 md:p-8 bg-muted/20 min-h-screen">
+      <div className="max-w-4xl mx-auto space-y-8 pb-32">
+        <div className="flex items-center justify-between">
+            <Button asChild variant="ghost" className="rounded-full font-bold gap-2 hover:bg-white px-6">
+                <Link href="/history"><ArrowLeft size={18}/> 기록 목록</Link>
             </Button>
+            <div className="text-right">
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Analysis Date</p>
+              <p className="font-black text-sm">{record.createdAt?.toDate().toLocaleDateString()}</p>
+            </div>
         </div>
+        
         <AnalysisResult 
           result={record.analysisOutput} 
           input={inputForComponent}

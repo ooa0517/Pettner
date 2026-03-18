@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { collection, query, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 import { useUser, useFirestore } from '@/firebase';
-import { Loader2, FileText, Clock, Cat, Dog, ChevronRight, Search } from 'lucide-react';
+import { Loader2, FileText, Clock, Cat, Dog, ChevronRight, Search, ShieldCheck, Microscope } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -14,7 +14,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import type { AnalyzePetFoodIngredientsOutput, AnalyzePetFoodIngredientsInput } from '@/ai/flows/analyze-pet-food-ingredients';
 import { useLanguage } from '@/contexts/language-context';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -22,20 +21,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-type StoredUserInput = Omit<AnalyzePetFoodIngredientsInput, 'language' | 'photoDataUri' | 'ingredientsText' | 'brandName' | 'foodType' | 'healthConditions' | 'lifeStage'> & { 
-    ingredientsText?: string; 
-    brandName?: string;
-    foodType?: string;
-    healthConditions?: string;
-    lifeStage?: 'PUPPY' | 'ADULT' | 'SENIOR' | 'GERIATRIC' | 'ALL_STAGES';
-    photoProvided: boolean;
-};
-
 type AnalysisRecord = {
   id: string;
+  type: 'A' | 'B';
   createdAt: Timestamp;
-  analysisOutput: AnalyzePetFoodIngredientsOutput;
-  userInput: StoredUserInput;
+  analysisOutput: any;
+  userInput: any;
 };
 
 export default function HistoryPage() {
@@ -67,11 +58,11 @@ export default function HistoryPage() {
               id: doc.id,
               ...doc.data(),
             } as AnalysisRecord))
-            .filter(item => item.analysisOutput && item.analysisOutput.productIdentity);
+            .filter(item => item.analysisOutput && (item.analysisOutput.productIdentity || item.analysisOutput.productInfo));
           setHistory(historyData);
         } catch (err) {
           console.error("Error fetching history: ", err);
-          setError(t('historyPage.fetchError'));
+          setError("기록을 불러오는 중 오류가 발생했습니다.");
         } finally {
           setIsLoading(false);
         }
@@ -80,12 +71,13 @@ export default function HistoryPage() {
     } else if (!isUserLoading) {
         setIsLoading(false);
     }
-  }, [user, isUserLoading, db, t]);
+  }, [user, isUserLoading, db]);
 
-  const filteredHistory = history.filter(item => 
-    item.analysisOutput.productIdentity?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.analysisOutput.productIdentity?.brand || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredHistory = history.filter(item => {
+    const name = item.analysisOutput.productIdentity?.name || item.userInput.productName || item.userInput.productInfo?.productName || "";
+    const brand = item.analysisOutput.productIdentity?.brand || "";
+    return name.toLowerCase().includes(searchTerm.toLowerCase()) || brand.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   if (isUserLoading || isLoading) {
     return (
@@ -97,17 +89,17 @@ export default function HistoryPage() {
 
   return (
     <div className="flex-grow p-4 md:p-8 bg-muted/20">
-      <div className="max-w-4xl mx-auto space-y-8 pb-20">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="max-w-4xl mx-auto space-y-8 pb-32">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h1 className="text-4xl font-black font-headline tracking-tight">{t('historyPage.title')}</h1>
-            <p className="text-muted-foreground mt-1">지금까지 분석한 우리 아이들의 먹거리 리포트입니다.</p>
+            <h1 className="text-4xl font-black font-headline tracking-tight">분석 히스토리</h1>
+            <p className="text-muted-foreground mt-1 font-medium">지금까지 분석한 우리 아이들의 정밀 리포트입니다.</p>
           </div>
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="relative w-full md:w-72">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="제품명 검색..." 
-              className="pl-10 bg-white" 
+              placeholder="제품명 또는 브랜드 검색..." 
+              className="pl-12 h-14 rounded-2xl bg-white border-none shadow-sm font-bold" 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -115,27 +107,27 @@ export default function HistoryPage() {
         </div>
 
         {error && (
-          <Alert variant="destructive">
-            <AlertTitle>{t('common.error')}</AlertTitle>
+          <Alert variant="destructive" className="rounded-3xl border-none shadow-lg">
+            <AlertTitle>오류 발생</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
         {filteredHistory.length === 0 ? (
-          <Card className="text-center py-20 border-2 border-dashed bg-white">
+          <Card className="text-center py-24 border-none shadow-xl rounded-[3rem] bg-white">
             <CardHeader>
-              <div className="mx-auto bg-muted p-6 rounded-full w-fit mb-4">
-                <FileText className="h-12 w-12 text-muted-foreground" />
+              <div className="mx-auto bg-muted/50 p-8 rounded-full w-fit mb-6">
+                <FileText className="h-16 w-16 text-muted-foreground opacity-20" />
               </div>
-              <CardTitle className="text-2xl font-bold">{searchTerm ? "검색 결과가 없습니다" : t('historyPage.noHistoryTitle')}</CardTitle>
-              <CardDescription className="text-lg">
-                {searchTerm ? "다른 검색어를 입력해 보세요." : t('historyPage.noHistoryDescription')}
+              <CardTitle className="text-2xl font-black">{searchTerm ? "검색 결과가 없습니다" : "아직 분석 기록이 없습니다"}</CardTitle>
+              <CardDescription className="text-lg font-medium">
+                {searchTerm ? "다른 검색어를 입력해 보세요." : "첫 번째 제품을 분석하고 전문 리포트를 소장하세요!"}
               </CardDescription>
             </CardHeader>
             {!searchTerm && (
               <CardContent>
                 <Link href="/">
-                  <Button size="lg" className="rounded-full px-8 shadow-lg">새로운 제품 분석하기</Button>
+                  <Button size="lg" className="h-16 rounded-2xl px-10 font-black text-lg shadow-xl shadow-primary/20">지금 바로 시작하기</Button>
                 </Link>
               </CardContent>
             )}
@@ -143,44 +135,45 @@ export default function HistoryPage() {
         ) : (
           <div className="grid gap-4">
             {filteredHistory.map((item) => {
-              const PetIcon = item.userInput.petType === 'cat' ? Cat : Dog;
-              const score = item.analysisOutput.scoreCard?.totalScore;
+              const productName = item.analysisOutput.productIdentity?.name || item.userInput.productName || item.userInput.productInfo?.productName || "제품 정보 없음";
+              const brandName = item.analysisOutput.productIdentity?.brand || "브랜드 미식별";
+              const isTypeA = item.type === 'A';
               
               return (
               <Link href={`/history/${item.id}`} key={item.id}>
-                <Card className="hover:shadow-xl transition-all duration-300 cursor-pointer border-none shadow-md overflow-hidden group">
-                  <div className="flex h-full">
-                    <div className={cn("w-2 bg-primary transition-all group-hover:w-4", 
-                      score && score >= 90 ? "bg-success" : 
-                      score && score >= 70 ? "bg-primary" : "bg-yellow-400"
+                <Card className="hover:shadow-2xl transition-all duration-500 cursor-pointer border-none shadow-md overflow-hidden group rounded-[2rem] bg-white">
+                  <div className="flex h-full min-h-[120px]">
+                    <div className={cn("w-3 transition-all group-hover:w-5", 
+                      isTypeA ? "bg-success" : "bg-primary"
                     )} />
-                    <CardContent className="p-6 flex flex-1 justify-between items-center bg-white">
+                    <CardContent className="p-6 flex flex-1 justify-between items-center">
                       <div className="flex items-center gap-6">
-                        <div className="p-3 bg-muted rounded-2xl group-hover:scale-110 transition-transform">
-                          <PetIcon className="h-8 w-8 text-primary" />
+                        <div className={cn(
+                          "p-4 rounded-2xl transition-all group-hover:scale-110 shadow-inner",
+                          isTypeA ? "bg-success/10 text-success" : "bg-primary/10 text-primary"
+                        )}>
+                          {isTypeA ? <ShieldCheck size={32} /> : <Microscope size={32} />}
                         </div>
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                             <p className="font-black text-xl text-foreground leading-none">{item.analysisOutput.productIdentity?.name}</p>
-                             {score && (
-                               <Badge variant="outline" className="font-bold text-primary border-primary/20 bg-primary/5">
-                                 {score}점 적합
-                               </Badge>
-                             )}
+                          <div className="flex flex-wrap items-center gap-2">
+                             <p className="font-black text-2xl text-foreground leading-none tracking-tight">{productName}</p>
+                             <Badge variant="outline" className={cn(
+                               "font-black text-[10px] tracking-widest px-2 py-0.5 rounded-full border-none",
+                               isTypeA ? "bg-success/10 text-success" : "bg-primary/10 text-primary"
+                             )}>
+                               {isTypeA ? 'TYPE A: AUDIT' : 'TYPE B: DIAGNOSIS'}
+                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground font-medium">
-                            {item.analysisOutput.productIdentity?.brand || '브랜드 정보 없음'} · {item.analysisOutput.productIdentity?.category || '분석 유형'}
+                          <p className="text-sm text-muted-foreground font-bold">
+                            {brandName} · {item.createdAt?.toDate().toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US')}
                           </p>
                         </div>
                       </div>
-                      <div className="text-right flex flex-col items-end gap-2">
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-bold">
-                          <Clock className="h-3.5 w-3.5" />
-                          <span>
-                            {item.createdAt?.toDate().toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US')}
-                          </span>
+                      <div className="flex items-center gap-4">
+                        <div className="hidden md:flex flex-col items-end">
+                           <span className="text-[10px] font-black text-muted-foreground uppercase opacity-40">View Report</span>
+                           <ChevronRight className="h-6 w-6 text-muted-foreground opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                         </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground opacity-30 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                       </div>
                     </CardContent>
                   </div>
