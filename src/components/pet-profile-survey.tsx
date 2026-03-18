@@ -122,6 +122,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                 <Label className="font-black text-lg ml-1">아이 이름</Label>
                 <Input 
                   placeholder="예: 나무, 초코" 
+                  autoComplete="off"
                   {...register('name')} 
                   className={cn("h-16 rounded-2xl bg-muted/20 border-none px-6 text-xl font-bold focus-visible:ring-2 focus-visible:ring-primary/20", errors.name && "ring-2 ring-destructive")}
                 />
@@ -145,6 +146,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                 <Label className="font-black text-lg ml-1">품종</Label>
                 <Input 
                   placeholder="예: 말티즈, 코리안숏헤어" 
+                  autoComplete="off"
                   {...register('breed')} 
                   className={cn("h-14 rounded-2xl bg-muted/20 border-none px-6 font-bold focus-visible:ring-2 focus-visible:ring-primary/20", errors.breed && "ring-2 ring-destructive")}
                 />
@@ -332,6 +334,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                 <Label className="font-black text-lg ml-1">복용 중인 영양제/약물 (선택)</Label>
                 <Input 
                   placeholder="예: 관절 영양제, 심장약 등" 
+                  autoComplete="off"
                   {...register('medications')} 
                   className="h-14 rounded-2xl bg-muted/20 border-none px-6 font-bold focus-visible:ring-2 focus-visible:ring-primary/20" 
                 />

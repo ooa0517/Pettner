@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ShoppingBag, Camera, Sparkles, ArrowLeft, Microscope, HeartPulse, CheckCircle2, PlusCircle } from 'lucide-react';
+import { ShoppingBag, Camera, Sparkles, ArrowLeft, Microscope, HeartPulse, CheckCircle2, PlusCircle, Dog, Cat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
