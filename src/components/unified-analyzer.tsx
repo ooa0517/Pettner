@@ -70,9 +70,32 @@ export default function UnifiedAnalyzer({ onBack, userData }: { onBack: () => vo
       });
       setPhotoDataUri(uri);
 
+      // Sanitize pet profile to remove non-serializable Firestore Timestamps
+      // This fixes the "Only plain objects can be passed to Server Functions" error
+      const cleanPetProfile = {
+        name: selectedPet.name,
+        petType: selectedPet.petType,
+        breed: selectedPet.breed,
+        ageYears: selectedPet.ageYears,
+        ageMonths: selectedPet.ageMonths,
+        gender: selectedPet.gender,
+        isNeutered: selectedPet.isNeutered,
+        weight: selectedPet.weight,
+        bcs: selectedPet.bcs,
+        stoolStatus: selectedPet.stoolStatus,
+        eatingHabit: selectedPet.eatingHabit,
+        usagePurpose: selectedPet.usagePurpose,
+        medications: selectedPet.medications,
+      };
+
       const result = await getMasterAnalysis({
-        productInfo: { productName, productCategory: category.id as any, detailedProductType: detailedType, photoDataUri: uri },
-        petProfile: selectedPet,
+        productInfo: { 
+          productName, 
+          productCategory: category.id as any, 
+          detailedProductType: detailedType, 
+          photoDataUri: uri 
+        },
+        petProfile: cleanPetProfile,
         language: language,
       });
 
@@ -129,7 +152,9 @@ export default function UnifiedAnalyzer({ onBack, userData }: { onBack: () => vo
           </CardTitle>
         </CardHeader>
         <CardContent className="p-10 space-y-6">
-          {pets && pets.length > 0 ? (
+          {isPetsLoading ? (
+            <div className="text-center py-12">반려동물 정보를 불러오는 중...</div>
+          ) : pets && pets.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {pets.map(pet => (
                 <div 

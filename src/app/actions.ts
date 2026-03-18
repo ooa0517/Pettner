@@ -1,4 +1,4 @@
-'use client';
+'use server';
 
 import { analyzeMaster } from "@/ai/flows/analyze-master";
 import type { AnalyzeMasterInput, AnalyzeMasterOutput } from "@/ai/flows/analyze-master";
