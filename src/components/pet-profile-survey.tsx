@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -72,6 +73,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
   const purpose = watch('usagePurpose');
 
   const handleNextStep = async () => {
+    // 1단계 필수 필드 유효성 검사 강제 트리거
     const isStep1Valid = await trigger(['name', 'breed', 'petType', 'gender', 'weight']);
     if (isStep1Valid) {
       setStep(2);
@@ -113,14 +115,19 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
         <CardDescription className="text-base font-medium">정밀 분석을 위해 최소한의 정보만 받습니다.</CardDescription>
       </CardHeader>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <div className="p-0">
         <CardContent className="p-8 md:p-12 space-y-10 min-h-[550px] overflow-y-auto max-h-[70vh]">
           {step === 1 ? (
             <div className="space-y-10 animate-in fade-in slide-in-from-right-5 duration-500">
               {/* 이름 */}
               <div className="space-y-4">
                 <Label className="font-black text-lg ml-1">아이 이름</Label>
-                <Input placeholder="이름을 입력해주세요 (예: 나무)" {...register('name')} className="h-16 rounded-2xl bg-muted/20 border-none px-6 text-xl font-bold focus-visible:ring-2 focus-visible:ring-primary/20" />
+                <Input 
+                  placeholder="이름을 입력해주세요 (예: 나무)" 
+                  {...register('name')} 
+                  className={cn("h-16 rounded-2xl bg-muted/20 border-none px-6 text-xl font-bold focus-visible:ring-2 focus-visible:ring-primary/20", errors.name && "ring-2 ring-destructive")}
+                />
+                {errors.name && <p className="text-xs text-destructive font-bold ml-2">{errors.name.message}</p>}
               </div>
 
               {/* 종류 */}
@@ -135,13 +142,18 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                 </div>
               </div>
 
-              {/* 품종 */}
+              {/* 품종 - 입력 불가 현상 수정 */}
               <div className="space-y-4">
                 <Label className="font-black text-lg ml-1">품종</Label>
-                <Input placeholder="예: 말티즈, 코리안숏헤어" {...register('breed')} className="h-14 rounded-2xl bg-muted/20 border-none px-6 font-bold focus-visible:ring-2 focus-visible:ring-primary/20" />
+                <Input 
+                  placeholder="예: 말티즈, 코리안숏헤어" 
+                  {...register('breed')} 
+                  className={cn("h-14 rounded-2xl bg-muted/20 border-none px-6 font-bold focus-visible:ring-2 focus-visible:ring-primary/20", errors.breed && "ring-2 ring-destructive")}
+                />
+                {errors.breed && <p className="text-xs text-destructive font-bold ml-2">{errors.breed.message}</p>}
               </div>
 
-              {/* 나이 (입력 + 스크롤) */}
+              {/* 나이 */}
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
                   <CalendarDays className="text-primary h-5 w-5" />
@@ -151,7 +163,13 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-black text-muted-foreground uppercase">Years</span>
-                      <Input type="number" min={0} max={20} value={ageYears} onChange={(e) => setValue('ageYears', Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))} className="w-16 h-8 text-center font-black p-0 border-none bg-white rounded-lg shadow-sm" />
+                      <Input 
+                        type="number" 
+                        min={0} max={20} 
+                        value={ageYears} 
+                        onChange={(e) => setValue('ageYears', Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))} 
+                        className="w-16 h-8 text-center font-black p-0 border-none bg-white rounded-lg shadow-sm" 
+                      />
                     </div>
                     <Slider value={[ageYears]} onValueChange={([v]) => setValue('ageYears', v)} max={20} step={1} className="py-2" />
                     <p className="text-right text-sm font-black text-primary">{ageYears}살</p>
@@ -159,7 +177,13 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-black text-muted-foreground uppercase">Months</span>
-                      <Input type="number" min={0} max={11} value={ageMonths} onChange={(e) => setValue('ageMonths', Math.min(11, Math.max(0, parseInt(e.target.value) || 0)))} className="w-16 h-8 text-center font-black p-0 border-none bg-white rounded-lg shadow-sm" />
+                      <Input 
+                        type="number" 
+                        min={0} max={11} 
+                        value={ageMonths} 
+                        onChange={(e) => setValue('ageMonths', Math.min(11, Math.max(0, parseInt(e.target.value) || 0)))} 
+                        className="w-16 h-8 text-center font-black p-0 border-none bg-white rounded-lg shadow-sm" 
+                      />
                     </div>
                     <Slider value={[ageMonths]} onValueChange={([v]) => setValue('ageMonths', v)} max={11} step={1} className="py-2" />
                     <p className="text-right text-sm font-black text-primary">{ageMonths}개월</p>
@@ -167,7 +191,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                 </div>
               </div>
 
-              {/* 몸무게 (입력 + 스크롤) */}
+              {/* 몸무게 */}
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -201,8 +225,16 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                   <Button type="button" onClick={() => setValue('gender', 'male')} variant={gender === 'male' ? 'default' : 'outline'} className={cn("flex-1 md:w-24 h-14 rounded-2xl font-black text-lg transition-all", gender === 'male' && "shadow-lg shadow-primary/20")}>남아</Button>
                   <Button type="button" onClick={() => setValue('gender', 'female')} variant={gender === 'female' ? 'default' : 'outline'} className={cn("flex-1 md:w-24 h-14 rounded-2xl font-black text-lg transition-all", gender === 'female' && "shadow-lg shadow-primary/20")}>여아</Button>
                 </div>
-                <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-2xl shadow-sm w-full md:w-auto justify-center">
-                  <Checkbox id="neutered" checked={isNeutered} onCheckedChange={(v) => setValue('isNeutered', !!v)} className="w-6 h-6 rounded-lg border-2 border-primary" />
+                <div 
+                  onClick={() => setValue('isNeutered', !isNeutered)}
+                  className="flex items-center gap-3 bg-white px-6 py-3 rounded-2xl shadow-sm w-full md:w-auto justify-center cursor-pointer active:scale-95 transition-all"
+                >
+                  <Checkbox 
+                    id="neutered" 
+                    checked={isNeutered} 
+                    onCheckedChange={(v) => setValue('isNeutered', !!v)} 
+                    className="w-6 h-6 rounded-lg border-2 border-primary" 
+                  />
                   <Label htmlFor="neutered" className="font-black text-base cursor-pointer select-none">중성화 완료</Label>
                 </div>
               </div>
@@ -282,7 +314,11 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
               {/* 영양제/약물 */}
               <div className="space-y-4">
                 <Label className="font-black text-lg ml-1">복용 중인 영양제/약물 (선택)</Label>
-                <Input placeholder="예: 관절 영양제, 심장약 등" {...register('medications')} className="h-14 rounded-2xl bg-muted/20 border-none px-6 font-bold focus-visible:ring-2 focus-visible:ring-primary/20" />
+                <Input 
+                  placeholder="예: 관절 영양제, 심장약 등" 
+                  {...register('medications')} 
+                  className="h-14 rounded-2xl bg-muted/20 border-none px-6 font-bold focus-visible:ring-2 focus-visible:ring-primary/20" 
+                />
               </div>
             </div>
           )}
@@ -303,7 +339,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
             {isSaving ? <Loader2 className="animate-spin" /> : step === 1 ? <>다음 단계로 <ArrowRight className="ml-3" /></> : "프로필 완성하기"}
           </Button>
         </CardFooter>
-      </form>
+      </div>
     </Card>
   );
 }

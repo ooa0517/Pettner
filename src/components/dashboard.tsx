@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -70,7 +71,7 @@ export default function Dashboard({ userData, onStartAnalysis }: DashboardProps)
             </div>
           </Card>
           {!isPremium && (
-            <Button onClick={() => router.push('/account')} size="sm" className="rounded-2xl h-12 px-6 font-black bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-200">
+            <Button onClick={() => router.push('/account')} size="sm" className="rounded-2xl h-12 px-6 font-black bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-200 active:scale-95 transition-all">
               <Crown className="mr-2 h-4 w-4" /> PREMIUM
             </Button>
           )}
@@ -112,7 +113,7 @@ export default function Dashboard({ userData, onStartAnalysis }: DashboardProps)
             <h3 className="text-2xl font-black flex items-center gap-2">
               <HeartPulse className="text-primary" /> 나의 반려동물
             </h3>
-            <Button variant="ghost" onClick={() => router.push('/account')} className="font-bold text-primary hover:bg-primary/5">
+            <Button variant="ghost" onClick={() => router.push('/account')} className="font-bold text-primary hover:bg-primary/5 active:scale-95 transition-all">
               관리하기 <ChevronRight size={16} />
             </Button>
           </div>
@@ -120,9 +121,9 @@ export default function Dashboard({ userData, onStartAnalysis }: DashboardProps)
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {pets && pets.length > 0 ? (
               pets.map(pet => (
-                <Card key={pet.id} className="border-none shadow-md rounded-[2rem] bg-white overflow-hidden hover:shadow-xl transition-all cursor-pointer" onClick={onStartAnalysis}>
+                <Card key={pet.id} className="border-none shadow-md rounded-[2rem] bg-white overflow-hidden hover:shadow-xl transition-all cursor-pointer group active:scale-95" onClick={onStartAnalysis}>
                   <CardContent className="p-6 flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center text-primary">
+                    <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center text-primary group-hover:bg-primary/10 transition-colors">
                       {pet.petType === 'cat' ? <Cat size={28} /> : <Dog size={28} />}
                     </div>
                     <div>
@@ -152,7 +153,7 @@ export default function Dashboard({ userData, onStartAnalysis }: DashboardProps)
             <h3 className="text-2xl font-black flex items-center gap-2">
               <History className="text-primary" /> 분석 기록
             </h3>
-            <Button variant="ghost" onClick={() => router.push('/history')} className="font-bold text-muted-foreground">
+            <Button variant="ghost" onClick={() => router.push('/history')} className="font-bold text-muted-foreground active:scale-95 transition-all">
               전체보기
             </Button>
           </div>
@@ -163,7 +164,7 @@ export default function Dashboard({ userData, onStartAnalysis }: DashboardProps)
                 <Card 
                   key={item.id} 
                   onClick={() => router.push(`/history/${item.id}`)}
-                  className="border-none shadow-sm rounded-2xl bg-white hover:shadow-md cursor-pointer transition-all group"
+                  className="border-none shadow-sm rounded-2xl bg-white hover:shadow-md cursor-pointer transition-all group active:scale-95"
                 >
                   <CardContent className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -186,7 +187,7 @@ export default function Dashboard({ userData, onStartAnalysis }: DashboardProps)
                   <p className="text-sm font-black">아직 분석 기록이 없네요!</p>
                   <p className="text-[10px] text-muted-foreground font-medium">실제 리포트가 어떻게 나오는지 궁금하신가요?</p>
                 </div>
-                <Button variant="link" onClick={() => router.push('/sample-report')} className="text-xs font-black text-primary p-0 h-auto underline decoration-2">
+                <Button variant="link" onClick={() => router.push('/sample-report')} className="text-xs font-black text-primary p-0 h-auto underline decoration-2 active:scale-95 transition-all">
                   샘플 리포트 먼저 확인하기 →
                 </Button>
               </div>
