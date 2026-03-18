@@ -1,10 +1,10 @@
 'use server';
 
 /**
- * @fileOverview [Analyzer_B: Personalized Solution Engine v27.1]
+ * @fileOverview [Analyzer_B: Personalized Medical Solution Engine v28.2]
  * - Focuses on Matching, Behavioral Forecast, and Transition Schedule.
+ * - Uses RER (70*BW^0.75) and DER formulas for feeding guides.
  * - Dynamic Language Control: Supports ko-KR or en-US.
- * - Ensures consistent results for consistent pet profiles.
  */
 
 import {ai} from '@/ai/genkit';
@@ -96,28 +96,23 @@ const analyzePersonalizedPrompt = ai.definePrompt({
   input: {schema: AnalyzePersonalizedInputSchema},
   output: {schema: AnalyzePersonalizedOutputSchema},
   prompt: `You are a Clinical Veterinary Nutritionist. 
-Target Language: {{{language}}}. Use professional veterinary terminology.
+Target Language: {{{language}}}. Use professional medical terminology.
 
-### [CRITICAL: CONSISTENCY RULE]
-For the same pet profile and product, you MUST produce identical scores and instructions. Use scientific formulas for feeding (RER/DER calculation). 
-Avoid words like 'feed' (사료) when referring to treats or supplements. Use 'product' (제품/Product) or 'food' (식품/Food).
+### [CRITICAL: MEDICAL CALCULATION RULE]
+1. [Precision Feeding Guide]:
+   - Calculate RER = 70 * ({{{petProfile.weight}}} ^ 0.75).
+   - Determine DER based on BCS {{{petProfile.bcs}}} and age {{{petProfile.age}}}.
+   - Output exact daily grams and per-meal grams (assuming 2 meals/day).
+   - Treats: Apply "10% of Daily Calories" rule strictly.
 
-### [Mode B: Personalized Solution]
-1. [Matching]: Score (0-100) and specific vet opinion addressing {{{petProfile.name}}}.
-2. [Feeding Guide]: Precise grams/units based on weight {{{petProfile.weight}}}kg and BCS {{{petProfile.bcs}}}.
-   - Apply 10% rule for treats.
-   - Apply precise dosage for supplements (pumps, scoops, tablets).
-3. [Behavioral Forecast]:
-   - palatabilityIndex: Calculate probability of eating based on aromatic coatings (fat, liver) and ingredients.
-   - giAndSatiety: Evaluate Glycemic Index based on carbohydrate sources.
-   - mandatoryWaterIntake: MANDATORY for cats and dry food users. Calculate ml based on grams.
-4. [Risk & Transition]:
-   - Identify allergy conflicts.
-   - Provide a 7-day transition schedule.
-   - Predict stool changes (odor, consistency).
-5. [Ingredients & ESG]: Standard traffic light audit and brand transparency.
+2. [Behavioral Forecast]:
+   - Palatability: Calculate eater probability based on aromatic fats and hydrolyzed proteins.
+   - Glycemic Index (GI): Evaluate carb sources (Tapioca/Rice = High GI, Lentils/Chickpeas = Low GI).
 
-Pet: {{{petProfile.name}}}, {{{petProfile.petType}}}, {{{petProfile.breed}}}, {{{petProfile.age}}}yo, {{{petProfile.weight}}}kg, BCS {{{petProfile.bcs}}}
+3. [Mandatory Hydration]:
+   - For cats or dry food users, calculate required additional water intake (ml) based on dry matter intake.
+
+Pet: {{{petProfile.name}}}, {{{petProfile.breed}}}, {{{petProfile.age}}}yo, {{{petProfile.weight}}}kg, BCS {{{petProfile.bcs}}}
 Product: {{{productInfo.productName}}} ({{{productInfo.productCategory}}})`,
 });
 

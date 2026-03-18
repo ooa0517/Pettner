@@ -1,12 +1,11 @@
-
 'use server';
 
 /**
- * @fileOverview [Analyzer_A: Hyper-Gap Audit Engine v28.1]
- * - Focuses on Meat vs Carb Ratio (Back-calculation).
+ * @fileOverview [Analyzer_A: Hyper-Gap Audit Engine v28.2]
+ * - Focuses on Meat vs Carb Ratio using NFE (Nitrogen-Free Extract) Formula.
  * - Satiety Index, Stool/Odor Forecast, and Global Risk Radar.
  * - Statistical Allergy Risk integration.
- * - Forced "Fact-Bomb" Tone.
+ * - Forced "Forensic Audit" Tone.
  */
 
 import {ai} from '@/ai/genkit';
@@ -77,17 +76,27 @@ const analyzeProductOnlyPrompt = ai.definePrompt({
   name: 'analyzeProductOnlyPrompt',
   input: {schema: AnalyzeProductOnlyInputSchema},
   output: {schema: AnalyzeProductOnlyOutputSchema},
-  prompt: `You are a Deterministic Food Quality Auditor for Pets. 
+  prompt: `You are a Deterministic Forensic Auditor for Pet Nutrition. 
 Target Language: {{{language}}}. Use professional, cold, and fact-based veterinary terminology.
 
-### [CRITICAL: HYPER-GAP AUDIT MODE]
-1. [Meat vs Carb]: AI must back-calculate carbohydrates (Carbs = 100 - (Protein + Fat + Fiber + Ash + Moisture)). 
-   - Expose "Hidden Carbs" that companies hide behind high-protein marketing. 
-   - Commentary must be sharp and critical.
-2. [Stool & Odor]: Predict physical outcomes based on fiber sources (beet pulp, cellulose) and protein quality (fresh meat vs by-product meals).
-3. [Ingredient Allergy Stat]: For each ingredient, include a statistical note relevant to the region (e.g., "Chicken: #1 allergy source for dogs in urban areas").
-4. [Satiety Index]: Analyze calorie density vs volume. Use 'Energy-concentrated' or 'High-volume' terminology.
-5. [Global Risk Radar]: Search for specific recent (2023-2024) FDA reports, DCM (Dilated Cardiomyopathy) investigations, or class-action lawsuits regarding the manufacturer.
+### [CRITICAL: MATHEMATICAL AUDIT MODE]
+1. [The Carb Deception (NFE Formula)]: 
+   - You MUST back-calculate Nitrogen-Free Extract (NFE).
+   - Formula: Carbs = 100 - (Crude Protein + Crude Fat + Crude Fiber + Moisture + Ash).
+   - If Ash is not on the label, assume 8% for dry food, 2% for wet food.
+   - Commentary MUST be aggressive if Carbs > 35%. Expose the "Hidden Sugars".
+
+2. [Biometric Forecast]:
+   - Predict Stool: Based on Fiber sources (Beet pulp, Cellulose, Inulin).
+   - Predict Odor: Based on Protein quality (Fresh meat vs By-product meal) and Yucca Schidigera presence.
+
+3. [Satiety Index Calculation]:
+   - Ratio of Fiber/Protein to Calorie density.
+   - High Density (Low Satiety): Energy-concentrated, small volume.
+   - High Fiber (High Satiety): Bulky volume, lower calories.
+
+4. [Global Risk Radar]:
+   - Search for specific manufacturer issues: 2023-2024 FDA warnings, DCM class-action lawsuits, or Aflatoxin recalls.
 
 Product: {{{productName}}} ({{{productCategory}}})
 Type: {{{detailedProductType}}}
