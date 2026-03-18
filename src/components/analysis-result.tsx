@@ -431,6 +431,38 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
               )}
               <p className="text-sm font-bold text-primary/70 bg-white/50 py-3 rounded-2xl border border-dashed border-primary/20">{result.personalizedFeedingGuide?.kcalInstruction}</p>
            </Card>
+
+           {/* Type B용 제품 교체 스케줄 추가 */}
+           {result.riskAndTransition?.transitionSchedule && (
+             <Card className="border-none shadow-xl bg-white rounded-[2.5rem] p-10 space-y-6">
+                <h3 className="font-black text-2xl flex items-center gap-3"><Clock className="text-primary"/> 7일 안전 제품 교체 스케줄</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  {result.riskAndTransition.transitionSchedule.map((item: any, i: number) => (
+                    <div key={i} className="p-4 bg-muted/30 rounded-2xl text-center space-y-1">
+                      <p className="text-[10px] font-black text-primary uppercase">{item.day}</p>
+                      <p className="font-black text-sm">{item.ratio}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10">
+                  <p className="text-xs font-bold text-amber-700 flex items-center gap-2">
+                    <Info size={14}/> {result.riskAndTransition.expectedStoolChanges}
+                  </p>
+                </div>
+             </Card>
+           )}
+
+           {/* 강제 음수량 가이드 (특히 고양이에게 중요) */}
+           {result.behavioralForecast?.mandatoryWaterIntake && (
+             <Card className="border-none shadow-xl bg-blue-500 rounded-[2.5rem] p-10 text-white space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-white/20 rounded-2xl"><Droplets size={28}/></div>
+                  <h3 className="font-black text-2xl">필수 강제 음수량 처방</h3>
+                </div>
+                <p className="text-4xl font-black tracking-tighter">{result.behavioralForecast.mandatoryWaterIntake.ml}</p>
+                <p className="text-sm font-medium opacity-80 leading-relaxed">{result.behavioralForecast.mandatoryWaterIntake.reason}</p>
+             </Card>
+           )}
         </div>
       )}
 
