@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -8,7 +9,8 @@ import {
   ShoppingBag, AlertCircle, Stethoscope, Microscope, Scale, ThumbsUp, AlertTriangle,
   TrendingUp, Globe, UtensilsCrossed, Activity, Factory, Search, Share2, ArrowLeft,
   Droplets, Clock, ShieldCheck, Zap, Info, Cat, Dog, Battery, Wind, InfoIcon,
-  ChevronDown, ChevronUp, Target, HeartPulse, CreditCard, Sparkles, CheckCircle2
+  ChevronDown, ChevronUp, Target, HeartPulse, CreditCard, Sparkles, CheckCircle2,
+  Footprints, Utensils
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -162,6 +164,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
               </div>
             </div>
             <div className="relative h-8 w-full bg-muted rounded-full overflow-hidden flex shadow-inner">
+              {/* Note: Simplified percentage calculation for UI, ideally based on total energy or mass from AI */}
               <div className="h-full bg-rose-500 transition-all duration-1000" style={{ width: `${data["4_fact_check_and_nutrition"].protein_pct || 30}%` }} />
               <div className="h-full bg-amber-500 transition-all duration-1000" style={{ width: `${data["4_fact_check_and_nutrition"].carb_pct || 40}%` }} />
             </div>
@@ -170,7 +173,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
 
           <div className="p-8 bg-muted/30 rounded-[2.5rem] border border-dashed space-y-4">
             <div className="flex items-center gap-2">
-              <Badge variant={data["4_fact_check_and_nutrition"].nutrition_radar.aafco_fediaf_met ? "success" : "destructive"}>
+              <Badge variant={data["4_fact_check_and_nutrition"].nutrition_radar.aafco_fediaf_met ? "default" : "destructive"}>
                 {data["4_fact_check_and_nutrition"].nutrition_radar.aafco_fediaf_met ? "글로벌 기준 충족" : "기준 미달"}
               </Badge>
               <span className="font-black text-sm">영양 밸런스 헥사곤</span>
@@ -232,7 +235,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
                 <div key={i} className="py-8 flex items-start gap-6 group">
                   <div className={cn(
                     "mt-1.5 w-4 h-4 rounded-full shrink-0 shadow-lg",
-                    ing.grade === 'green' ? 'bg-success' : ing.grade === 'yellow' ? 'bg-amber-500' : 'bg-rose-500'
+                    ing.grade === 'green' ? 'bg-green-500' : ing.grade === 'yellow' ? 'bg-amber-500' : 'bg-rose-500'
                   )} />
                   <div className="space-y-2">
                     <p className="font-black text-2xl group-hover:text-primary transition-colors">{ing.name}</p>
@@ -274,7 +277,7 @@ export default function AnalysisResult({ result, input, onReset, isPublicView = 
       <div className="fixed bottom-0 left-0 right-0 p-8 bg-white/90 backdrop-blur-3xl border-t z-50 flex justify-center shadow-[0_-20px_60px_rgba(0,0,0,0.15)]">
         <div className="w-full max-w-4xl flex gap-6">
           <Button onClick={onReset} variant="outline" className="flex-1 h-20 rounded-[2rem] border-[3px] font-black text-primary text-xl hover:bg-primary/5 active:scale-95 transition-all">새로운 분석</Button>
-          <Button onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(input.productName || '반려동물 사료')}`, '_blank')} className="flex-[2] h-20 rounded-[2rem] text-2xl font-black shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all"><ShoppingBag size={28} className="mr-4" /> 최저가 검색하기</Button>
+          <Button onClick={() => window.open(`https://search.shopping.naver.com/search/all?query=${encodeURIComponent(input.productName || '반려동물 먹거리')}`, '_blank')} className="flex-[2] h-20 rounded-[2rem] text-2xl font-black shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all"><ShoppingBag size={28} className="mr-4" /> 최저가 검색하기</Button>
         </div>
       </div>
     </div>

@@ -17,7 +17,7 @@ import { PlusCircle, Loader2, ChevronRight, HeartPulse, ClipboardCheck, CreditCa
 import { useLanguage } from '@/contexts/language-context';
 import { Badge } from '@/components/ui/badge';
 import PetProfileSurvey from '@/components/pet-profile-survey';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { doc, getDoc, collection, deleteDoc } from 'firebase/firestore';
 import PaymentModal from '@/components/payment-modal';
@@ -111,6 +111,10 @@ export default function AccountPage() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-3xl p-0 overflow-hidden border-none bg-white rounded-[2.5rem]">
+                <DialogHeader className="sr-only">
+                  <DialogTitle>반려동물 프로필 등록</DialogTitle>
+                  <DialogDescription>아이의 신체 정보와 식습관을 입력하여 정밀 분석을 준비합니다.</DialogDescription>
+                </DialogHeader>
                 <PetProfileSurvey onComplete={() => setShowSurvey(false)} />
               </DialogContent>
             </Dialog>
@@ -134,7 +138,7 @@ export default function AccountPage() {
                           </Badge>
                         </div>
                         <p className="text-xs text-muted-foreground font-bold">
-                          {pet.breed} · {pet.age}살 · {pet.weight}kg · {pet.neutered === 'yes' ? '중성화O' : '중성화X'}
+                          {pet.breed} · {pet.ageYears}살 {pet.ageMonths}개월 · {pet.weight}kg · {pet.isNeutered ? '중성화O' : '중성화X'}
                         </p>
                       </div>
                     </div>
