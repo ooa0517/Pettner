@@ -1,8 +1,7 @@
-
 'use client';
 
 import { useState } from 'react';
-import { ShoppingBag, Camera, Sparkles, ArrowLeft, Info, HeartPulse, FileText, X, AlertTriangle, ChevronDown, CheckCircle2, Search, Microscope, PlusCircle } from 'lucide-react';
+import { ShoppingBag, Camera, Sparkles, ArrowLeft, Microscope, HeartPulse, CheckCircle2, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -123,7 +122,7 @@ export default function UnifiedAnalyzer({ onBack, userData }: { onBack: () => vo
       </div>
 
       {/* 1. Pet Selection */}
-      <Card className="border-none shadow-2xl rounded-[3.5rem] overflow-hidden bg-white group hover:shadow-primary/5 transition-all duration-500">
+      <Card className="border-none shadow-2xl rounded-[3.5rem] overflow-hidden bg-white">
         <CardHeader className="bg-primary/5 p-10 border-b">
           <CardTitle className="text-2xl font-black flex items-center gap-3">
             <HeartPulse className="text-primary"/> 1. 진단 대상 선택
@@ -166,9 +165,9 @@ export default function UnifiedAnalyzer({ onBack, userData }: { onBack: () => vo
               </div>
               <div className="space-y-1 px-10">
                 <p className="text-muted-foreground font-black text-lg">등록된 반려동물이 없습니다.</p>
-                <p className="text-sm text-muted-foreground font-medium">우리 아이 맞춤 진단을 위해 프로필을 먼저 등록해주세요.</p>
+                <p className="text-sm text-muted-foreground font-medium">맞춤 진단을 위해 프로필을 먼저 등록해주세요.</p>
               </div>
-              <Button onClick={() => setShowPetSurvey(true)} className="rounded-[1.5rem] h-14 px-10 font-black text-lg shadow-xl shadow-primary/20">프로필 등록하러 가기</Button>
+              <Button onClick={() => setShowPetSurvey(true)} className="rounded-[1.5rem] h-14 px-10 font-black text-lg">프로필 등록하기</Button>
             </div>
           )}
         </CardContent>
@@ -185,13 +184,13 @@ export default function UnifiedAnalyzer({ onBack, userData }: { onBack: () => vo
           <div className="grid grid-cols-3 gap-3">
             {CATEGORIES.map(c => (
               <div key={c.id} onClick={() => { setCategory(c); setDetailedType(c.types[0]); }} className={cn("flex flex-col items-center p-5 border-4 rounded-[2rem] cursor-pointer transition-all gap-2", category.id === c.id ? "border-primary bg-primary/5 shadow-md scale-[1.02]" : "border-muted opacity-40 hover:opacity-80")}>
-                <span className="font-black text-sm">{c.label}</span>
+                <span className="font-black text-xs md:text-sm">{c.label}</span>
               </div>
             ))}
           </div>
           
           <div className="space-y-4">
-            <label className="text-xs font-black text-muted-foreground ml-3 uppercase tracking-widest">세부 유형 선택</label>
+            <label className="text-xs font-black text-muted-foreground ml-3 uppercase tracking-widest">세부 유형</label>
             <div className="flex flex-wrap gap-2">
               {category.types.map((t: string) => (
                 <button key={t} onClick={() => setDetailedType(t)} className={cn("px-6 py-3 rounded-full font-black text-sm border-2 transition-all active:scale-90", detailedType === t ? "bg-primary text-white border-primary shadow-lg" : "bg-white border-muted text-muted-foreground hover:border-muted-foreground/30")}>
@@ -203,7 +202,12 @@ export default function UnifiedAnalyzer({ onBack, userData }: { onBack: () => vo
 
           <div className="space-y-4">
             <label className="text-xs font-black text-muted-foreground ml-3 uppercase tracking-widest">제품명 (선택)</label>
-            <Input value={productName} onChange={e => setProductName(e.target.value)} placeholder="분석할 제품의 정확한 이름을 입력해주세요." className="h-16 rounded-[1.5rem] border-none bg-muted/20 px-6 font-bold text-lg focus-visible:ring-2 focus-visible:ring-primary/20" />
+            <Input 
+              value={productName} 
+              onChange={e => setProductName(e.target.value)} 
+              placeholder="제품의 정확한 이름을 입력해주세요." 
+              className="h-16 rounded-[1.5rem] border-none bg-muted/20 px-6 font-bold text-lg" 
+            />
           </div>
         </CardContent>
       </Card>
@@ -214,25 +218,24 @@ export default function UnifiedAnalyzer({ onBack, userData }: { onBack: () => vo
           <CardTitle className="text-3xl font-black flex items-center justify-center gap-4">
             <Camera size={40} /> 3. 성분표 라벨 촬영
           </CardTitle>
-          <p className="opacity-80 font-medium mt-2">제품 뒷면의 원재료명과 등록성분량을 찍어주세요.</p>
+          <p className="opacity-80 font-medium mt-2">뒷면의 원재료명과 등록성분량을 찍어주세요.</p>
         </CardHeader>
         <CardContent className="p-10">
-          <div onClick={() => document.getElementById('image-master')?.click()} className={cn("relative w-full aspect-[4/3] border-[6px] border-dashed rounded-[3.5rem] flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden group", image ? "border-success bg-success/5" : "border-muted/30 hover:border-primary/30")}>
+          <div onClick={() => document.getElementById('image-master-input')?.click()} className={cn("relative w-full aspect-[4/3] border-[6px] border-dashed rounded-[3.5rem] flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden group", image ? "border-success bg-success/5" : "border-muted/30 hover:border-primary/30")}>
             {image ? (
                <div className="relative w-full h-full">
                  <img src={URL.createObjectURL(image)} className="w-full h-full object-cover" alt="Label" />
                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="text-white font-black text-xl flex items-center gap-2"><Camera /> 다시 촬영하기</span>
+                    <span className="text-white font-black text-xl flex items-center gap-2"><Camera /> 다시 촬영</span>
                  </div>
                </div>
             ) : (
               <>
                 <Camera className="h-20 w-20 text-primary opacity-20 mb-6 group-hover:scale-110 transition-transform" />
                 <span className="text-2xl font-black text-muted-foreground">라벨 촬영 / 이미지 업로드</span>
-                <p className="text-sm text-muted-foreground mt-2 font-medium">클릭하여 카메라를 실행하거나 파일을 선택하세요.</p>
               </>
             )}
-            <input id="image-master" type="file" accept="image/*" className="hidden" onChange={e => {
+            <input id="image-master-input" type="file" accept="image/*" className="hidden" onChange={e => {
               const file = e.target.files?.[0];
               if (file) setImage(file);
             }} />
@@ -244,7 +247,6 @@ export default function UnifiedAnalyzer({ onBack, userData }: { onBack: () => vo
         <Sparkles className="mr-4 h-12 w-12" /> 진단 리포트 생성
       </Button>
 
-      {/* Modals */}
       <UsageLimitModal open={showLimitModal} onOpenChange={setShowLimitModal} />
       
       <Dialog open={showPetSurvey} onOpenChange={setShowPetSurvey}>

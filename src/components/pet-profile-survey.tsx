@@ -1,8 +1,7 @@
-
 'use client';
 
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -24,7 +23,7 @@ const petProfileSchema = z.object({
   name: z.string().min(1, '이름을 입력해주세요'),
   petType: z.enum(['dog', 'cat']),
   breed: z.string().min(1, '품종을 입력해주세요'),
-  ageYears: z.number().min(0).max(20),
+  ageYears: z.number().min(0).max(25),
   ageMonths: z.number().min(0).max(11),
   gender: z.enum(['male', 'female']),
   isNeutered: z.boolean().default(false),
@@ -45,10 +44,12 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
   const [step, setStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
 
-  const { register, handleSubmit, setValue, watch, trigger, formState: { errors } } = useForm<PetProfileValues>({
+  const { register, handleSubmit, control, setValue, watch, trigger, formState: { errors } } = useForm<PetProfileValues>({
     resolver: zodResolver(petProfileSchema),
     defaultValues: {
+      name: '',
       petType: 'dog',
+      breed: '',
       ageYears: 1,
       ageMonths: 0,
       gender: 'male',
@@ -58,13 +59,11 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
       stoolStatus: 'IDEAL',
       eatingHabit: 'NORMAL',
       usagePurpose: 'FACTCHECK',
+      medications: '',
     }
   });
 
   const selectedType = watch('petType');
-  const ageYears = watch('ageYears');
-  const ageMonths = watch('ageMonths');
-  const weight = watch('weight');
   const gender = watch('gender');
   const isNeutered = watch('isNeutered');
   const bcs = watch('bcs');
@@ -73,14 +72,13 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
   const purpose = watch('usagePurpose');
 
   const handleNextStep = async () => {
-    // 1단계 필수 필드 유효성 검사 강제 트리거
     const isStep1Valid = await trigger(['name', 'breed', 'petType', 'gender', 'weight']);
     if (isStep1Valid) {
       setStep(2);
     } else {
       toast({ 
         variant: "destructive", 
-        title: "입력 정보를 확인해주세요", 
+        title: "필수 정보를 확인해주세요", 
         description: "이름, 품종, 성별, 몸무게는 필수 입력 사항입니다." 
       });
     }
@@ -94,7 +92,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
         ...data,
         updatedAt: serverTimestamp(),
       });
-      toast({ title: "프로필 등록 완료", description: "이제 즉시 정밀 분석을 시작할 수 있습니다." });
+      toast({ title: "프로필 등록 완료", description: "이제 맞춤 분석을 시작할 수 있습니다." });
       onComplete();
     } catch (e) {
       toast({ variant: "destructive", title: "저장 실패", description: "서버 연결 상태를 확인해주세요." });
@@ -111,8 +109,8 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
             <div key={i} className={cn("w-16 h-2.5 rounded-full transition-all duration-500", step >= i ? "bg-primary shadow-sm" : "bg-muted")} />
           ))}
         </div>
-        <CardTitle className="text-3xl font-black tracking-tight">15초 컷 프로필 등록</CardTitle>
-        <CardDescription className="text-base font-medium">정밀 분석을 위해 최소한의 정보만 받습니다.</CardDescription>
+        <CardTitle className="text-3xl font-black tracking-tight">반려동물 프로필 등록</CardTitle>
+        <CardDescription className="text-base font-medium">정밀 분석을 위한 기초 정보를 입력해주세요.</CardDescription>
       </CardHeader>
 
       <div className="p-0">
@@ -123,7 +121,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
               <div className="space-y-4">
                 <Label className="font-black text-lg ml-1">아이 이름</Label>
                 <Input 
-                  placeholder="이름을 입력해주세요 (예: 나무)" 
+                  placeholder="예: 나무, 초코" 
                   {...register('name')} 
                   className={cn("h-16 rounded-2xl bg-muted/20 border-none px-6 text-xl font-bold focus-visible:ring-2 focus-visible:ring-primary/20", errors.name && "ring-2 ring-destructive")}
                 />
@@ -142,7 +140,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                 </div>
               </div>
 
-              {/* 품종 - 입력 불가 현상 수정 */}
+              {/* 품종 */}
               <div className="space-y-4">
                 <Label className="font-black text-lg ml-1">품종</Label>
                 <Input 
@@ -161,32 +159,42 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-muted/10 p-6 rounded-3xl">
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-black text-muted-foreground uppercase">Years</span>
-                      <Input 
-                        type="number" 
-                        min={0} max={20} 
-                        value={ageYears} 
-                        onChange={(e) => setValue('ageYears', Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))} 
-                        className="w-16 h-8 text-center font-black p-0 border-none bg-white rounded-lg shadow-sm" 
-                      />
-                    </div>
-                    <Slider value={[ageYears]} onValueChange={([v]) => setValue('ageYears', v)} max={20} step={1} className="py-2" />
-                    <p className="text-right text-sm font-black text-primary">{ageYears}살</p>
+                    <Label className="text-xs font-black text-muted-foreground uppercase">Years</Label>
+                    <Controller
+                      name="ageYears"
+                      control={control}
+                      render={({ field }) => (
+                        <div className="space-y-4">
+                          <Input 
+                            type="number" 
+                            min={0} max={25}
+                            value={field.value}
+                            onChange={(e) => field.onChange(Math.min(25, Math.max(0, parseInt(e.target.value) || 0)))}
+                            className="h-12 text-center font-black bg-white rounded-xl shadow-sm"
+                          />
+                          <Slider value={[field.value]} onValueChange={([v]) => field.onChange(v)} max={25} step={1} />
+                        </div>
+                      )}
+                    />
                   </div>
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-black text-muted-foreground uppercase">Months</span>
-                      <Input 
-                        type="number" 
-                        min={0} max={11} 
-                        value={ageMonths} 
-                        onChange={(e) => setValue('ageMonths', Math.min(11, Math.max(0, parseInt(e.target.value) || 0)))} 
-                        className="w-16 h-8 text-center font-black p-0 border-none bg-white rounded-lg shadow-sm" 
-                      />
-                    </div>
-                    <Slider value={[ageMonths]} onValueChange={([v]) => setValue('ageMonths', v)} max={11} step={1} className="py-2" />
-                    <p className="text-right text-sm font-black text-primary">{ageMonths}개월</p>
+                    <Label className="text-xs font-black text-muted-foreground uppercase">Months</Label>
+                    <Controller
+                      name="ageMonths"
+                      control={control}
+                      render={({ field }) => (
+                        <div className="space-y-4">
+                          <Input 
+                            type="number" 
+                            min={0} max={11}
+                            value={field.value}
+                            onChange={(e) => field.onChange(Math.min(11, Math.max(0, parseInt(e.target.value) || 0)))}
+                            className="h-12 text-center font-black bg-white rounded-xl shadow-sm"
+                          />
+                          <Slider value={[field.value]} onValueChange={([v]) => field.onChange(v)} max={11} step={1} />
+                        </div>
+                      )}
+                    />
                   </div>
                 </div>
               </div>
@@ -196,27 +204,35 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Scale className="text-primary h-5 w-5" />
-                    <Label className="font-black text-lg">몸무게</Label>
+                    <Label className="font-black text-lg">몸무게 (kg)</Label>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Input 
-                      type="number" 
-                      step="0.1" 
-                      value={weight} 
-                      onChange={(e) => setValue('weight', Math.max(0.1, parseFloat(e.target.value) || 0.1))} 
-                      className="w-24 h-10 text-center font-black border-2 border-primary/20 rounded-xl bg-white shadow-sm text-lg" 
-                    />
-                    <span className="font-black text-lg text-muted-foreground">kg</span>
-                  </div>
+                  <Controller
+                    name="weight"
+                    control={control}
+                    render={({ field }) => (
+                      <Input 
+                        type="number" 
+                        step="0.1"
+                        value={field.value}
+                        onChange={(e) => field.onChange(Math.max(0.1, parseFloat(e.target.value) || 0.1))}
+                        className="w-24 h-12 text-center font-black border-2 border-primary/20 rounded-xl shadow-sm"
+                      />
+                    )}
+                  />
                 </div>
-                <div className="bg-muted/10 p-6 rounded-3xl space-y-4">
-                  <Slider value={[weight]} onValueChange={([v]) => setValue('weight', v)} max={50} step={0.1} className="py-2" />
-                  <div className="flex justify-between text-[10px] font-bold text-muted-foreground">
-                    <span>0.1kg</span>
-                    <span>25kg</span>
-                    <span>50kg+</span>
-                  </div>
-                </div>
+                <Controller
+                  name="weight"
+                  control={control}
+                  render={({ field }) => (
+                    <div className="bg-muted/10 p-6 rounded-3xl space-y-4">
+                      <Slider value={[field.value]} onValueChange={([v]) => field.onChange(v)} max={60} step={0.1} />
+                      <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase">
+                        <span>Min (0.1kg)</span>
+                        <span>Max (60kg+)</span>
+                      </div>
+                    </div>
+                  )}
+                />
               </div>
 
               {/* 성별 및 중성화 */}
@@ -295,7 +311,7 @@ export default function PetProfileSurvey({ onComplete }: { onComplete: () => voi
 
               {/* 사용 목적 */}
               <div className="space-y-6">
-                <Label className="font-black text-xl flex items-center gap-3"><Target className="text-primary h-6 w-6"/> 앱 사용 목적</Label>
+                <Label className="font-black text-xl flex items-center gap-3"><Target className="text-primary h-6 w-6"/> 분석 목적</Label>
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { id: 'DIET', label: '체중 관리', icon: '⚖️' },
